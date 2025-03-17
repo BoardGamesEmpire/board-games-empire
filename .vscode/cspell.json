@@ -1,0 +1,22 @@
+{
+  "version": "0.2",
+  "ignorePaths": [
+    "node_modules",
+    ".git",
+    ".vscode",
+    "package-lock.json",
+    "package.json",
+    "tsconfig.json",
+    "*.sql"
+  ],
+  "words": [
+    "Buildable",
+    "devkit",
+    "getify",
+    "linebreak",
+    "nrwl",
+    "Parens",
+    "prerender",
+    "willsoto"
+  ]
+}

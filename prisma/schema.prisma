@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AuthDevice {
+  createdAt           DateTime @default(now())
+  credentialId        Bytes
+  credentialPublicKey Bytes
+  counter             Int
+  uuid                String   @id @default(uuid())
+  updatedAt           DateTime @updatedAt
+  userId              String
+  User                User     @relation(fields: [userId], references: [uuid])
+}
+
+model Language {
+  abbreviation String      @unique @db.VarChar(2)
+  code         String      @unique @db.VarChar(3)
+  uuid         String      @id @default(uuid())
+  households   Household[]
+  name         String      @unique
+  users        User[]
+}
+
+model Token {
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  uuid      String   @id @default(uuid())
+  updatedAt DateTime @updatedAt
+  userId    String
+  User      User     @relation(fields: [userId], references: [uuid])
+}
+
+model User {
+  authDevices      AuthDevice[]
+  avatar           String?
+  createdAt        DateTime          @default(now())
+  email            String            @unique
+  firstName        String?
+  householdMembers HouseholdMember[]
+  households       Household[]
+  uuid             String            @id @default(uuid())
+  languageId       String?
+  language         Language?          @relation(fields: [languageId], references: [uuid])
+  lastName         String?
+  password         String?
+  role             Role              @default(USER)
+  tokens           Token[]
+  updatedAt        DateTime          @updatedAt
+  username         String            @unique
+}
+
+model Household {
+  createdAt       DateTime          @default(now())
+  uuid            String            @id @default(uuid())
+  image           String?
+  language        Language          @relation(fields: [languageId], references: [uuid])
+  languageId      String
+  members         HouseholdMember[]
+  name            String            @unique
+  owner           User              @relation(fields: [ownerId], references: [uuid])
+  ownerId         String
+  updatedAt       DateTime          @updatedAt
+}
+
+enum Role {
+  ADMIN
+  GUEST
+  SiteAdmin
+  SiteOwner
+  USER
+}
+
+model HouseholdMember {
+  uuid        String    @id @default(uuid())
+  householdId String
+  household   Household @relation(fields: [householdId], references: [uuid])
+  role        Role
+  userId      String
+  user        User      @relation(fields: [userId], references: [uuid])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([householdId, userId])
+}
+
+model GameType {
+  uuid  String @id @default(uuid())
+  name  String @unique
+  games Game[]
+}
+
+model Category {
+  uuid  String         @id @default(uuid())
+  name  String         @unique
+  games GameCategory[]
+}
+
+model GameCategory {
+  uuid       String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  game       Game     @relation(fields: [gameId], references: [uuid])
+  gameId     String
+  category   Category @relation(fields: [categoryId], references: [uuid])
+  categoryId String
+
+  @@unique([gameId, categoryId])
+}
+
+model Mechanic {
+  uuid  String         @id @default(uuid())
+  name  String         @unique
+  games GameMechanic[]
+}
+
+model GameMechanic {
+  uuid       String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  game       Game     @relation(fields: [gameId], references: [uuid])
+  gameId     String
+  mechanic   Mechanic @relation(fields: [mechanicId], references: [uuid])
+  mechanicId String
+
+  @@unique([gameId, mechanicId])
+}
+
+model Family {
+  uuid  String       @id @default(uuid())
+  name  String       @unique
+  games GameFamily[]
+}
+
+model GameFamily {
+  uuid      String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  game      Game     @relation(fields: [gameId], references: [uuid])
+  gameId    String
+  family    Family   @relation(fields: [familyId], references: [uuid])
+  familyId  String
+
+  @@unique([gameId, familyId])
+}
+
+model Designer {
+  uuid  String         @id @default(uuid())
+  name  String         @unique
+  games GameDesigner[]
+}
+
+model GameDesigner {
+  uuid       String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  game       Game     @relation(fields: [gameId], references: [uuid])
+  gameId     String
+  designer   Designer @relation(fields: [designerId], references: [uuid])
+  designerId String
+
+  @@unique([gameId, designerId])
+}
+
+model Artist {
+  uuid  String       @id @default(uuid())
+  name  String       @unique
+  games GameArtist[]
+}
+
+model GameArtist {
+  uuid      String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  game      Game     @relation(fields: [gameId], references: [uuid])
+  gameId    String
+  artist    Artist   @relation(fields: [artistId], references: [uuid])
+  artistId  String
+
+  @@unique([gameId, artistId])
+}
+
+model Publisher {
+  uuid  String          @id @default(uuid())
+  name  String          @unique
+  games GamePublisher[]
+}
+
+model GamePublisher {
+  uuid        String    @id @default(uuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  game        Game      @relation(fields: [gameId], references: [uuid])
+  gameId      String
+  publisher   Publisher @relation(fields: [publisherId], references: [uuid])
+  publisherId String
+
+  @@unique([gameId, publisherId])
+}
+
+model Game {
+  uuid        String          @id @default(uuid())
+  typeId      String
+  type        GameType        @relation(fields: [typeId], references: [uuid])
+  title       String
+  subtitle    String?
+  description String?
+  image       String?
+  publishYear Int?
+  minPlayers  Int?
+  maxPlayers  Int?
+  playingTime Int?
+  minPlayTime Int?
+  maxPlayTime Int?
+  minAge      Int?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  categories  GameCategory[]
+  mechanics   GameMechanic[]
+  families    GameFamily[]
+  designers   GameDesigner[]
+  artists     GameArtist[]
+  publishers  GamePublisher[]
+}
