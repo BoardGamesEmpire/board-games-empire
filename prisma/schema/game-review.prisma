@@ -1,0 +1,17 @@
+model GameReview {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String
+
+  rating     Float
+  visibility Visibility @default(Household)
+  comment    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, gameId])
+  @@map("game_reviews")
+}

@@ -1,0 +1,79 @@
+model GameWeight {
+  id     String @id @default(cuid())
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String @unique
+
+  // Overall complexity
+  overallWeight Float? // 1-5 scale, overall complexity
+
+  // Dimensional complexity metrics
+  rulesWeight    Float? // 1-5 scale, rules complexity
+  strategyWeight Float? // 1-5 scale, strategic depth
+  luckWeight     Float? // 1-5 scale, luck factor (5 = high luck)
+  mathWeight     Float? // 1-5 scale, mathematical complexity
+  socialWeight   Float? // 1-5 scale, social interaction complexity
+
+  // Teaching difficulty
+  teachingTime  Int? // Estimated minutes to teach
+  learningCurve LearningCurve? // Steepness of learning curve
+
+  // Source of weight calculation
+  weightSource WeightSource @default(Internal)
+  externalUrl  String? // Link to external rating source if applicable
+
+  // User contributions
+  weightVotes GameWeightVote[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("game_weights")
+}
+
+// User votes on game weight (allows for crowdsourcing)
+model GameWeightVote {
+  id           String     @id @default(cuid())
+  gameWeight   GameWeight @relation(fields: [gameWeightId], references: [id])
+  gameWeightId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  // User's ratings for each dimension
+  overallWeight  Float? // 1-5 scale
+  rulesWeight    Float? // 1-5 scale
+  strategyWeight Float? // 1-5 scale
+  luckWeight     Float? // 1-5 scale
+  mathWeight     Float? // 1-5 scale
+  socialWeight   Float? // 1-5 scale
+
+  // Helpful comments about difficulty
+  comments String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameWeightId, userId])
+  @@map("game_weight_votes")
+}
+
+enum WeightSource {
+  Internal // Internal rating
+  BoardGameGeek // From BGG
+  UserAverage // Average of user ratings
+  ExpertRating // From expert/critic
+
+  @@map("weight_sources")
+}
+
+enum LearningCurve {
+  Gentle // Easy to learn, gentle progression
+  Moderate // Some initial challenge but smooth afterward
+  Stepped // Multiple distinct learning plateaus
+  Steep // Difficult initial learning
+  Cliff // Very high barrier to entry
+
+  @@map("learning_curves")
+}

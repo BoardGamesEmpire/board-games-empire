@@ -1,0 +1,21 @@
+model WishList {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  name   String @default("My Wishlist")
+
+  games WishListGame[]
+
+  @@map("wish_lists")
+}
+
+model WishListGame {
+  id         String   @id @default(cuid())
+  wishList   WishList @relation(fields: [wishListId], references: [id])
+  wishListId String
+  game       Game     @relation(fields: [gameId], references: [id])
+  gameId     String
+  priority   Int      @default(0)
+
+  @@map("wish_list_games")
+}

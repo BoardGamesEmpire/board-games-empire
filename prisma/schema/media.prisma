@@ -1,0 +1,30 @@
+enum MediaType {
+  ActionShot
+  BoardState
+  BoxArt
+  Card
+  ComponentPhoto
+  GameSetup
+  Other
+  RuleBook
+  SessionPhoto
+  Video
+
+  @@map("media_types")
+}
+
+model SessionMedia {
+  id        String          @id @default(cuid())
+  session   GamePlaySession @relation(fields: [sessionId], references: [id])
+  sessionId String
+
+  url     String
+  caption String?
+
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+  uploadedById String
+
+  createdAt DateTime @default(now())
+
+  @@map("session_media")
+}

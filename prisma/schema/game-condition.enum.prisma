@@ -1,0 +1,10 @@
+enum GameCondition {
+  Acceptable
+  Good
+  LikeNew
+  New
+  Poor
+  VeryGood
+
+  @@map("game_conditions")
+}

@@ -1,0 +1,37 @@
+enum InviteStatus {
+  Accepted
+  AwaitingApproval
+  Declined
+  Expired
+  Pending
+  Revoked
+  Withdrawn
+
+  @@map("invite_statuses")
+}
+
+model EventInvite {
+  id      String @id @default(cuid())
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+
+  // Invited User
+  invitedUser   User   @relation(fields: [invitedUserId], references: [id])
+  invitedUserId String
+
+  // Inviter (who sent the invite)
+  invitedBy   User   @relation("SentInvites", fields: [invitedById], references: [id])
+  invitedById String
+
+  // Invite Status
+  status InviteStatus @default(Pending)
+
+  // Optional Expiration
+  expiresAt DateTime?
+
+  // Tracking
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("event_invites")
+}

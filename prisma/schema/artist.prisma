@@ -1,0 +1,47 @@
+model Artist {
+  id        String  @id @default(cuid())
+  name      String // No unique constraint to handle same-named artists
+  fullName  String? // Optional full/legal name if different
+  website   String? // Personal or portfolio website
+  biography String? // Brief artist bio
+  country   String? // Country of origin/residence
+
+  // Social media and contact
+  boardGameGeekUrl String? // BGG profile link
+  twitterHandle    String?
+  instagramHandle  String?
+
+  games GameArtist[] // Games with artwork by this artist
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("artists")
+}
+
+model GameArtist {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  game      Game     @relation(fields: [gameId], references: [id])
+  gameId    String
+  artist    Artist   @relation(fields: [artistId], references: [id])
+  artistId  String
+
+  role    ArtistRole @default(Primary) // Primary, Cover, Component, etc.
+  details String? // Specific contributions (e.g., "Character Design")
+
+  @@unique([gameId, artistId])
+  @@map("game_artists")
+}
+
+enum ArtistRole {
+  Primary // Main artist
+  Cover // Cover art only
+  Component // Game components
+  Illustration // Interior illustrations
+  Graphic // Graphic design
+  Supporting // Minor contributions
+
+  @@map("artist_roles")
+}

@@ -15,27 +15,27 @@ export class DesignersService {
     return this.prisma.designer.findMany();
   }
 
-  findOne(uuid: string) {
+  findOne(id: string) {
     return this.prisma.designer.findUnique({
       where: {
-        uuid,
+        id,
       },
     });
   }
 
-  update(uuid: string, updateDesignerDto: UpdateDesignerDto) {
+  update(id: string, updateDesignerDto: UpdateDesignerDto) {
     return this.prisma.designer.update({
       where: {
-        uuid,
+        id,
       },
       data: updateDesignerDto,
     });
   }
 
-  remove(uuid: string) {
+  remove(id: string) {
     return this.prisma.designer.delete({
       where: {
-        uuid,
+        id,
       },
     });
   }

@@ -6,5 +6,5 @@ export class User {
   lastName: string;
   password?: string;
   username: string;
-  uuid: string;
+  id: string;
 }

@@ -1,0 +1,13 @@
+enum PlayerDynamic {
+  Competitive // Creates friendly competition
+  Cooperative // Brings the group together
+  Creative // Brings out creativity
+  Divisive // Tends to create arguments
+  Energizing // Energizes the group
+  Hilarious // Results in lots of laughter
+  Relaxing // Calms the group
+  Strategic // Encourages deep thinking
+  TeamBased // Forms team bonds
+
+  @@map("player_dynamics")
+}

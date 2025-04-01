@@ -1,0 +1,62 @@
+model GameExpansion {
+  id         String @id @default(cuid())
+  name       String
+  baseGame   Game   @relation("BaseGame", fields: [baseGameId], references: [id])
+  baseGameId String
+
+  // Expansion details
+  description  String?
+  releaseYear  Int?
+  isStandalone Boolean @default(false) // Can be played without base game?
+
+  // Games that this expansion is compatible with
+  compatibleWith ExpansionCompatibility[]
+
+  // Rule variant relationship
+  ruleVariants GameExpansionRuleVariant[]
+
+  // Track when this expansion was used
+  playSessionsUsed  GamePlaySessionExpansion[]
+  ruleVariantUsages RuleVariantUsageExpansion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("game_expansions")
+}
+
+model ExpansionCompatibility {
+  id          String        @id @default(cuid())
+  game        Game          @relation(fields: [gameId], references: [id])
+  gameId      String
+  expansion   GameExpansion @relation(fields: [expansionId], references: [id])
+  expansionId String
+
+  // Useful metadata
+  isRecommended Boolean @default(false) // Is this a recommended pairing?
+  notes         String? // Notes about this compatibility
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, expansionId])
+  @@map("expansion_compatibilities")
+}
+
+// Junction table for RuleVariants to GameExpansions
+model GameExpansionRuleVariant {
+  id              String        @id @default(cuid())
+  ruleVariant     RuleVariant   @relation(fields: [ruleVariantId], references: [id])
+  ruleVariantId   String
+  gameExpansion   GameExpansion @relation(fields: [gameExpansionId], references: [id])
+  gameExpansionId String
+
+  // Optional override settings specific to this expansion
+  overrideCategory RuleCategory?
+  overrideRuleText String? // Expansion-specific rule text modification
+
+  createdAt DateTime @default(now())
+
+  @@unique([ruleVariantId, gameExpansionId])
+  @@map("game_expansion_rule_variants")
+}

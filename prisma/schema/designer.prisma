@@ -1,0 +1,80 @@
+model Designer {
+  id        String  @id @default(cuid())
+  name      String  @unique
+  fullName  String? // Optional full/legal name if different
+  website   String? // Personal or company website
+  biography String? // Brief designer bio
+  country   String? // Country of origin/residence
+
+  // Designer metadata
+  boardGameGeekUrl String? // BGG profile link
+  debutYear        Int? // Year of first published game
+
+  // Designer networks
+  collaborators    DesignerCollaboration[] @relation("PrimaryDesigner")
+  collaboratedWith DesignerCollaboration[] @relation("Collaborator")
+
+  // Metadata for network analysis
+  totalCollaborators         Int? // Total number of unique designers collaborated with
+  mostFrequentCollaboratorId String? // Designer they've worked with most
+
+  games GameDesigner[] // Games designed by this person
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("designers")
+}
+
+model GameDesigner {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  game       Game     @relation(fields: [gameId], references: [id])
+  gameId     String
+  designer   Designer @relation(fields: [designerId], references: [id])
+  designerId String
+
+  role DesignerRole @default(Primary) // Primary, Developer, etc.
+
+  @@unique([gameId, designerId])
+  @@map("game_designers")
+}
+
+// model for tracking designer collaborations
+model DesignerCollaboration {
+  id                String   @id @default(cuid())
+  primaryDesigner   Designer @relation("PrimaryDesigner", fields: [primaryDesignerId], references: [id])
+  primaryDesignerId String
+  collaborator      Designer @relation("Collaborator", fields: [collaboratorId], references: [id])
+  collaboratorId    String
+
+  // Collaboration details
+  collaborationCount  Int  @default(1) // Number of games together
+  firstCollaboration  Int? // Year of first collaboration
+  latestCollaboration Int? // Year of most recent collaboration
+
+  // Which games they collaborated on
+  games Game[]
+
+  // Metadata
+  strength Float? // Calculated strength of collaboration (1-10)
+  notes    String? // Notes about this collaboration
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([primaryDesignerId, collaboratorId])
+  @@index([primaryDesignerId])
+  @@index([collaboratorId])
+  @@map("designer_collaborations")
+}
+
+enum DesignerRole {
+  Primary // Lead designer
+  Secondary // Supporting designer
+  Developer // Game developer
+  Contributor // Minor contributions
+
+  @@map("designer_roles")
+}

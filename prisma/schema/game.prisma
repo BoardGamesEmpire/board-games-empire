@@ -1,0 +1,157 @@
+model Game {
+  id          String  @id @default(cuid())
+  title       String
+  subtitle    String?
+  description String?
+  image       String?
+  publishYear Int?
+  minPlayers  Int?
+  maxPlayers  Int?
+  playingTime Int?
+
+  minPlayTime        Int?
+  minPlayTimeMeasure TimeMeasure?
+  maxPlayTime        Int?
+  maxPlayTimeMeasure TimeMeasure?
+  minAge             Int?
+
+  // Enhanced relationships for classification models
+  categories GameCategory[]
+  mechanics  GameMechanic[]
+  families   GameFamily[]
+  designers  GameDesigner[]
+  artists    GameArtist[]
+  publishers GamePublisher[]
+
+  // User Relations
+  owned       GameCollection[]
+  reviews     GameReview[]
+  households  HouseholdGame[]
+  loanedGames GameLoan[]
+  wishList    WishListGame[]
+
+  // Usage statistics
+  totalPlayCount Int    @default(0) // Total plays across all users
+  averageRating  Float? // Calculated average rating
+  complexity     Float? // Game complexity rating
+
+  // Ownership statistics
+  ownedByCount Int @default(0) // How many users own this game
+
+  gameMedia GameMedia[]
+
+  eventGames   EventGame[]
+  campaigns    Campaign[]
+  ruleVariants RuleVariant[]
+  playSessions GamePlaySession[]
+  tags         GameTag[]
+
+  // Version/expansion relationships
+  versions             GameVersion[]
+  expansions           GameExpansion[]          @relation("BaseGame")
+  compatibleExpansions ExpansionCompatibility[]
+
+  // Visibility and origin info
+  isPrivate      Boolean    @default(false) // Is this a private user-created game?
+  visibility     Visibility @default(Public)
+  createdBy      User?      @relation("GamesCreated", fields: [createdById], references: [id])
+  createdById    String?
+  isFromExternal Boolean    @default(false) // Was this imported from external API?
+  externalId     String? // ID from external source if imported
+
+  // Define who has access to this private game
+  sharedWithUsers      GameUserAccess[]
+  sharedWithHouseholds GameHouseholdAccess[]
+
+  // Track customizations
+  userCustomizations      UserGameCustomization[]
+  householdCustomizations HouseholdGameCustomization[]
+
+  weight                 GameWeight?
+  implementations        GameImplementation[]
+  designerCollaborations DesignerCollaboration[] // Games where designers collaborated
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("games")
+}
+
+model GameCollection {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String
+
+  // Household Visibility Exceptions
+  excludedFromHouseholds ExcludedGame[]
+
+  quantity Int @default(1)
+
+  rating      Int?
+  playCount   Int?
+  playAgain   Boolean?
+  favorite    Boolean?
+  comment     String?
+  lastPlayed  DateTime?
+  lastUpdated DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, gameId])
+  @@map("game_collections")
+}
+
+model GameMedia {
+  id     String @id @default(cuid())
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String
+
+  mediaType    MediaType
+  url          String
+  thumbnailUrl String?
+  title        String?
+  description  String?
+  isDefault    Boolean   @default(false)
+
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+  uploadedById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("game_media")
+}
+
+model GameLoan {
+  id     String @id @default(cuid())
+  user   User   @relation("GamesOnLoan", fields: [userId], references: [id])
+  userId String
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String
+
+  loanToUserId String?
+  loanToUser   User?   @relation("GamesLoanedTo", fields: [loanToUserId], references: [id])
+  loanTo       String?
+  loanToEmail  String?
+
+  loanDate           DateTime  @default(now())
+  expectedReturnDate DateTime?
+  actualReturnDate   DateTime?
+  notes              String?
+
+  @@map("loaned_games")
+}
+
+enum TimeMeasure {
+  Minutes
+  Hours
+  Days
+  Weeks
+  Months
+  Years
+
+  @@map("time_measures")
+}

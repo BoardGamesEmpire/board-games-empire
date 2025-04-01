@@ -1,0 +1,39 @@
+model GameHouseholdAccess {
+  id          String    @id @default(cuid())
+  game        Game      @relation(fields: [gameId], references: [id])
+  gameId      String
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
+
+  // Access level
+  canEdit  Boolean @default(false) // Household members can edit
+  canShare Boolean @default(false) // Household members can share
+
+  // Tracking
+  sharedBy   User     @relation("HouseholdGameSharer", fields: [sharedById], references: [id])
+  sharedById String
+  sharedAt   DateTime @default(now())
+
+  @@unique([gameId, householdId])
+  @@map("game_household_access")
+}
+
+model GameUserAccess {
+  id     String @id @default(cuid())
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  // Access level
+  canEdit  Boolean @default(false) // Can edit this private game
+  canShare Boolean @default(false) // Can share this game with others
+
+  // Tracking
+  sharedBy   User     @relation("GameSharer", fields: [sharedById], references: [id])
+  sharedById String
+  sharedAt   DateTime @default(now())
+
+  @@unique([gameId, userId])
+  @@map("game_user_access")
+}

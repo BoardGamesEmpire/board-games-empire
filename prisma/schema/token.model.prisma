@@ -1,0 +1,11 @@
+model Token {
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  id        String   @id @default(cuid())
+  token     String   @unique @db.VarChar(64)
+  updatedAt DateTime @updatedAt
+  userId    String
+  User      User     @relation(fields: [userId], references: [id])
+
+  @@map("tokens")
+}

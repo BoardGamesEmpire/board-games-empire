@@ -15,27 +15,27 @@ export class FamiliesService {
     return this.prisma.family.findMany();
   }
 
-  findOne(uuid: string) {
+  findOne(id: string) {
     return this.prisma.family.findUnique({
       where: {
-        uuid,
+        id,
       },
     });
   }
 
-  update(uuid: string, updateFamilyDto: UpdateFamilyDto) {
+  update(id: string, updateFamilyDto: UpdateFamilyDto) {
     return this.prisma.family.update({
       where: {
-        uuid,
+        id,
       },
       data: updateFamilyDto,
     });
   }
 
-  remove(uuid: string) {
+  remove(id: string) {
     return this.prisma.family.delete({
       where: {
-        uuid,
+        id,
       },
     });
   }

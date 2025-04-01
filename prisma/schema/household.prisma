@@ -1,0 +1,74 @@
+model Household {
+  id          String  @id @default(cuid())
+  description String?
+  name        String
+  image       String?
+
+  language   Language @relation(fields: [languageId], references: [id])
+  languageId String
+
+  gamePlaySessions GamePlaySession[]
+  members          HouseholdMember[]
+  games            HouseholdGame[]
+  events           Event[]
+
+  owner   User   @relation(fields: [ownerId], references: [id])
+  ownerId String
+
+  // Role assignments within this household
+  roleAssignments HouseholdRole[]
+
+  campaigns    Campaign[]
+  ruleVariants RuleVariant[]
+
+  gameCustomizations HouseholdGameCustomization[]
+
+  // Games shared with this household
+  accessToGames GameHouseholdAccess[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("households")
+}
+
+model HouseholdRole {
+  id          String    @id @default(cuid())
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  role        Role      @relation(fields: [roleId], references: [id])
+  roleId      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([householdId, userId, roleId])
+  @@map("household_roles")
+}
+
+model HouseholdMember {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id])
+
+  showAllGames           Boolean        @default(true)
+  // Household Visibility Exceptions
+  excludedFromHouseholds ExcludedGame[]
+
+  // Game interests
+  gameInterests HouseholdGameInterest[]
+
+  // Game experiences
+  gameExperienceParticipations HouseholdGameExperienceParticipant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([householdId, userId])
+  @@map("household_members")
+}

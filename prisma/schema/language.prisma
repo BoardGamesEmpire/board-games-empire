@@ -1,0 +1,10 @@
+model Language {
+  abbreviation    String            @unique @db.VarChar(2)
+  code            String            @unique @db.VarChar(3)
+  id              String            @id @default(cuid())
+  households      Household[]
+  name            String            @unique
+  userPreferences UserPreferences[]
+
+  @@map("languages")
+}

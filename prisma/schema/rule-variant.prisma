@@ -1,0 +1,153 @@
+model RuleVariant {
+  id          String @id @default(cuid())
+  name        String
+  description String
+
+  // Where this rule applies
+  campaign    Campaign?  @relation(fields: [campaignId], references: [id])
+  campaignId  String?
+  game        Game?      @relation(fields: [gameId], references: [id])
+  gameId      String?
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
+
+  // New relationships for expansions and versions
+  gameExpansions GameExpansionRuleVariant[]
+  gameVersions   GameVersionRuleVariant[]
+
+  // Rule details
+  category RuleCategory @default(General)
+  ruleType RuleType     @default(Addition)
+
+  // Compatibility mode - how this rule applies across game variants
+  compatibilityMode RuleCompatibilityMode @default(ExactMatch)
+
+  // What this rule modifies
+  modifiesCore    Boolean @default(false) // Does this modify a core rule?
+  replacedRuleRef String? // Reference to the rule being replaced/modified
+  rulebookPage    Int? // Page number in rulebook, if applicable
+  rulebookEdition String? // Edition of the rulebook this applies to
+
+  // Rule content
+  ruleText String // The actual rule text
+  examples String? // Examples of the rule in action
+
+  // Rule management
+  createdBy   User    @relation(fields: [createdById], references: [id])
+  createdById String
+  isActive    Boolean @default(true)
+
+  // Rule metadata
+  source         String? // Where this rule came from if not original
+  discussionLink String? // Link to discussion about this rule
+
+  // Rule versioning
+  version           String       @default("1.0")
+  previousVersion   RuleVariant? @relation("RuleVersions", fields: [previousVersionId], references: [id])
+  previousVersionId String?      @unique
+  nextVersion       RuleVariant? @relation("RuleVersions")
+
+  // When this rule was used
+  sessionsUsed RuleVariantUsage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("rule_variants")
+}
+
+model RuleVariantUsage {
+  id            String          @id @default(cuid())
+  ruleVariant   RuleVariant     @relation(fields: [ruleVariantId], references: [id])
+  ruleVariantId String
+  session       GamePlaySession @relation(fields: [sessionId], references: [id])
+  sessionId     String
+
+  // Track which expansions/versions were in use
+  gameExpansions RuleVariantUsageExpansion[]
+  gameVersions   RuleVariantUsageVersion[]
+
+  // Details about the rule's usage
+  wasEffective Boolean? // Did the rule work well?
+  notes        String? // Notes about how the rule worked
+
+  @@unique([ruleVariantId, sessionId])
+  @@map("rule_variant_usages")
+}
+
+model RuleVariantUsageVersion {
+  id                 String           @id @default(cuid())
+  ruleVariantUsage   RuleVariantUsage @relation(fields: [ruleVariantUsageId], references: [id])
+  ruleVariantUsageId String
+  gameVersion        GameVersion      @relation(fields: [gameVersionId], references: [id])
+  gameVersionId      String
+
+  // Useful metadata
+  wasApplicable  Boolean @default(true) // Was this rule relevant for this version?
+  requiresErrata Boolean @default(false) // Does this require rulebook errata?
+  errataDetails  String? // Details on errata if needed
+
+  @@unique([ruleVariantUsageId, gameVersionId])
+  @@map("rule_variant_usage_versions")
+}
+
+model RuleVariantUsageExpansion {
+  id                 String           @id @default(cuid())
+  ruleVariantUsage   RuleVariantUsage @relation(fields: [ruleVariantUsageId], references: [id])
+  ruleVariantUsageId String
+  gameExpansion      GameExpansion    @relation(fields: [gameExpansionId], references: [id])
+  gameExpansionId    String
+
+  // Useful metadata
+  wasApplicable        Boolean @default(true) // Was this rule relevant for this expansion?
+  requiredModification Boolean @default(false) // Did the rule need tweaking for this expansion?
+  notes                String? // Any expansion-specific notes
+
+  @@unique([ruleVariantUsageId, gameExpansionId])
+  @@map("rule_variant_usage_expansions")
+}
+
+enum RuleType {
+  Addition // Adds new content not in original rules
+  Clarification // Explains how to interpret an ambiguous rule
+  Modification // Tweaks an existing rule
+  Replacement // Completely replaces an existing rule
+  Restriction // Adds limitations to an existing rule
+  Removal // Removes an existing rule
+
+  @@map("rule_types")
+}
+
+// Define how a rule behaves across game variants
+enum RuleCompatibilityMode {
+  AllExpansions // Applies to base game and all expansions
+  AllVersions // Applies to all versions of the game
+  BaseGameOnly // Only applies to the base game
+  ExactMatch // Only applies to exactly specified games/expansions/versions
+  SpecificExpansions // Only applies to specific expansions
+  SpecificVersions // Only applies to specific versions
+
+  @@map("rule_compatibility_modes")
+}
+
+enum RuleCategory {
+  ActionEconomy
+  Advancement
+  CharacterCreation
+  Combat
+  Condition
+  Custom // For user-defined categories
+  Economy
+  Environment
+  Equipment
+  Experience
+  General
+  Initiative
+  Magic
+  Movement
+  Other
+  RestAndRecovery
+  SocialInteraction
+
+  @@map("rule_categories")
+}

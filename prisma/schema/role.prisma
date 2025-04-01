@@ -1,0 +1,33 @@
+model Role {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+  isSystem    Boolean @default(false) // Is this a system-defined role?
+
+  // Role permissions
+  permissions RolePermission[]
+
+  // Role assignments
+  userRoles      UserRole[]
+  householdRoles HouseholdRole[]
+
+  policyAssignments RolePolicyAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model RolePermission {
+  id     String @id @default(cuid())
+  role   Role   @relation(fields: [roleId], references: [id])
+  roleId String
+
+  permission Permission
+
+  createdAt DateTime @default(now())
+
+  @@unique([roleId, permission])
+  @@map("role_permissions")
+}

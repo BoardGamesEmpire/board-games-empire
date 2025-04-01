@@ -15,27 +15,27 @@ export class HouseholdsService {
     return this.prisma.household.findMany();
   }
 
-  findOne(uuid: string) {
+  findOne(id: string) {
     return this.prisma.household.findUnique({
       where: {
-        uuid,
+        id,
       },
     });
   }
 
-  update(uuid: string, updateHouseholdDto: UpdateHouseholdDto) {
+  update(id: string, updateHouseholdDto: UpdateHouseholdDto) {
     return this.prisma.household.update({
       where: {
-        uuid,
+        id,
       },
       data: updateHouseholdDto,
     });
   }
 
-  remove(uuid: string) {
+  remove(id: string) {
     return this.prisma.household.delete({
       where: {
-        uuid,
+        id,
       },
     });
   }

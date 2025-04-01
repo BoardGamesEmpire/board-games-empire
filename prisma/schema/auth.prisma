@@ -1,0 +1,91 @@
+model IdentityProvider {
+  id             String    @id @default(cuid())
+  name           String    @unique             // Display name (e.g., "Google")
+  provider       String    @unique             // Provider identifier (e.g., "google")
+
+  // OIDC configuration
+  clientId       String                        // OIDC client ID
+  clientSecret   String                        // OIDC client secret (should be encrypted)
+  discoveryUrl   String?                       // OIDC discovery URL
+  authorizationUrl String?                     // Authorization endpoint URL
+  tokenUrl       String?                       // Token endpoint URL
+  userInfoUrl    String?                       // UserInfo endpoint URL
+  jwksUrl        String?                       // JWKS endpoint URL
+
+  // Provider configuration
+  scopes         String[]  @default(["openid", "email", "profile"]) // Requested scopes
+  enabled        Boolean   @default(true)      // Whether this provider is active
+
+  // External identities using this provider
+  identities     UserExternalIdentity[]
+
+  // sessions
+  authSessions   OidcAuthSession[]
+
+  // Timestamps
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("identity_providers")
+}
+
+model UserExternalIdentity {
+  id             String    @id @default(cuid())
+
+  // User association
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+
+  // Provider association
+  provider       IdentityProvider @relation(fields: [providerId], references: [id])
+  providerId     String
+
+  // Identity details
+  externalId     String            // User ID at the external provider
+  email          String?           // Email from the provider (may differ from user.email)
+  rawProfile     Json?             // Raw profile data from provider
+  accessToken    String?           // Encrypted access token
+  refreshToken   String?           // Encrypted refresh token
+  tokenExpiresAt DateTime?         // When the token expires
+
+  // Timestamps
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([providerId, externalId])  // Each external ID can only be linked once per provider
+  @@map("user_external_identities")
+}
+
+model OidcAuthSession {
+  id             String    @id @default(cuid())
+
+  // Session details
+  state          String    @unique   // OIDC state parameter for validation
+  nonce          String?             // OIDC nonce parameter for validation
+  codeVerifier   String?             // PKCE code verifier
+  redirectUri    String              // Where to redirect after auth
+
+  // Provider details
+  provider       IdentityProvider @relation(fields: [providerId], references: [id])
+  providerId     String
+
+  // Session expiration
+  expiresAt      DateTime           // When this session expires
+
+  // Timestamps
+  createdAt      DateTime  @default(now())
+
+  @@map("oidc_auth_sessions")
+}
+
+enum AuthStrategy {
+  Apple          // Apple OIDC
+  Custom         // Custom OIDC provider
+  Facebook       // Facebook OIDC
+  GitHub         // GitHub OIDC
+  Google         // Google OIDC
+  Local          // Traditional email/password
+  Microsoft      // Microsoft OIDC
+
+  @@map("auth_strategies")
+}

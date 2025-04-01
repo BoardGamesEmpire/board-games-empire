@@ -1,0 +1,235 @@
+model Campaign {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  image       String?
+
+  // Game System Reference
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String
+
+  // Campaign Status
+  status    CampaignStatus @default(Active)
+  startDate DateTime       @default(now())
+  endDate   DateTime?
+
+  // Campaign Context
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
+
+  // Campaign Owner/DM/GM
+  gameMaster   User   @relation("CampaignGameMaster", fields: [gameMasterId], references: [id])
+  gameMasterId String
+
+  // Associated Sessions
+  sessions GamePlaySession[]
+
+  // Campaign Characters
+  characters CampaignCharacter[]
+
+  // Campaign Tracking
+  currentLevel   Int?
+  currentChapter String?
+  campaignNotes  String?
+
+  // Campaign-specific permissions
+  memberPermissions CampaignMemberPermission[]
+
+  // Game System Reference
+  gameSystem   GameSystem? @relation(fields: [gameSystemId], references: [id])
+  gameSystemId String?
+
+  // Whether this is a custom or standard ruleset
+  useCustomRules Boolean @default(false)
+  customRules    String? // Description of house rules or custom system
+
+  // Campaign Elements
+  locations    CampaignLocation[]
+  npcs         CampaignNPC[]
+  ruleVariants RuleVariant[]
+
+  // Campaign progression and tracking
+  sessionOutcomes CampaignSessionOutcome[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("campaigns")
+}
+
+model CampaignCharacter {
+  id         String   @id @default(cuid())
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  // Player Reference
+  player   User   @relation(fields: [playerId], references: [id])
+  playerId String
+
+  // Character Details
+  name     String
+  class    String?
+  race     String?
+  level    Int?
+  isActive Boolean @default(true)
+
+  // Character Progression
+  experience Int?
+  attributes Json? // Flexible JSON for system-specific attributes
+  inventory  Json? // Items, gold, etc.
+  notes      String?
+
+  // Session Participation (which sessions this character participated in)
+  sessions           CharacterSession[]
+  gameParticipations GamePlayParticipant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("campaign_characters")
+}
+
+model CampaignLocation {
+  id         String   @id @default(cuid())
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  name         String
+  description  String?
+  locationType String? // City, dungeon, wilderness, etc.
+  isSecret     Boolean @default(false) // Hidden from players?
+
+  // Location details
+  mapImage String? // URL to map image
+  notes    String? // GM notes about the location
+
+  // Relations to other locations
+  parentLocation   CampaignLocation?  @relation("LocationHierarchy", fields: [parentLocationId], references: [id])
+  parentLocationId String?
+  childLocations   CampaignLocation[] @relation("LocationHierarchy")
+
+  // Sessions that took place here
+  sessions GamePlaySession[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("campaign_locations")
+}
+
+model CampaignNPC {
+  id         String   @id @default(cuid())
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  // Basic NPC info
+  name        String
+  description String?
+  role        String? // Overall role (villain, ally, shopkeeper, etc.)
+  isSecret    Boolean @default(false) // Hidden from players?
+  isRecurring Boolean @default(false) // Is this NPC a recurring character?
+
+  // NPC details
+  stats Json? // System-specific stats
+  notes String? // GM notes about the NPC
+
+  // Track NPC appearances in sessions
+  appearances CampaignNPCAppearance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("campaign_npcs")
+}
+
+model CampaignNPCAppearance {
+  id        String          @id @default(cuid())
+  npc       CampaignNPC     @relation(fields: [npcId], references: [id])
+  npcId     String
+  session   GamePlaySession @relation(fields: [sessionId], references: [id])
+  sessionId String
+
+  // Combined metadata from both previous models
+  role           String? // Role in the session (antagonist, ally, neutral, etc.)
+  wasEncountered Boolean @default(true) // Did players actually encounter this NPC?
+  wasSignificant Boolean @default(false) // Was this a major appearance?
+
+  // Event details
+  significantEvent String? // Any significant event involving this NPC
+  notes            String? // Session-specific notes about this NPC
+
+  @@unique([npcId, sessionId])
+  @@map("campaign_npc_appearances")
+}
+
+model CharacterSession {
+  id                String            @id @default(cuid())
+  character         CampaignCharacter @relation(fields: [characterId], references: [id])
+  characterId       String
+  gamePlaySession   GamePlaySession   @relation(fields: [gamePlaySessionId], references: [id])
+  gamePlaySessionId String
+
+  // Session-specific character details
+  levelDuringSession Int?
+  experienceGained   Int?
+  notesDuringSession String?
+
+  @@unique([characterId, gamePlaySessionId])
+  @@map("character_sessions")
+}
+
+enum CampaignStatus {
+  Planning
+  Active
+  OnHiatus
+  Completed
+  Abandoned
+  Cancelled
+
+  @@map("campaign_statuses")
+}
+
+model CampaignMemberPermission {
+  id         String   @id @default(cuid())
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+
+  permission Permission
+
+  grantedBy   User   @relation("CampaignPermissionGranter", fields: [grantedById], references: [id])
+  grantedById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([campaignId, userId, permission])
+  @@map("campaign_member_permissions")
+}
+
+model CampaignSessionOutcome {
+  id                String          @id @default(cuid())
+  gamePlaySession   GamePlaySession @relation(fields: [gamePlaySessionId], references: [id])
+  gamePlaySessionId String          @unique
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  // Narrative outcomes
+  storySummary String? // Brief summary of what happened
+  keyDecisions Json? // Major decision points in the session
+
+  // World state changes
+  worldChanges Json? // Changes to the campaign world/setting
+  npcChanges   Json? // Changes to NPCs (deaths, introductions, etc)
+
+  // Resources and rewards
+  treasureFound     Json? // Loot, gold, magic items discovered
+  experienceAwarded Int? // Total XP awarded in session
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("campaign_session_outcomes")
+}
