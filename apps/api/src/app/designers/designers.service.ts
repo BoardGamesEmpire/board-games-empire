@@ -1,5 +1,5 @@
+import { PrismaService } from '@bg-empire/api/prisma';
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
 import { CreateDesignerDto } from './dto/create-designer.dto';
 import { UpdateDesignerDto } from './dto/update-designer.dto';
 

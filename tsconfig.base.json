@@ -14,7 +14,11 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@bg-empire/api/auth": ["libs/api/auth/src/index.ts"],
+      "@bg-empire/api/prisma": ["libs/api/prisma/src/index.ts"],
+      "@bg-empire/api/users": ["libs/api/users/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

@@ -11,6 +11,7 @@ model User {
 
   authStrategy   AuthStrategy @default(Local)   // Primary auth method for this user
   isExternalUser Boolean      @default(false)   // Whether user was created via external provider
+  oidcSessions  OidcAuthSession[]
 
   // External identities relationship
   externalIdentities UserExternalIdentity[]

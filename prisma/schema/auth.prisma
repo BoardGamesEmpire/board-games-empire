@@ -65,6 +65,10 @@ model OidcAuthSession {
   codeVerifier   String?             // PKCE code verifier
   redirectUri    String              // Where to redirect after auth
 
+  // User association
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String?
+
   // Provider details
   provider       IdentityProvider @relation(fields: [providerId], references: [id])
   providerId     String

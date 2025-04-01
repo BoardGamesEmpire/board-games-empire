@@ -1,5 +1,5 @@
+import { PrismaModule } from '@bg-empire/api/prisma';
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../prisma/prisma.module';
 import { DesignersController } from './designers.controller';
 import { DesignersService } from './designers.service';
 

@@ -1,5 +1,5 @@
+import { PrismaModule } from '@bg-empire/api/prisma';
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../prisma/prisma.module';
 import { LanguagesController } from './languages.controller';
 import { LanguagesService } from './languages.service';
 
