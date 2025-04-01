@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { LanguagesService } from './languages.service';
 import { CreateLanguageDto } from './dto/create-language.dto';
 import { UpdateLanguageDto } from './dto/update-language.dto';
+import { ParseCUIDPipe } from '../pipes/parse-cuid.pipe';
 
 @Controller('languages')
 export class LanguagesController {
@@ -17,18 +18,18 @@ export class LanguagesController {
     return this.languagesService.findAll();
   }
 
-  @Get(':uuid')
-  findOne(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    return this.languagesService.findOne(uuid);
+  @Get(':id')
+  findOne(@Param('id', new ParseCUIDPipe()) id: string) {
+    return this.languagesService.findOne(id);
   }
 
-  @Patch(':uuid')
-  update(@Param('uuid', new ParseUUIDPipe()) uuid: string, @Body() updateLanguageDto: UpdateLanguageDto) {
-    return this.languagesService.update(uuid, updateLanguageDto);
+  @Patch(':id')
+  update(@Param('id', new ParseCUIDPipe()) id: string, @Body() updateLanguageDto: UpdateLanguageDto) {
+    return this.languagesService.update(id, updateLanguageDto);
   }
 
-  @Delete(':uuid')
-  remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    return this.languagesService.remove(uuid);
+  @Delete(':id')
+  remove(@Param('id', new ParseCUIDPipe()) id: string) {
+    return this.languagesService.remove(id);
   }
 }

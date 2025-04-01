@@ -1,0 +1,102 @@
+// Core model for tracking different implementations of a game
+model GameImplementation {
+  id     String @id @default(cuid())
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String
+
+  // Implementation details
+  platform GamePlatform
+  title    String? // Title if different from base game
+  url      String? // Link to app store, website, etc.
+
+  // Publisher information
+  publisher   Publisher? @relation(fields: [publisherId], references: [id])
+  publisherId String? // Optional - might not have a publisher
+
+  // Release details
+  releaseDate DateTime?
+  version     String? // Current version
+  lastUpdated DateTime? // Last app update
+
+  // Pricing and access
+  pricingModel   PricingModel?
+  basePrice      Float? // Base price in USD
+  hasPurchases   Boolean       @default(false) // In-app purchases
+  isSubscription Boolean       @default(false) // Requires subscription
+
+  // Features
+  supportsSolo   Boolean @default(false) // Can play against AI
+  supportsLocal  Boolean @default(false) // Local multiplayer
+  supportsOnline Boolean @default(false) // Online multiplayer
+  hasAsyncPlay   Boolean @default(false) // Turn-based async
+  hasRealtime    Boolean @default(false) // Realtime play
+  hasTutorial    Boolean @default(false) // Includes tutorial
+
+  // User tracking
+  userRatings ImplementationRating[]
+
+  // External IDs
+  appStoreId       String? // iOS App Store ID
+  googlePlayId     String? // Google Play ID
+  steamAppId       String? // Steam App ID
+  boardGameArenaId String? // BGA ID
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, platform])
+  @@map("game_implementations")
+}
+
+// User ratings for implementations
+model ImplementationRating {
+  id               String             @id @default(cuid())
+  implementation   GameImplementation @relation(fields: [implementationId], references: [id])
+  implementationId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  // Rating details
+  rating          Float // 1-5 star rating
+  review          String? // Optional review text
+  usabilityRating Float? // 1-5 for UI/UX
+  featureRating   Float? // 1-5 for feature completeness
+  aiRating        Float? // 1-5 for AI quality if applicable
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([implementationId, userId])
+  @@map("implementation_ratings")
+}
+
+// Platform enum defining implementation types
+enum GamePlatform {
+  Android // Android app
+  BoardGameArena // On Board Game Arena
+  EpicGames // Epic Games Store
+  iOS // iOS app
+  OtherDigital // Other digital implementation
+  PhysicalOnly // Traditional board game only
+  PlayStation // PlayStation
+  Steam // PC via Steam
+  Switch // Nintendo Switch
+  Tabletopia // On Tabletopia
+  TabletopSimulator // On Tabletop Simulator
+  Vassal // Vassal module
+  WebBased // Browser-based implementation
+  Xbox // Xbox
+
+  @@map("game_platforms")
+}
+
+enum PricingModel {
+  Free // Completely free
+  Freemium // Free with premium features
+  Mixed // Multiple pricing options
+  PaidUpfront // One-time purchase
+  Subscription // Requires subscription
+
+  @@map("pricing_models")
+}

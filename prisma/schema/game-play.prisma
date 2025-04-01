@@ -1,0 +1,165 @@
+model GamePlaySession {
+  id String @id @default(cuid())
+
+  // Optional Event Association
+  event   Event?  @relation(fields: [eventId], references: [id])
+  eventId String?
+
+  // Game Details
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String
+
+  // Campaign reference
+  campaign   Campaign? @relation(fields: [campaignId], references: [id])
+  campaignId String?
+
+  // Track which game version was played
+  gameVersion   GameVersion? @relation(fields: [gameVersionId], references: [id])
+  gameVersionId String?
+
+  // Track which expansions were used
+  expansionsUsed GamePlaySessionExpansion[]
+
+  // Rule variants used in this session
+  rulesUsed RuleVariantUsage[]
+
+  // Session-specific campaign info
+  sessionNumber Int? // For tracking sequence in a campaign
+  chapter       String? // Story chapter or adventure module
+  milestone     String? // Important campaign milestone achieved
+
+  // Character tracking
+  characterSessions CharacterSession[]
+
+  // Location and NPC relationships
+  campaignLocation   CampaignLocation?       @relation(fields: [campaignLocationId], references: [id])
+  campaignLocationId String?
+  npcAppearances     CampaignNPCAppearance[]
+  sessionOutcome     CampaignSessionOutcome?
+
+  // Session Metadata
+  playDate DateTime @default(now())
+  duration Int? // Duration in minutes
+  location String?
+
+  // Play Context
+  context GamePlayContext @default(Casual)
+
+  // Players in the Session
+  players GamePlayParticipant[]
+
+  // Game Specific Outcomes
+  results GamePlayResult[]
+
+  // Optional Household Association
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
+
+  venue          String? // Physical location name
+  isComplete     Boolean @default(false) // Is the game complete?
+  wasInterrupted Boolean @default(false) // Was the game interrupted?
+
+  // Session pictures
+  sessionMedia SessionMedia[]
+
+  // Stats tracking
+  playtime Int? // Actual play time in minutes
+  turns    Int? // Number of game turns/rounds
+
+  // Notes and Additional Information
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("game_play_sessions")
+}
+
+enum GamePlayContext {
+  Campaign
+  Casual
+  Competitive
+  Convention
+  Demo
+  League
+  OneShot
+  OrganizedEvent
+  Tournament
+  Virtual
+
+  @@map("game_play_contexts")
+}
+
+model GamePlayParticipant {
+  id String @id @default(cuid())
+
+  // Session Association
+  gamePlaySession   GamePlaySession @relation(fields: [gamePlaySessionId], references: [id])
+  gamePlaySessionId String
+
+  // User Association (optional - might be a guest)
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
+
+  // Guest Information
+  guestName String?
+
+  campaignCharacter   CampaignCharacter? @relation(fields: [campaignCharacterId], references: [id])
+  campaignCharacterId String?
+
+  // Player-specific Details
+  playerPosition Int? // Seat or turn order
+  team           String? // For team-based games
+
+  // Performance Tracking
+  finalScore Float?
+  placement  Int? // 1st, 2nd, 3rd, etc.
+  winner     Boolean @default(false)
+
+  @@map("game_play_participants")
+}
+
+// Game Play Result Model (for complex scoring or multi-phase games)
+model GamePlayResult {
+  id String @id @default(cuid())
+
+  // Session Association
+  gamePlaySession   GamePlaySession @relation(fields: [gamePlaySessionId], references: [id])
+  gamePlaySessionId String
+
+  // Detailed Result Tracking
+  resultType ResultType @default(Score)
+
+  // Scoring Details
+  scoringPhase String? // e.g., "Round 1", "Final Scoring"
+  scoreDetails Json? // Flexible JSON for complex scoring systems
+
+  // Optional Team or Individual Metrics
+  teamScores        Json?
+  individualMetrics Json?
+
+  @@map("game_play_results")
+}
+
+// Junction table for GamePlaySession to GameExpansion
+model GamePlaySessionExpansion {
+  id          String          @id @default(cuid())
+  session     GamePlaySession @relation(fields: [sessionId], references: [id])
+  sessionId   String
+  expansion   GameExpansion   @relation(fields: [expansionId], references: [id])
+  expansionId String
+
+  @@unique([sessionId, expansionId])
+  @@map("game_play_session_expansions")
+}
+
+enum ResultType {
+  Custom
+  Elimination
+  Placement
+  Points
+  Score
+  Time
+
+  @@map("result_types")
+}

@@ -15,27 +15,27 @@ export class GameTypesService {
     return this.prisma.gameType.findMany();
   }
 
-  findOne(uuid: string) {
+  findOne(id: string) {
     return this.prisma.gameType.findUnique({
       where: {
-        uuid,
+        id,
       },
     });
   }
 
-  update(uuid: string, updateGameTypeDto: UpdateGameTypeDto) {
+  update(id: string, updateGameTypeDto: UpdateGameTypeDto) {
     return this.prisma.gameType.update({
       where: {
-        uuid,
+        id,
       },
       data: updateGameTypeDto,
     });
   }
 
-  remove(uuid: string) {
+  remove(id: string) {
     return this.prisma.gameType.delete({
       where: {
-        uuid,
+        id,
       },
     });
   }

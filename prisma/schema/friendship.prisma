@@ -1,0 +1,27 @@
+model Friendship {
+  id String @id @default(cuid())
+
+  // Users in the friendship
+  requestor   User   @relation("FriendshipRequestor", fields: [requestorId], references: [id])
+  requestorId String
+  recipient   User   @relation("FriendshipRecipient", fields: [recipientId], references: [id])
+  recipientId String
+
+  status FriendshipStatus @default(Pending)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([requestorId, recipientId])
+  @@map("friendships")
+}
+
+enum FriendshipStatus {
+  Accepted
+  Blocked
+  Declined
+  Pending
+  Unfriended
+
+  @@map("friendship_statuses")
+}

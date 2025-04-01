@@ -15,27 +15,27 @@ export class MechanicsService {
     return this.prisma.mechanic.findMany();
   }
 
-  findOne(uuid: string) {
+  findOne(id: string) {
     return this.prisma.mechanic.findUnique({
       where: {
-        uuid,
+        id,
       },
     });
   }
 
-  update(uuid: string, updateMechanicDto: UpdateMechanicDto) {
+  update(id: string, updateMechanicDto: UpdateMechanicDto) {
     return this.prisma.mechanic.update({
       where: {
-        uuid,
+        id,
       },
       data: updateMechanicDto,
     });
   }
 
-  remove(uuid: string) {
+  remove(id: string) {
     return this.prisma.mechanic.delete({
       where: {
-        uuid,
+        id,
       },
     });
   }

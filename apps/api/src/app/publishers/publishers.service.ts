@@ -15,27 +15,27 @@ export class PublishersService {
     return this.prisma.publisher.findMany();
   }
 
-  findOne(uuid: string) {
+  findOne(id: string) {
     return this.prisma.publisher.findUnique({
       where: {
-        uuid,
+        id,
       },
     });
   }
 
-  update(uuid: string, updatePublisherDto: UpdatePublisherDto) {
+  update(id: string, updatePublisherDto: UpdatePublisherDto) {
     return this.prisma.publisher.update({
       where: {
-        uuid,
+        id,
       },
       data: updatePublisherDto,
     });
   }
 
-  remove(uuid: string) {
+  remove(id: string) {
     return this.prisma.publisher.delete({
       where: {
-        uuid,
+        id,
       },
     });
   }

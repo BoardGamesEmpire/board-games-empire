@@ -1,0 +1,57 @@
+model Publisher {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  legalName   String? // Official company name if different
+  website     String?
+  country     String? // Country of headquarters
+  foundedYear Int?
+
+  // Publisher relationships
+  parentCompany   Publisher?  @relation("PublisherSubsidiary", fields: [parentCompanyId], references: [id])
+  parentCompanyId String?
+  subsidiaries    Publisher[] @relation("PublisherSubsidiary")
+
+  // Publishing details
+  isActive Boolean @default(true)
+  logoUrl  String?
+
+  // Game relationships
+  games GamePublisher[]
+
+  // Family relationship - a publisher can be the primary publisher for multiple families
+  publishedFamilies Family[] // Families primarily published by this publisher
+
+  // Game implementations published by this publisher
+  publishedImplementations GameImplementation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("publishers")
+}
+
+model GamePublisher {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  game        Game      @relation(fields: [gameId], references: [id])
+  gameId      String
+  publisher   Publisher @relation(fields: [publisherId], references: [id])
+  publisherId String
+
+  role        PublisherRole @default(Primary)
+  releaseYear Int? // Year this publisher released the game
+  region      String? // Geographic region for this release
+
+  @@unique([gameId, publisherId])
+  @@map("game_publishers")
+}
+
+enum PublisherRole {
+  Primary // Main publisher
+  Localization // Translated/localized version
+  Distribution // Distribution only
+  Reprint // Reprint or new edition
+
+  @@map("publisher_roles")
+}

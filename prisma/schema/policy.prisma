@@ -1,0 +1,103 @@
+model PermissionPolicy {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  // Policy details
+  resourceType ResourceType
+  effect       PolicyEffect @default(Allow)
+  conditions   Json? // Optional JSON conditions for the policy
+
+  // Specific permissions (as a list of strings representing Permission enum values)
+  permissions String[] // Array of Permission enum values
+
+  // Who created this policy
+  createdBy   User   @relation("PolicyCreator", fields: [createdById], references: [id])
+  createdById String
+
+  // Relationships to models that use this policy
+  appliedToRoles     RolePolicyAssignment[]
+  appliedToUsers     UserPolicyAssignment[]
+  appliedToGroups    GroupPolicyAssignment[]
+  appliedToResources ResourcePolicyAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("permission_policies")
+}
+
+model RolePolicyAssignment {
+  id       String           @id @default(cuid())
+  role     Role             @relation(fields: [roleId], references: [id])
+  roleId   String
+  policy   PermissionPolicy @relation(fields: [policyId], references: [id])
+  policyId String
+
+  priority Int     @default(100) // Higher number = higher priority
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roleId, policyId])
+  @@map("role_policy_assignments")
+}
+
+model UserPolicyAssignment {
+  id       String           @id @default(cuid())
+  user     User             @relation(fields: [userId], references: [id])
+  userId   String
+  policy   PermissionPolicy @relation(fields: [policyId], references: [id])
+  policyId String
+
+  priority  Int       @default(100)
+  isActive  Boolean   @default(true)
+  expiresAt DateTime? // Optional expiration for temporary policies
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, policyId])
+  @@map("user_policy_assignments")
+}
+
+model GroupPolicyAssignment {
+  id       String           @id @default(cuid())
+  group    PermissionGroup  @relation(fields: [groupId], references: [id])
+  groupId  String
+  policy   PermissionPolicy @relation(fields: [policyId], references: [id])
+  policyId String
+
+  priority Int     @default(100)
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([groupId, policyId])
+  @@map("group_policy_assignments")
+}
+
+model ResourcePolicyAssignment {
+  id       String           @id @default(cuid())
+  policy   PermissionPolicy @relation(fields: [policyId], references: [id])
+  policyId String
+
+  // Resource information
+  resourceType ResourceType
+  resourceId   String // ID of the resource this policy applies to
+
+  // Who this policy applies to (optional - if null, applies to everyone)
+  appliesTo   User?   @relation(fields: [appliesToId], references: [id])
+  appliesToId String?
+
+  priority Int     @default(100)
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([policyId, resourceType, resourceId, appliesToId])
+  @@map("resource_policy_assignments")
+}

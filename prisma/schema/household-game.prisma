@@ -1,0 +1,206 @@
+model HouseholdGame {
+  id          String    @id @default(cuid())
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
+  game        Game      @relation(fields: [gameId], references: [id])
+  gameId      String
+
+  // Ownership information
+  ownershipType HouseholdGameOwnership @default(MemberOwned)
+
+  // Physical aspects
+  storageLocation String? // Where in the house this game is stored
+  condition       GameCondition?
+  missingPieces   String? // Notes about any missing components
+
+  // Household-specific metadata
+  houseRating     Float? // Collective household rating
+  playCount       Int       @default(0) // Times played in this household
+  lastPlayed      DateTime?
+  isFavorite      Boolean   @default(false)
+  bestPlayerCount Int? // Optimal player count for this group specifically
+
+  // Availability
+  isAvailable       Boolean @default(true) // Currently available to play
+  unavailableReason String? // Why it's unavailable (loaned out, damaged, etc.)
+
+  // Enhanced Social Features
+
+  // Game Champion - the household evangelist for this game
+  championedBy   User?   @relation("GameChampion", fields: [championedById], references: [id])
+  championedById String? // User who loves/promotes this game in the household
+
+  // Game Keeper - who's responsible for this game
+  maintainedBy   User?   @relation("GameKeeper", fields: [maintainedById], references: [id])
+  maintainedById String? // User responsible for keeping the game in good shape
+
+  // Game Teacher - who's best at teaching this game
+  teacherId String?
+  teacher   User?   @relation("GameTeacher", fields: [teacherId], references: [id])
+
+  // Social history
+  mostFrequentWinner String? // Who typically wins this game
+  winHistory         Json? // Historical win record (structured data)
+
+  // Group dynamics
+  playerDynamics PlayerDynamic[] // How this game affects the group
+
+  // Game nights
+  idealFor GameNightType[] // What kind of game nights this works well for
+
+  // Member engagement
+  memberInterest HouseholdGameInterest[]
+
+  // Group learning
+  learningDifficulty LearningDifficulty? // How hard for the group to learn
+  teachingNotes      String? // Notes about teaching to this specific group
+
+  // House rules
+  houseRuleCount Int @default(0) // Number of house rules applied
+
+  // Household-specific notes
+  notes           String?
+  gameExperiences HouseholdGameExperience[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([householdId, gameId])
+  @@map("household_games")
+}
+
+enum HouseholdGameOwnership {
+  Borrowed // Borrowed from outside the household
+  Digital // Digital version (no physical copy)
+  HouseholdOwned // Owned collectively by the household
+  MemberOwned // Owned by a household member
+
+  @@map("household_game_ownerships")
+}
+
+model HouseholdGameCustomization {
+  id          String    @id @default(cuid())
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
+  game        Game      @relation(fields: [gameId], references: [id])
+  gameId      String
+
+  // Customizable fields (same as user customizations)
+  title       String?
+  subtitle    String?
+  description String?
+  image       String?
+  publishYear Int?
+  minPlayers  Int?
+  maxPlayers  Int?
+  playingTime Int?
+  minPlayTime Int?
+  maxPlayTime Int?
+  minAge      Int?
+  complexity  Float?
+
+  // Who made this customization
+  customizedBy   User   @relation(fields: [customizedById], references: [id])
+  customizedById String
+
+  // Notes about customization
+  customizationNotes String?
+
+  // Permissions
+  permissions HouseholdGameCustomizationPermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([householdId, gameId])
+  @@map("household_game_customizations")
+}
+
+model HouseholdGameExperience {
+  id              String        @id @default(cuid())
+  householdGame   HouseholdGame @relation(fields: [householdGameId], references: [id])
+  householdGameId String
+
+  date        DateTime @default(now())
+  title       String // E.g., "Epic comeback night" or "First time playing"
+  description String
+
+  // Who was involved
+  participants HouseholdGameExperienceParticipant[]
+
+  // Media related to this experience
+  photos String[] // URLs to photos
+
+  // Experience metadata
+  tags String[] // User-defined tags like "funny", "tense", "memorable"
+
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("household_game_experiences")
+}
+
+model HouseholdGameExperienceParticipant {
+  id String @id @default(cuid())
+
+  // Experience relationship
+  experience   HouseholdGameExperience @relation(fields: [experienceId], references: [id])
+  experienceId String
+
+  // Member relationship
+  member   HouseholdMember @relation(fields: [memberId], references: [id])
+  memberId String
+
+  // Additional metadata about participation
+  role          String? // E.g., "Game Master", "Player", "Observer"
+  hadFun        Boolean? // Did they enjoy the experience?
+  notes         String? // Specific notes about this member's experience
+  isHighlighted Boolean  @default(false) // Was this member particularly featured in the story?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([experienceId, memberId])
+  @@map("household_game_experience_participants")
+}
+
+model HouseholdGameInterest {
+  id                String          @id @default(cuid())
+  householdGame     HouseholdGame   @relation(fields: [householdGameId], references: [id])
+  householdGameId   String
+  member            HouseholdMember @relation(fields: [householdMemberId], references: [id])
+  householdMemberId String
+
+  interestLevel InterestLevel @default(Neutral)
+  playDesire    PlayDesire    @default(Anytime)
+  comments      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([householdGameId, householdMemberId])
+  @@map("household_game_interests")
+}
+
+model HouseholdGameCustomizationPermission {
+  id              String                     @id @default(cuid())
+  customization   HouseholdGameCustomization @relation(fields: [customizationId], references: [id])
+  customizationId String
+  user            User                       @relation(fields: [userId], references: [id])
+  userId          String
+
+  permission Permission
+
+  grantedBy   User   @relation("HouseholdCustomizationPermissionGranter", fields: [grantedById], references: [id])
+  grantedById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([customizationId, userId, permission])
+  @@map("household_game_customization_permissions")
+}

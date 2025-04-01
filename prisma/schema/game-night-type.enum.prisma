@@ -1,0 +1,14 @@
+enum GameNightType {
+  AdultsOnly
+  CasualGathering
+  CompetitivePlay
+  FamilyNight
+  KidFriendly
+  LearningSession
+  LongGameDay
+  MixedAges
+  PartyGames
+  StrategyNight
+
+  @@map("game_night_types")
+}

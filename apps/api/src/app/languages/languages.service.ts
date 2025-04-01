@@ -15,27 +15,27 @@ export class LanguagesService {
     return this.prisma.language.findMany();
   }
 
-  findOne(uuid: string) {
+  findOne(id: string) {
     return this.prisma.language.findUnique({
       where: {
-        uuid,
+        id,
       },
     });
   }
 
-  update(uuid: string, updateLanguageDto: UpdateLanguageDto) {
+  update(id: string, updateLanguageDto: UpdateLanguageDto) {
     return this.prisma.language.update({
       where: {
-        uuid,
+        id,
       },
       data: updateLanguageDto,
     });
   }
 
-  remove(uuid: string) {
+  remove(id: string) {
     return this.prisma.language.delete({
       where: {
-        uuid,
+        id,
       },
     });
   }

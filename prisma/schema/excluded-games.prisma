@@ -1,0 +1,18 @@
+model ExcludedGame {
+  id String @id @default(cuid())
+
+  // HouseholdMember relationship
+  householdMember   HouseholdMember @relation(fields: [householdMemberId], references: [id])
+  householdMemberId String
+
+  // GameCollection relationship
+  gameCollection   GameCollection @relation(fields: [gameCollectionId], references: [id])
+  gameCollectionId String
+
+  // Optional: Add additional metadata for the relationship
+  excludedReason String?
+  excludedAt     DateTime @default(now())
+
+  @@unique([householdMemberId, gameCollectionId]) // Ensure one relationship per game/member pair
+  @@map("excluded_games") // Database table name
+}

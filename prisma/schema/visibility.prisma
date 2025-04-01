@@ -1,0 +1,10 @@
+enum Visibility {
+  Friends
+  FriendsOfFriends
+  FriendsOfHouseholds
+  Household
+  Private
+  Public
+
+  @@map("visibility_types")
+}

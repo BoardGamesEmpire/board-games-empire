@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { DesignersService } from './designers.service';
 import type { CreateDesignerDto } from './dto/create-designer.dto';
 import type { UpdateDesignerDto } from './dto/update-designer.dto';
+import { ParseCUIDPipe } from '../pipes/parse-cuid.pipe';
 
 @Controller('designers')
 export class DesignersController {
@@ -17,18 +18,18 @@ export class DesignersController {
     return this.designersService.findAll();
   }
 
-  @Get(':uuid')
-  findOne(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    return this.designersService.findOne(uuid);
+  @Get(':id')
+  findOne(@Param('id', new ParseCUIDPipe()) id: string) {
+    return this.designersService.findOne(id);
   }
 
-  @Patch(':uuid')
-  update(@Param('uuid', new ParseUUIDPipe()) uuid: string, @Body() updateDesignerDto: UpdateDesignerDto) {
-    return this.designersService.update(uuid, updateDesignerDto);
+  @Patch(':id')
+  update(@Param('id', new ParseCUIDPipe()) id: string, @Body() updateDesignerDto: UpdateDesignerDto) {
+    return this.designersService.update(id, updateDesignerDto);
   }
 
-  @Delete(':uuid')
-  remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    return this.designersService.remove(uuid);
+  @Delete(':id')
+  remove(@Param('id', new ParseCUIDPipe()) id: string) {
+    return this.designersService.remove(id);
   }
 }

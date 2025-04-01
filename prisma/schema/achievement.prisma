@@ -1,0 +1,36 @@
+model Achievement {
+  id          String  @id @default(cuid())
+  name        String
+  description String
+  icon        String?
+
+  // Achievement criteria
+  type      AchievementType
+  threshold Int             @default(1) // Number required to earn
+
+  // User achievements
+  earnedBy UserAchievement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("achievements")
+}
+
+enum AchievementType {
+  Collector // Games from specific category/mechanic
+  Completionist // Fill out all profile fields
+  EventsAttended
+  EventsHosted
+  FriendsAdded
+  GameMaster // GM a game X times
+  GameMastery // Play same game X times
+  GamesOwned
+  GamesPlayed
+  GamesRated
+  PlayStreak
+  Socialite // Interact with other users
+  WinStreak
+
+  @@map("achievement_types")
+}

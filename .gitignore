@@ -40,6 +40,9 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# Notes to self
+planning/*
+
 .nx/cache
 .nx/workspace-data
 .angular

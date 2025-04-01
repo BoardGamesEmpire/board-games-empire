@@ -15,11 +15,9 @@ export class UsersService {
     return this.prisma.user.findMany();
   }
 
-  findOne(uuid: string) {
+  findOne(id: string) {
     return this.prisma.user.findUnique({
-      where: {
-        uuid,
-      },
+      where: { id },
     });
   }
 
@@ -31,20 +29,16 @@ export class UsersService {
     });
   }
 
-  update(uuid: string, updateUserDto: UpdateUserDto) {
+  update(id: string, updateUserDto: UpdateUserDto) {
     return this.prisma.user.update({
-      where: {
-        uuid,
-      },
+      where: { id },
       data: updateUserDto,
     });
   }
 
-  remove(uuid: string) {
+  remove(id: string) {
     return this.prisma.user.delete({
-      where: {
-        uuid,
-      },
+      where: { id }
     });
   }
 }

@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { GameTypesService } from './game-types.service';
 import { CreateGameTypeDto } from './dto/create-game-type.dto';
 import { UpdateGameTypeDto } from './dto/update-game-type.dto';
+import { ParseCUIDPipe } from '../pipes/parse-cuid.pipe';
 
 @Controller('game-types')
 export class GameTypesController {
@@ -17,18 +18,18 @@ export class GameTypesController {
     return this.gameTypesService.findAll();
   }
 
-  @Get(':uuid')
-  findOne(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    return this.gameTypesService.findOne(uuid);
+  @Get(':id')
+  findOne(@Param('id', new ParseCUIDPipe()) id: string) {
+    return this.gameTypesService.findOne(id);
   }
 
-  @Patch(':uuid')
-  update(@Param('uuid', new ParseUUIDPipe()) uuid: string, @Body() updateGameTypeDto: UpdateGameTypeDto) {
-    return this.gameTypesService.update(uuid, updateGameTypeDto);
+  @Patch(':id')
+  update(@Param('id', new ParseCUIDPipe()) id: string, @Body() updateGameTypeDto: UpdateGameTypeDto) {
+    return this.gameTypesService.update(id, updateGameTypeDto);
   }
 
-  @Delete(':uuid')
-  remove(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    return this.gameTypesService.remove(uuid);
+  @Delete(':id')
+  remove(@Param('id', new ParseCUIDPipe()) id: string) {
+    return this.gameTypesService.remove(id);
   }
 }

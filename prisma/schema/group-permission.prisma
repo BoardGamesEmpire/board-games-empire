@@ -1,0 +1,44 @@
+model GroupPermission {
+  id      String          @id @default(cuid())
+  group   PermissionGroup @relation(fields: [groupId], references: [id])
+  groupId String
+
+  permission   Permission
+  resourceType ResourceType
+  resourceId   String?
+
+  @@unique([groupId, permission, resourceType, resourceId])
+  @@map("group_permissions")
+}
+
+// Group permissions for easier management
+model PermissionGroup {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  // Permissions in this group
+  permissions       GroupPermission[]
+  policyAssignments GroupPolicyAssignment[]
+
+  // Users assigned to this group
+  members GroupMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("permission_groups")
+}
+
+model GroupMember {
+  id      String          @id @default(cuid())
+  group   PermissionGroup @relation(fields: [groupId], references: [id])
+  groupId String
+  user    User            @relation(fields: [userId], references: [id])
+  userId  String
+
+  createdAt DateTime @default(now())
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}

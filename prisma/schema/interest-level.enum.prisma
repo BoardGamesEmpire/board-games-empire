@@ -1,0 +1,9 @@
+enum InterestLevel {
+  Favorite
+  VeryInterested
+  Interested
+  Neutral
+  Disinterested
+  StronglyDislike
+  WillNotPlay
+}

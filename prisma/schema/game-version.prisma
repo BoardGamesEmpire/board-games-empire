@@ -1,0 +1,39 @@
+model GameVersion {
+  id     String @id @default(cuid())
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String
+
+  versionName String // e.g., "Base Game", "2nd Edition", "Revised"
+  releaseYear Int?
+  isBaseline  Boolean @default(false) // Is this the main version?
+
+  // Rule variant relationship
+  ruleVariants GameVersionRuleVariant[]
+
+  // Track when this version was used
+  playSessionsUsed  GamePlaySession[]
+  ruleVariantUsages RuleVariantUsageVersion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("game_versions")
+}
+
+// Junction table for RuleVariants to GameVersions
+model GameVersionRuleVariant {
+  id            String      @id @default(cuid())
+  ruleVariant   RuleVariant @relation(fields: [ruleVariantId], references: [id])
+  ruleVariantId String
+  gameVersion   GameVersion @relation(fields: [gameVersionId], references: [id])
+  gameVersionId String
+
+  // Optional override settings specific to this version
+  overrideCategory RuleCategory?
+  overrideRuleText String? // Version-specific rule text modification
+
+  createdAt DateTime @default(now())
+
+  @@unique([ruleVariantId, gameVersionId])
+  @@map("game_version_rule_variants")
+}

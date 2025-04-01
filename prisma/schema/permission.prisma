@@ -1,0 +1,122 @@
+enum Permission {
+  // User Management
+  ManageUsers
+  ViewUsers
+  ViewOwnProfile
+  UpdateOwnProfile
+
+  // Household Management
+  CreateHousehold
+  UpdateHousehold
+  DeleteHousehold
+  ManageHouseholdMembers
+  ViewHousehold
+  JoinHousehold
+  InviteToHousehold
+
+  // Game Collection
+  AddGameToCollection
+  RemoveGameFromCollection
+  UpdateGameInCollection
+  ViewGameCollection
+
+  // Event Management
+  CreateEvent
+  UpdateEvent
+  DeleteEvent
+  ViewEvent
+  ManageEventParticipants
+  InviteToEvent
+  JoinEvent
+
+  // Game Play Sessions
+  CreateGameSession
+  UpdateGameSession
+  DeleteGameSession
+  ViewGameSession
+  JoinGameSession
+  RecordGamePlay
+
+  // Campaign Management
+  CreateCampaign
+  UpdateCampaign
+  DeleteCampaign
+  ManageCampaignMembers
+
+  // Rule Variants
+  CreateRuleVariant
+  UpdateRuleVariant
+  DeleteRuleVariant
+
+  // Game Data
+  CreateGame
+  UpdateGame
+  DeleteGame
+
+  // Content Moderation
+  ModerateContent
+
+  // System Settings
+  ManageSystemSettings
+
+  // Content Access
+  ViewPublicContent
+
+  // Game Customization Permissions
+  CreatePrivateGame
+  ViewPrivateGames // View games marked as private
+  ApproveGameCreationRequests
+
+  // User Customization Permissions
+  CreateUserGameCustomization
+  UpdateUserGameCustomization
+  DeleteUserGameCustomization
+  ViewUserGameCustomization // View other users' customizations
+
+  // Household Customization Permissions
+  CreateHouseholdGameCustomization
+  UpdateHouseholdGameCustomization
+  DeleteHouseholdGameCustomization
+  ViewHouseholdGameCustomization
+
+  // Game Data Management
+  ImportGameFromExternalAPI
+  ManageGameMetadata // Manage global game metadata
+
+  // Game Sharing Permissions
+  ShareGameWithUser
+  ShareGameWithHousehold
+  EditSharedGame
+  ViewSharedGame
+
+  // Game Visibility Permissions
+  ChangeGameVisibility
+
+  @@map("permissions")
+}
+
+enum PolicyEffect {
+  Allow
+  Deny
+
+  @@map("policy_effects")
+}
+
+enum ResourceType {
+  Campaign
+  Event
+  Game
+  GameCollection
+  GameCreationRequest
+  GameCustomization
+  GamePlaySession
+  GameSharing
+  Household
+  HouseholdGameCustomization
+  RuleVariant
+  System
+  User
+  UserGameCustomization
+
+  @@map("resource_types")
+}

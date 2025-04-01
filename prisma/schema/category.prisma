@@ -1,0 +1,38 @@
+model Category {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String? // Description of this category/type
+
+  // Category relationships - hierarchical structure
+  parentCategory   Category?  @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id])
+  parentCategoryId String?
+  subcategories    Category[] @relation("CategoryHierarchy")
+
+  // Games that have this as a category (many-to-many)
+  games GameCategory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model GameCategory {
+  id         String   @id @default(cuid())
+  game       Game     @relation(fields: [gameId], references: [id])
+  gameId     String
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  // Flag to identify the primary category for the game
+  isPrimary Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Each game-category pair must be unique
+  @@unique([gameId, categoryId])
+  // Special index to ensure each game has only one primary category
+  @@unique([gameId, isPrimary], name: "uniquePrimaryCategoryPerGame", map: "unique_primary_category_per_game")
+  @@map("game_categories")
+}

@@ -1,0 +1,95 @@
+model Family {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String? // What connects these games
+
+  // Family metadata
+  publisher   Publisher? @relation(fields: [publisherId], references: [id])
+  publisherId String? // Primary publisher for this family (optional)
+
+  // Branding
+  logoUrl String? // Logo image for the family
+  website String? // Official website for the family/series
+
+  // Family type
+  familyType FamilyType @default(Series)
+
+  // Family relationships - hierarchical structure
+  parentFamily   Family?  @relation("FamilyHierarchy", fields: [parentFamilyId], references: [id])
+  parentFamilyId String?
+  subfamilies    Family[] @relation("FamilyHierarchy")
+
+  collectionFamily FamilyCollection[] // User collections for this family
+
+  // Games in this family through junction table
+  games GameFamily[]
+
+  // Creation and update timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("families")
+}
+
+model GameFamily {
+  id       String @id @default(cuid())
+  game     Game   @relation(fields: [gameId], references: [id])
+  gameId   String
+  family   Family @relation(fields: [familyId], references: [id])
+  familyId String
+
+  // Enhanced fields for tracking game position in series
+  position Int? // Chronological or release order position
+
+  // Timeline and narrative information
+  releaseOrder Int? // Order of release (may differ from narrative position)
+  storyOrder   Int? // Order in the story/narrative timeline
+
+  // Relationship to other games in the family
+  isStandalone    Boolean  @default(true) // Can be played without other games in family
+  requiredGameIds String[] // IDs of games required to play this one
+
+  // Additional metadata
+  note String? // Context for this game in the family
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, familyId])
+  @@map("game_families")
+}
+
+enum FamilyType {
+  Series // Games in the same series (e.g., Pandemic series)
+  Universe // Games in the same fictional universe
+  Reimplementation // Games that reimagine earlier games
+  System // Games using the same system (e.g., GIPF series)
+  Brand // Games under the same brand
+  Collection // Thematic collection without strong connection
+  Publisher // Games from the same publisher (when that's the primary grouping)
+
+  @@map("family_types")
+}
+
+// Add a new model for tracking collections within game families
+model FamilyCollection {
+  id       String @id @default(cuid())
+  family   Family @relation(fields: [familyId], references: [id])
+  familyId String
+  user     User   @relation(fields: [userId], references: [id])
+  userId   String
+
+  // Collection tracking
+  isComplete   Boolean   @default(false)
+  missingCount Int? // Number of games missing from collection
+  collectedOn  DateTime? // When the collection was completed
+
+  // Notification preferences
+  notifyOnNewReleases Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([familyId, userId])
+  @@map("family_collections")
+}

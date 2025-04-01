@@ -1,0 +1,156 @@
+model Event {
+  id          String    @id @default(cuid())
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  createdById String
+
+  title       String
+  image       String?
+  description String?
+  location    String?
+  url         String?
+
+  // Event Visibility and Invite Policies
+  visibility        Visibility @default(Friends)
+  allowGuestInvites Boolean    @default(true)
+
+  // Event-specific permissions
+  memberPermissions EventMemberPermission[]
+
+  // Attendance Controls
+  maxTotalParticipants Int?
+  strictCapacity       Boolean @default(false)
+
+  // Timing
+  startDate DateTime
+  endDate   DateTime?
+
+  // Event Management
+  gamePlaySessions GamePlaySession[]
+  attendees        EventAttendee[]
+  votedGames       EventGameVote[]
+  invites          EventInvite[]
+  suggestedGames   EventGame[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("events")
+}
+
+model EventAttendee {
+  id      String @id @default(cuid())
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+
+  // Type of attendee
+  attendeeType AttendeeType @default(Participant)
+
+  // For registered users
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
+
+  // For guests without accounts
+  guestName  String?
+  guestEmail String?
+
+  // Participation details
+  status EventParticipationStatus @default(Invited)
+  role   EventParticipantRole     @default(Participant)
+
+  // Invitation tracking
+  invitedBy   EventAttendee? @relation("InvitedAttendees", fields: [invitedById], references: [id])
+  invitedById String?
+
+  // People this attendee invited
+  invitees EventAttendee[] @relation("InvitedAttendees")
+
+  // Game contributions
+  gamesContributing EventGame[]
+
+  // Additional metadata
+  notes    String?
+  rsvpDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("event_attendees")
+}
+
+model EventGameVote {
+  id          String    @id @default(cuid())
+  eventGame   EventGame @relation(fields: [eventGameId], references: [id])
+  eventGameId String
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  Event       Event?    @relation(fields: [eventId], references: [id])
+  eventId     String?
+
+  @@unique([eventGameId, userId])
+  @@map("event_game_votes")
+}
+
+model EventGame {
+  id      String @id @default(cuid())
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+  game    Game   @relation(fields: [gameId], references: [id])
+  gameId  String
+
+  suggestedBy   EventAttendee @relation(fields: [suggestedById], references: [id])
+  suggestedById String
+
+  votes EventGameVote[]
+
+  @@map("event_games")
+}
+
+model EventMemberPermission {
+  id      String @id @default(cuid())
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+  user    User   @relation(fields: [userId], references: [id])
+  userId  String
+
+  permission Permission
+
+  grantedBy   User   @relation("EventPermissionGranter", fields: [grantedById], references: [id])
+  grantedById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, userId, permission])
+  @@map("event_member_permissions")
+}
+
+enum EventParticipantRole {
+  CoHost
+  Guest
+  Host
+  Moderator
+  Organizer
+  Participant
+  Spectator
+
+  @@map("event_participant_roles")
+}
+
+enum EventParticipationStatus {
+  Attending
+  Invited
+  Maybe
+  NotAttending
+
+  @@map("event_participation_statuses")
+}
+
+enum AttendeeType {
+  Participant // Formal participant with a user account
+  Guest // Guest of a participant (may or may not have user account)
+  Organizer // Event organizer
+
+  @@map("attendee_types")
+}

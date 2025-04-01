@@ -15,25 +15,25 @@ export class CategoriesService {
     return this.prisma.category.findMany();
   }
 
-  findOne(uuid: string) {
+  findOne(id: string) {
     return this.prisma.category.findUnique({
-      where: { uuid },
+      where: { id },
     });
   }
 
-  update(uuid: string, updateCategoryDto: UpdateCategoryDto) {
+  update(id: string, updateCategoryDto: UpdateCategoryDto) {
     return this.prisma.category.update({
       where: {
-        uuid,
+        id,
       },
       data: updateCategoryDto,
     });
   }
 
-  remove(uuid: string) {
+  remove(id: string) {
     return this.prisma.category.delete({
       where: {
-        uuid,
+        id,
       },
     });
   }

@@ -15,27 +15,27 @@ export class GamesService {
     return this.prisma.game.findMany();
   }
 
-  findOne(uuid: string) {
+  findOne(id: string) {
     return this.prisma.game.findUnique({
       where: {
-        uuid,
+        id,
       },
     });
   }
 
-  update(uuid: string, updateGameDto: UpdateGameDto) {
+  update(id: string, updateGameDto: UpdateGameDto) {
     return this.prisma.game.update({
       where: {
-        uuid,
+        id,
       },
       data: updateGameDto,
     });
   }
 
-  remove(uuid: string) {
+  remove(id: string) {
     return this.prisma.game.delete({
       where: {
-        uuid,
+        id,
       },
     });
   }
