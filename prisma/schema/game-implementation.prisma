@@ -14,9 +14,9 @@ model GameImplementation {
   publisherId String? // Optional - might not have a publisher
 
   // Release details
-  releaseDate DateTime?
+  releaseDate DateTime? @db.Timestamptz(3)
   version     String? // Current version
-  lastUpdated DateTime? // Last app update
+  lastUpdated DateTime? @db.Timestamptz(3) // Last app update
 
   // Pricing and access
   pricingModel   PricingModel?
@@ -41,8 +41,8 @@ model GameImplementation {
   steamAppId       String? // Steam App ID
   boardGameArenaId String? // BGA ID
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([gameId, platform])
   @@map("game_implementations")
@@ -64,8 +64,8 @@ model ImplementationRating {
   featureRating   Float? // 1-5 for feature completeness
   aiRating        Float? // 1-5 for AI quality if applicable
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([implementationId, userId])
   @@map("implementation_ratings")

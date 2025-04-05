@@ -24,7 +24,7 @@ model SessionMedia {
   uploadedBy   User   @relation(fields: [uploadedById], references: [id])
   uploadedById String
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@map("session_media")
 }

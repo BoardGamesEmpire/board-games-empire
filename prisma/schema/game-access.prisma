@@ -12,7 +12,7 @@ model GameHouseholdAccess {
   // Tracking
   sharedBy   User     @relation("HouseholdGameSharer", fields: [sharedById], references: [id])
   sharedById String
-  sharedAt   DateTime @default(now())
+  sharedAt   DateTime @default(now()) @db.Timestamptz(3)
 
   @@unique([gameId, householdId])
   @@map("game_household_access")
@@ -32,7 +32,7 @@ model GameUserAccess {
   // Tracking
   sharedBy   User     @relation("GameSharer", fields: [sharedById], references: [id])
   sharedById String
-  sharedAt   DateTime @default(now())
+  sharedAt   DateTime @default(now()) @db.Timestamptz(3)
 
   @@unique([gameId, userId])
   @@map("game_user_access")

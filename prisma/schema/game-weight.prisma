@@ -25,8 +25,8 @@ model GameWeight {
   weightVotes GameWeightVote[]
 
   // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("game_weights")
 }
@@ -52,8 +52,8 @@ model GameWeightVote {
   comments String?
 
   // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([gameWeightId, userId])
   @@map("game_weight_votes")

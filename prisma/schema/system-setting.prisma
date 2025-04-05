@@ -2,6 +2,7 @@ model SystemSetting {
   id                    String  @id @default(cuid())
   allowPasswordResets   Boolean @default(true)
   allowUserRegistration Boolean @default(true)
+  allowUsernameChange   Boolean @default(true)
 
   @@map("system_settings")
 }

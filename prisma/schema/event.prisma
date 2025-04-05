@@ -24,7 +24,7 @@ model Event {
 
   // Timing
   startDate DateTime
-  endDate   DateTime?
+  endDate   DateTime? @db.Timestamptz(3)
 
   // Event Management
   gamePlaySessions GamePlaySession[]
@@ -33,8 +33,8 @@ model Event {
   invites          EventInvite[]
   suggestedGames   EventGame[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("events")
 }
@@ -71,10 +71,10 @@ model EventAttendee {
 
   // Additional metadata
   notes    String?
-  rsvpDate DateTime?
+  rsvpDate DateTime? @db.Timestamptz(3)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("event_attendees")
 }
@@ -119,8 +119,8 @@ model EventMemberPermission {
   grantedBy   User   @relation("EventPermissionGranter", fields: [grantedById], references: [id])
   grantedById String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([eventId, userId, permission])
   @@map("event_member_permissions")

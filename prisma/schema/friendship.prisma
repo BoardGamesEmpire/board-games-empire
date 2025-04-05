@@ -9,8 +9,8 @@ model Friendship {
 
   status FriendshipStatus @default(Pending)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([requestorId, recipientId])
   @@map("friendships")

@@ -23,8 +23,8 @@ model IdentityProvider {
   authSessions   OidcAuthSession[]
 
   // Timestamps
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
 
   @@map("identity_providers")
 }
@@ -33,8 +33,8 @@ model UserExternalIdentity {
   id             String    @id @default(cuid())
 
   // User association
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String
+  authentication   UserAuthentication @relation(fields: [authenticationId], references: [id])
+  authenticationId String
 
   // Provider association
   provider       IdentityProvider @relation(fields: [providerId], references: [id])
@@ -46,11 +46,11 @@ model UserExternalIdentity {
   rawProfile     Json?             // Raw profile data from provider
   accessToken    String?           // Encrypted access token
   refreshToken   String?           // Encrypted refresh token
-  tokenExpiresAt DateTime?         // When the token expires
+  tokenExpiresAt DateTime? @db.Timestamptz(3)         // When the token expires
 
   // Timestamps
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
 
   @@unique([providerId, externalId])  // Each external ID can only be linked once per provider
   @@map("user_external_identities")
@@ -65,6 +65,10 @@ model OidcAuthSession {
   codeVerifier   String?             // PKCE code verifier
   redirectUri    String              // Where to redirect after auth
 
+  // User association - optional to allow flow initiation
+  authentication   UserAuthentication? @relation(fields: [authenticationId], references: [id])
+  authenticationId String?
+
   // Provider details
   provider       IdentityProvider @relation(fields: [providerId], references: [id])
   providerId     String
@@ -73,9 +77,76 @@ model OidcAuthSession {
   expiresAt      DateTime           // When this session expires
 
   // Timestamps
-  createdAt      DateTime  @default(now())
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
 
   @@map("oidc_auth_sessions")
+}
+
+model UserSession {
+  id                String             @id @default(cuid())
+  authentication    UserAuthentication @relation(fields: [authenticationId], references: [id], onDelete: Cascade)
+  authenticationId  String
+
+  // Session metadata
+  token             String             @unique // Will store JWT reference
+  deviceInfo        Json?              // Browser, OS, etc.
+  ipAddress         String?
+  userAgent         String?
+  lastActive        DateTime           @default(now())
+  expiresAt         DateTime
+  isValid           Boolean            @default(true)
+
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([token])
+  @@index([authenticationId, isValid])
+  @@map("user_sessions")
+}
+
+model UserAuthentication {
+  id            String       @id @default(cuid())
+
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String       @unique
+
+  // Credentials
+  email         String       @unique
+  password      String?
+  authStrategy  AuthStrategy @default(Local)
+
+  // Email verification
+  emailVerified Boolean      @default(false)
+
+  lastPasswordChange DateTime? @db.Timestamptz(3)
+
+  // Security features
+  accountLocked Boolean      @default(false)
+  accountLockedUntil DateTime? @db.Timestamptz(3)
+  failedLoginAttempts Int    @default(0)
+  lastFailedLogin DateTime? @db.Timestamptz(3)
+  lastLogin      DateTime? @db.Timestamptz(3)
+
+  // 2FA
+  twoFactorEnabled Boolean   @default(false)
+  twoFactorSecret String?
+  recoveryCodesHash String?
+
+  // External identity management
+  isExternalUser Boolean     @default(false)
+  externalIdentities UserExternalIdentity[]
+  oidcSessions    OidcAuthSession[]
+
+  // Devices and sessions
+  loginHistory    UserLoginHistory[]
+  sessions        UserSession[]
+  knownDevices    UserDevice[]
+  tokens          Token[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@map("user_authentications")
 }
 
 enum AuthStrategy {

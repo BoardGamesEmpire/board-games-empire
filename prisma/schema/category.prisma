@@ -11,8 +11,8 @@ model Category {
   // Games that have this as a category (many-to-many)
   games GameCategory[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("categories")
 }
@@ -27,8 +27,8 @@ model GameCategory {
   // Flag to identify the primary category for the game
   isPrimary Boolean @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   // Each game-category pair must be unique
   @@unique([gameId, categoryId])

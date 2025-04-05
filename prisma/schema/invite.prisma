@@ -27,11 +27,11 @@ model EventInvite {
   status InviteStatus @default(Pending)
 
   // Optional Expiration
-  expiresAt DateTime?
+  expiresAt DateTime? @db.Timestamptz(3)
 
   // Tracking
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("event_invites")
 }

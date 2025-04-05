@@ -19,8 +19,8 @@ model GameExpansion {
   playSessionsUsed  GamePlaySessionExpansion[]
   ruleVariantUsages RuleVariantUsageExpansion[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("game_expansions")
 }
@@ -36,8 +36,8 @@ model ExpansionCompatibility {
   isRecommended Boolean @default(false) // Is this a recommended pairing?
   notes         String? // Notes about this compatibility
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([gameId, expansionId])
   @@map("expansion_compatibilities")
@@ -55,7 +55,7 @@ model GameExpansionRuleVariant {
   overrideCategory RuleCategory?
   overrideRuleText String? // Expansion-specific rule text modification
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@unique([ruleVariantId, gameExpansionId])
   @@map("game_expansion_rule_variants")

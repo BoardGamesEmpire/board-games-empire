@@ -26,8 +26,8 @@ model Household {
   // Games shared with this household
   accessToGames GameHouseholdAccess[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("households")
 }
@@ -41,8 +41,8 @@ model HouseholdRole {
   role        Role      @relation(fields: [roleId], references: [id])
   roleId      String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([householdId, userId, roleId])
   @@map("household_roles")
@@ -66,8 +66,8 @@ model HouseholdMember {
   // Game experiences
   gameExperienceParticipations HouseholdGameExperienceParticipant[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([householdId, userId])
   @@map("household_members")

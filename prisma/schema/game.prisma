@@ -71,8 +71,8 @@ model Game {
   implementations        GameImplementation[]
   designerCollaborations DesignerCollaboration[] // Games where designers collaborated
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("games")
 }
@@ -94,11 +94,11 @@ model GameCollection {
   playAgain   Boolean?
   favorite    Boolean?
   comment     String?
-  lastPlayed  DateTime?
-  lastUpdated DateTime?
+  lastPlayed  DateTime? @db.Timestamptz(3)
+  lastUpdated DateTime? @db.Timestamptz(3)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([userId, gameId])
   @@map("game_collections")
@@ -119,8 +119,8 @@ model GameMedia {
   uploadedBy   User   @relation(fields: [uploadedById], references: [id])
   uploadedById String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("game_media")
 }
@@ -137,9 +137,9 @@ model GameLoan {
   loanTo       String?
   loanToEmail  String?
 
-  loanDate           DateTime  @default(now())
-  expectedReturnDate DateTime?
-  actualReturnDate   DateTime?
+  loanDate           DateTime  @default(now()) @db.Timestamptz(3)
+  expectedReturnDate DateTime? @db.Timestamptz(3)
+  actualReturnDate   DateTime? @db.Timestamptz(3)
   notes              String?
 
   @@map("loaned_games")

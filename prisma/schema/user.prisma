@@ -1,31 +1,16 @@
 model User {
   id           String  @id @default(cuid())
+
+  // Profile information
+  firstName    String?
+  lastName     String?
   avatar       String?
   profileImage String?
   username     String  @unique
-  email        String  @unique
   bio          String?
-  firstName    String?
-  lastName     String?
-  password     String?
 
-  authStrategy   AuthStrategy @default(Local)   // Primary auth method for this user
-  isExternalUser Boolean      @default(false)   // Whether user was created via external provider
-
-  // External identities relationship
-  externalIdentities UserExternalIdentity[]
-
-  emailVerified                 Boolean   @default(false)
-  emailVerificationToken        String?
-  emailVerificationTokenExpires DateTime?
-  passwordResetToken            String?
-  passwordResetTokenExpires     DateTime?
-  accountLocked                 Boolean   @default(false)
-  accountLockedUntil            DateTime?
-  failedLoginAttempts           Int       @default(0)
-  lastFailedLogin               DateTime?
-  lastLogin                     DateTime?
-  lastPasswordChange            DateTime?
+  // Authentication link
+  authentication UserAuthentication?
 
   mechanicRelationships MechanicRelationship[]
   gameWeightVotes       GameWeightVote[]
@@ -33,17 +18,6 @@ model User {
   familyCollections     FamilyCollection[]
 
   gameMedia GameMedia[]
-
-  // Security Enhancements
-  twoFactorEnabled  Boolean @default(false)
-  twoFactorSecret   String?
-  recoveryCodesHash String? // Hashed recovery codes
-
-  // Login tracking
-  loginHistory UserLoginHistory[]
-
-  // Device management
-  knownDevices UserDevice[]
 
   // Permission relationships
   roles             UserRole[]
@@ -60,7 +34,6 @@ model User {
   campaignPermissions CampaignMemberPermission[]
   eventPermissions    EventMemberPermission[]
 
-  tokens       Token[]
   tagsAdded    GameTag[]
   achievements UserAchievement[]
 
@@ -129,8 +102,8 @@ model User {
   resourcePolicyTargets ResourcePolicyAssignment[]
   createdPolicies       PermissionPolicy[]         @relation("PolicyCreator")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("users")
 }
@@ -167,8 +140,8 @@ model UserPreferences {
   languageId              String?
   defaultReviewVisibility Visibility @default(Private)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("user_preferences")
 }
@@ -181,7 +154,7 @@ model UserRole {
   role   Role   @relation(fields: [roleId], references: [id])
   roleId String
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@unique([userId, roleId])
   @@map("user_roles")
@@ -202,10 +175,10 @@ model UserPermission {
   // Permission metadata
   grantedBy   User      @relation("PermissionGranter", fields: [grantedById], references: [id])
   grantedById String
-  expiresAt   DateTime?
+  expiresAt   DateTime? @db.Timestamptz(3)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([userId, permission, resourceType, resourceId])
   @@map("user_permissions")
@@ -213,37 +186,44 @@ model UserPermission {
 
 model UserLoginHistory {
   id            String   @id @default(cuid())
-  user          User     @relation(fields: [userId], references: [id])
-  userId        String
+
+  authentication   UserAuthentication @relation(fields: [authenticationId], references: [id])
+  authenticationId String
+
   ipAddress     String?
   userAgent     String?
   success       Boolean  @default(true)
+
   failureReason String?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
 
   @@map("user_login_histories")
 }
 
 model UserDevice {
   id               String   @id @default(cuid())
-  user             User     @relation(fields: [userId], references: [id])
-  userId           String
+
+  authentication   UserAuthentication @relation(fields: [authenticationId], references: [id])
+  authenticationId String
+
   deviceName       String?
   deviceIdentifier String // Unique device identifier
-  lastUsed         DateTime @default(now())
+  lastUsed         DateTime @default(now()) @db.Timestamptz(3)
   isTrusted        Boolean  @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
-  @@unique([userId, deviceIdentifier])
+  @@unique([authenticationId, deviceIdentifier])
   @@map("user_devices")
 }
 
 model UserGameCustomization {
   id     String @id @default(cuid())
+
   user   User   @relation(fields: [userId], references: [id])
   userId String
+
   game   Game   @relation(fields: [gameId], references: [id])
   gameId String
 
@@ -253,11 +233,14 @@ model UserGameCustomization {
   description String?
   image       String?
   publishYear Int?
+
   minPlayers  Int?
   maxPlayers  Int?
+
   playingTime Int?
   minPlayTime Int?
   maxPlayTime Int?
+
   minAge      Int?
   complexity  Float?
 
@@ -267,8 +250,8 @@ model UserGameCustomization {
   // Permissions
   permissions UserGameCustomizationPermission[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([userId, gameId])
   @@map("user_game_customizations")
@@ -277,8 +260,10 @@ model UserGameCustomization {
 // Specific permissions for customization objects
 model UserGameCustomizationPermission {
   id              String                @id @default(cuid())
+
   customization   UserGameCustomization @relation(fields: [customizationId], references: [id])
   customizationId String
+
   user            User                  @relation(fields: [userId], references: [id])
   userId          String
 
@@ -287,8 +272,8 @@ model UserGameCustomizationPermission {
   grantedBy   User   @relation("CustomizationPermissionGranter", fields: [grantedById], references: [id])
   grantedById String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([customizationId, userId, permission])
   @@map("user_game_customization_permissions")
@@ -296,14 +281,18 @@ model UserGameCustomizationPermission {
 
 model UserAchievement {
   id            String      @id @default(cuid())
+
   user          User        @relation(fields: [userId], references: [id])
   userId        String
+
   achievement   Achievement @relation(fields: [achievementId], references: [id])
   achievementId String
 
-  earnedAt DateTime @default(now())
+  earnedAt DateTime @default(now()) @db.Timestamptz(3)
   progress Int      @default(0) // Progress toward multi-step achievements
 
   @@unique([userId, achievementId])
   @@map("user_achievements")
 }
+
+

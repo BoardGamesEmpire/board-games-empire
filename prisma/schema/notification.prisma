@@ -8,7 +8,7 @@ model Notification {
   relatedEntityId String?
   isRead          Boolean          @default(false)
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@map("notifications")
 }

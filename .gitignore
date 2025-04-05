@@ -42,6 +42,7 @@ Thumbs.db
 
 # Notes to self
 planning/*
+tmp/
 
 .nx/cache
 .nx/workspace-data

@@ -15,9 +15,12 @@
     "devkit",
     "getify",
     "linebreak",
+    "luxon",
     "nrwl",
+    "paralleldrive",
     "Parens",
     "prerender",
+    "Timestamptz",
     "willsoto"
   ]
 }

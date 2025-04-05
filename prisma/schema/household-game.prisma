@@ -16,7 +16,7 @@ model HouseholdGame {
   // Household-specific metadata
   houseRating     Float? // Collective household rating
   playCount       Int       @default(0) // Times played in this household
-  lastPlayed      DateTime?
+  lastPlayed      DateTime? @db.Timestamptz(3)
   isFavorite      Boolean   @default(false)
   bestPlayerCount Int? // Optimal player count for this group specifically
 
@@ -63,8 +63,8 @@ model HouseholdGame {
   gameExperiences HouseholdGameExperience[]
 
   // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([householdId, gameId])
   @@map("household_games")
@@ -110,8 +110,8 @@ model HouseholdGameCustomization {
   // Permissions
   permissions HouseholdGameCustomizationPermission[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([householdId, gameId])
   @@map("household_game_customizations")
@@ -122,7 +122,7 @@ model HouseholdGameExperience {
   householdGame   HouseholdGame @relation(fields: [householdGameId], references: [id])
   householdGameId String
 
-  date        DateTime @default(now())
+  date        DateTime @default(now()) @db.Timestamptz(3)
   title       String // E.g., "Epic comeback night" or "First time playing"
   description String
 
@@ -138,8 +138,8 @@ model HouseholdGameExperience {
   createdBy   User   @relation(fields: [createdById], references: [id])
   createdById String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("household_game_experiences")
 }
@@ -161,8 +161,8 @@ model HouseholdGameExperienceParticipant {
   notes         String? // Specific notes about this member's experience
   isHighlighted Boolean  @default(false) // Was this member particularly featured in the story?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([experienceId, memberId])
   @@map("household_game_experience_participants")
@@ -179,8 +179,8 @@ model HouseholdGameInterest {
   playDesire    PlayDesire    @default(Anytime)
   comments      String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([householdGameId, householdMemberId])
   @@map("household_game_interests")
@@ -198,8 +198,8 @@ model HouseholdGameCustomizationPermission {
   grantedBy   User   @relation("HouseholdCustomizationPermissionGranter", fields: [grantedById], references: [id])
   grantedById String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([customizationId, userId, permission])
   @@map("household_game_customization_permissions")
