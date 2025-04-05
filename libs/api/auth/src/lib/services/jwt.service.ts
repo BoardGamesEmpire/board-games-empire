@@ -9,10 +9,10 @@ export class JwtService {
   /**
    * Validate a JWT token
    */
-  async validateToken(token: string): Promise<any> {
+  async validateToken(token: string) {
     try {
       return await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get('JWT_SECRET'),
+        secret: this.configService.get<string>('JWT_SECRET'),
       });
     } catch (error) {
       return null;
@@ -22,7 +22,7 @@ export class JwtService {
   /**
    * Generate a JWT token
    */
-  sign(payload: any): string {
+  sign(payload: Record<string, any>): string {
     return this.jwtService.sign(payload);
   }
 }

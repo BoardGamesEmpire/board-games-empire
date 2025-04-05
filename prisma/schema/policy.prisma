@@ -21,8 +21,8 @@ model PermissionPolicy {
   appliedToGroups    GroupPolicyAssignment[]
   appliedToResources ResourcePolicyAssignment[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("permission_policies")
 }
@@ -37,8 +37,8 @@ model RolePolicyAssignment {
   priority Int     @default(100) // Higher number = higher priority
   isActive Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([roleId, policyId])
   @@map("role_policy_assignments")
@@ -53,10 +53,10 @@ model UserPolicyAssignment {
 
   priority  Int       @default(100)
   isActive  Boolean   @default(true)
-  expiresAt DateTime? // Optional expiration for temporary policies
+  expiresAt DateTime? @db.Timestamptz(3) // Optional expiration for temporary policies
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([userId, policyId])
   @@map("user_policy_assignments")
@@ -72,8 +72,8 @@ model GroupPolicyAssignment {
   priority Int     @default(100)
   isActive Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([groupId, policyId])
   @@map("group_policy_assignments")
@@ -95,8 +95,8 @@ model ResourcePolicyAssignment {
   priority Int     @default(100)
   isActive Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([policyId, resourceType, resourceId, appliesToId])
   @@map("resource_policy_assignments")

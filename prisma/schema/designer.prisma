@@ -20,16 +20,16 @@ model Designer {
 
   games GameDesigner[] // Games designed by this person
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("designers")
 }
 
 model GameDesigner {
   id         String   @id @default(cuid())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
   game       Game     @relation(fields: [gameId], references: [id])
   gameId     String
   designer   Designer @relation(fields: [designerId], references: [id])
@@ -61,8 +61,8 @@ model DesignerCollaboration {
   strength Float? // Calculated strength of collaboration (1-10)
   notes    String? // Notes about this collaboration
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([primaryDesignerId, collaboratorId])
   @@index([primaryDesignerId])

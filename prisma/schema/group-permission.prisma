@@ -24,8 +24,8 @@ model PermissionGroup {
   // Users assigned to this group
   members GroupMember[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("permission_groups")
 }
@@ -37,7 +37,7 @@ model GroupMember {
   user    User            @relation(fields: [userId], references: [id])
   userId  String
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@unique([groupId, userId])
   @@map("group_members")

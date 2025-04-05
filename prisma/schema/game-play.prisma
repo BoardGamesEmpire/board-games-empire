@@ -38,7 +38,7 @@ model GamePlaySession {
   sessionOutcome     CampaignSessionOutcome?
 
   // Session Metadata
-  playDate DateTime @default(now())
+  playDate DateTime @default(now()) @db.Timestamptz(3)
   duration Int? // Duration in minutes
   location String?
 
@@ -69,8 +69,8 @@ model GamePlaySession {
   // Notes and Additional Information
   notes String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("game_play_sessions")
 }

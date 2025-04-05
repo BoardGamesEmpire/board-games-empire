@@ -11,8 +11,8 @@ const outputFile = path.join(outputDir, 'schema.prisma');
 async function main() {
   await fs.promises.mkdir(outputDir, { recursive: true });
 
-  if (fs.existsSync(prismaDir)) {
-    await fs.promises.rm(prismaDir, { recursive: true, force: true });
+  if (fs.existsSync(outputFile)) {
+    await fs.promises.rm(outputFile);
   }
 
   const dirContents = await fs.promises.readdir(schemaDir);
@@ -35,7 +35,7 @@ async function main() {
       continue;
     }
 
-    writeStream.write('\n\n');
+    writeStream.write('\n');
 
     const filePath = path.join(schemaDir, file);
     const fileStream = fs.createReadStream(filePath);
@@ -46,13 +46,10 @@ async function main() {
   }
 
   writeStream.end();
-
-  console.log('Schema files merged successfully!');
 }
 
 main()
   .then(() => {
-    console.log('All files processed successfully.');
     console.log('Merged schema written to:', outputFile);
   })
   .catch((error) => {

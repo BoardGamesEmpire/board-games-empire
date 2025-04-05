@@ -9,16 +9,12 @@ export class LocalAuthGuard extends AuthGuard('local') {
 
   // Override the canActivate method to customize the behavior
   override canActivate(context: ExecutionContext) {
-    console.log('LocalAuth canActivate called');
-    // Call the default canActivate method
-    const canActivate = super.canActivate(context);
-    // If you want to add additional logic, you can do it here
-    return canActivate;
+    return super.canActivate(context);
   }
 
   // Override the handleRequest method to customize the behavior
   override handleRequest(err: Error, user: any, info: any) {
-    console.log('LocalAuth handleRequest called');
+    console.log('LocalAuth handleRequest called', err, user, info);
     // If there is an error or no user, throw an exception
     if (err || !user) {
       throw err || new UnauthorizedException('Invalid credentials');

@@ -22,11 +22,16 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       return true;
     }
 
-    return super.canActivate(context);
+    // @ts-ignore
+    return super.canActivate(context)?.then((result) => {
+      console.log('superResult:', result);
+
+      return result;
+    });
   }
 
   override handleRequest(err: Error, user: any, info: any) {
-    console.log('JwtAuth handleRequest called');
+    console.log('JwtAuth handleRequest called', user, err, info);
 
     // You can throw an exception based on either "info" or "err" arguments
     if (err || !user) {

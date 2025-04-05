@@ -11,7 +11,7 @@ model ExcludedGame {
 
   // Optional: Add additional metadata for the relationship
   excludedReason String?
-  excludedAt     DateTime @default(now())
+  excludedAt     DateTime @default(now()) @db.Timestamptz(3)
 
   @@unique([householdMemberId, gameCollectionId]) // Ensure one relationship per game/member pair
   @@map("excluded_games") // Database table name

@@ -2,6 +2,7 @@ import { PrismaService } from '@bg-empire/api/prisma';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 @Injectable()
@@ -15,20 +16,27 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    console.log('JWT payload:', payload);
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       select: {
         id: true,
         username: true,
-        email: true,
         firstName: true,
         lastName: true,
         avatar: true,
-        authStrategy: true,
-        isExternalUser: true,
-        emailVerified: true,
         createdAt: true,
         updatedAt: true,
+
+        authentication: {
+          select: {
+            id: true,
+            email: true,
+            authStrategy: true,
+            isExternalUser: true,
+            emailVerified: true,
+          },
+        },
       },
     });
 
@@ -37,5 +45,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     return user;
+  }
+
+  override authenticate(req: Request, options?: any): void {
+    console.log('JWT authenticate called', req.headers, options);
+    return super.authenticate(req, options);
   }
 }

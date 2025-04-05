@@ -14,8 +14,8 @@ model GameVersion {
   playSessionsUsed  GamePlaySession[]
   ruleVariantUsages RuleVariantUsageVersion[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("game_versions")
 }
@@ -32,7 +32,7 @@ model GameVersionRuleVariant {
   overrideCategory RuleCategory?
   overrideRuleText String? // Version-specific rule text modification
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@unique([ruleVariantId, gameVersionId])
   @@map("game_version_rule_variants")

@@ -2,7 +2,7 @@ import { PrismaService } from '@bg-empire/api/prisma';
 import { Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { AuthStrategy } from '@prisma/client';
+import { AuthStrategy, TokenType } from '@prisma/client';
 import { createHash, randomBytes } from 'crypto';
 import { DateTime } from 'luxon';
 import * as querystring from 'querystring';
@@ -138,8 +138,9 @@ export class OidcService {
       // Store refresh token
       await this.prisma.token.create({
         data: {
-          userId: user.id,
+          authenticationId: user.authentication.id,
           token: refreshToken,
+          type: TokenType.Refresh,
           expiresAt: refreshTokenExpiry,
         },
       });
@@ -150,10 +151,18 @@ export class OidcService {
         user: {
           id: user.id,
           username: user.username,
-          email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
           avatar: user.avatar,
+          bio: user.bio,
+
+          authentication: {
+            email: user.authentication.email,
+            emailVerified: user.authentication.emailVerified,
+            authStrategy: user.authentication.authStrategy,
+            isExternalUser: user.authentication.isExternalUser,
+            lastLogin: user.authentication.lastLogin,
+          },
         },
         isNewUser: isNew,
       };
@@ -218,7 +227,20 @@ export class OidcService {
           externalId,
         },
       },
-      include: { user: true },
+      include: {
+        authentication: {
+          select: {
+            id: true,
+            email: true,
+            authStrategy: true,
+            isExternalUser: true,
+            emailVerified: true,
+          },
+          include: {
+            user: true,
+          },
+        },
+      },
     });
 
     // If we found an existing identity, update tokens and return the associated user
@@ -237,44 +259,61 @@ export class OidcService {
       }
 
       // Update last login timestamp
-      await this.prisma.user.update({
-        where: { id: existingIdentity.user.id },
+      await this.prisma.userAuthentication.update({
+        where: { id: existingIdentity.authentication.id },
         data: { lastLogin: new Date() },
       });
 
-      return { user: existingIdentity.user, isNew: false };
+      return { user: existingIdentity.authentication.user, isNew: false };
     }
 
     // Look for existing user with the same email
-    let user = null;
+    let auth = null;
     let isNew = false;
 
     if (userInfo.email) {
-      user = await this.prisma.user.findUnique({
+      auth = await this.prisma.userAuthentication.findUnique({
         where: { email: userInfo.email },
+        include: {
+          user: true,
+        },
       });
 
       // If user exists but email is not verified, require explicit linking
-      if (user && !user.emailVerified) {
+      if (auth && !auth.emailVerified) {
         throw new UnauthorizedException('Account exists but email is not verified. Please verify your email first.');
       }
     }
 
-    // If no existing user, create a new one
-    if (!user) {
+    // If no existing user(auth), create a new one
+    if (!auth) {
       const username = await this.generateUniqueUsername(userInfo);
 
-      user = await this.prisma.user.create({
+      auth = await this.prisma.userAuthentication.create({
         data: {
-          username,
           email: userInfo.email,
-          firstName: userInfo.given_name,
-          lastName: userInfo.family_name,
-          avatar: userInfo.picture,
           authStrategy: this.mapProviderToStrategy(providerId),
           isExternalUser: true,
-          emailVerified: true, // We trust the OIDC provider has verified the email
+          // We trust the OIDC provider has verified the email - for now...
+          emailVerified: true,
           lastLogin: new Date(),
+
+          user: {
+            create: {
+              username,
+              firstName: userInfo.given_name,
+              lastName: userInfo.family_name,
+              avatar: userInfo.picture,
+
+              // should supply all defaults
+              preferences: {
+                create: {},
+              },
+            },
+          },
+        },
+        include: {
+          user: true,
         },
       });
 
@@ -286,7 +325,8 @@ export class OidcService {
       data: {
         providerId,
         externalId,
-        userId: user.id,
+
+        authenticationId: auth.id,
         email: userInfo.email,
         rawProfile: userInfo,
         accessToken,
@@ -295,7 +335,7 @@ export class OidcService {
       },
     });
 
-    return { user, isNew };
+    return { user: auth.user, isNew };
   }
 
   /**
@@ -351,7 +391,7 @@ export class OidcService {
    */
   async getLinkedAccounts(userId: string) {
     const externalIdentities = await this.prisma.userExternalIdentity.findMany({
-      where: { userId },
+      where: { authentication: { userId } },
       include: { provider: true },
     });
 
@@ -381,22 +421,22 @@ export class OidcService {
     }
 
     // Check if this is the only authentication method
-    const user = await this.prisma.user.findUnique({
+    const auth = await this.prisma.userAuthentication.findUnique({
       where: { id: userId },
       include: {
         externalIdentities: true,
       },
     });
 
-    if (!user) {
+    if (!auth) {
       throw new NotFoundException('User not found');
     }
 
-    // If user has no password and this is their only external identity, prevent unlinking
+    // If auth has no password and this is their only external identity, prevent unlinking
     if (
-      !user.password &&
-      user.externalIdentities.length === 1 &&
-      user.externalIdentities[0].providerId === provider.id
+      !auth.password &&
+      auth.externalIdentities.length === 1 &&
+      auth.externalIdentities[0].providerId === provider.id
     ) {
       throw new UnauthorizedException('Cannot unlink the only authentication method. Please set a password first.');
     }
@@ -404,7 +444,7 @@ export class OidcService {
     // Delete the external identity
     await this.prisma.userExternalIdentity.deleteMany({
       where: {
-        userId,
+        authenticationId: auth.id,
         providerId: provider.id,
       },
     });
@@ -428,17 +468,22 @@ export class OidcService {
       throw new NotFoundException(`Identity provider '${providerName}' not found or not enabled`);
     }
 
-    // Check if user already has this provider linked
-    const existingIdentity = await this.prisma.userExternalIdentity.findFirst({
-      where: {
-        userId,
-        providerId: provider.id,
+    const auth = await this.prisma.userAuthentication.findUnique({
+      where: { id: userId },
+      include: {
+        externalIdentities: true,
       },
     });
 
-    if (existingIdentity) {
-      throw new UnauthorizedException('Account already linked to this provider');
+    if (!auth) {
+      throw new NotFoundException('User not found');
     }
+
+    auth.externalIdentities.forEach((identity) => {
+      if (identity.providerId === provider.id) {
+        throw new UnauthorizedException('Account already linked to this provider');
+      }
+    });
 
     // Generate state, nonce and PKCE params
     const state = randomBytes(32).toString('hex');
@@ -460,7 +505,7 @@ export class OidcService {
         redirectUri: `/profile/linked-accounts?action=link&provider=${providerName}`,
         providerId: provider.id,
         expiresAt: DateTime.now().plus({ minutes: 10 }).toJSDate(),
-        userId, // Store the user ID to link after authentication
+        authenticationId: auth.id,
       },
     });
 

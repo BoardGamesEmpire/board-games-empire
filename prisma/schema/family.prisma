@@ -25,8 +25,8 @@ model Family {
   games GameFamily[]
 
   // Creation and update timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("families")
 }
@@ -52,8 +52,8 @@ model GameFamily {
   // Additional metadata
   note String? // Context for this game in the family
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([gameId, familyId])
   @@map("game_families")
@@ -82,13 +82,13 @@ model FamilyCollection {
   // Collection tracking
   isComplete   Boolean   @default(false)
   missingCount Int? // Number of games missing from collection
-  collectedOn  DateTime? // When the collection was completed
+  collectedOn  DateTime? @db.Timestamptz(3) // When the collection was completed
 
   // Notification preferences
   notifyOnNewReleases Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([familyId, userId])
   @@map("family_collections")

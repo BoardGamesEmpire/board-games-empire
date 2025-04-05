@@ -1,3 +1,4 @@
+import { AuthService } from '@bg-empire/api/auth';
 import { PrismaService } from '@bg-empire/api/prisma';
 import {
   BadRequestException,
@@ -6,7 +7,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import { AuthStrategy, Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import type { ChangePasswordDto } from '../dto/change-password.dto';
 import type { CreateUserDto } from '../dto/create-user.dto';
@@ -15,7 +16,7 @@ import type { UpdateUserDto } from '../dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private auth: AuthService) {}
 
   /**
    * Create a new user
@@ -31,7 +32,7 @@ export class UsersService {
     }
 
     // Check if email already exists
-    const existingEmail = await this.prisma.user.findUnique({
+    const existingEmail = await this.prisma.userAuthentication.findUnique({
       where: { email: createUserDto.email },
     });
 
@@ -49,14 +50,19 @@ export class UsersService {
     const user = await this.prisma.user.create({
       data: {
         username: createUserDto.username,
-        email: createUserDto.email,
-        password: hashedPassword,
         firstName: createUserDto.firstName,
         lastName: createUserDto.lastName,
         avatar: createUserDto.avatar,
-        authStrategy: createUserDto.authStrategy || 'Local',
-        isExternalUser: createUserDto.isExternalUser || false,
-        emailVerified: createUserDto.emailVerified || false,
+
+        authentication: {
+          create: {
+            emailVerified: createUserDto.emailVerified || false,
+            isExternalUser: createUserDto.isExternalUser || false,
+            authStrategy: createUserDto.authStrategy || AuthStrategy.Local,
+            email: createUserDto.email,
+            password: hashedPassword,
+          },
+        },
       },
     });
 
@@ -67,9 +73,7 @@ export class UsersService {
       },
     });
 
-    // Return user without password
-    const { password: _, ...result } = user;
-    return result;
+    return user;
   }
 
   /**
@@ -80,12 +84,12 @@ export class UsersService {
     const skip = (page - 1) * limit;
 
     // Build filter conditions
-    let where = {};
+    let where: Prisma.UserWhereInput = {};
     if (search) {
       where = {
         OR: [
           { username: { contains: search, mode: 'insensitive' } },
-          { email: { contains: search, mode: 'insensitive' } },
+          { authentication: { email: { contains: search, mode: 'insensitive' } } },
           { firstName: { contains: search, mode: 'insensitive' } },
           { lastName: { contains: search, mode: 'insensitive' } },
         ],
@@ -105,16 +109,20 @@ export class UsersService {
         select: {
           id: true,
           username: true,
-          email: true,
           firstName: true,
           lastName: true,
           avatar: true,
-          authStrategy: true,
-          isExternalUser: true,
-          emailVerified: true,
           createdAt: true,
           updatedAt: true,
-          lastLogin: true,
+          authentication: {
+            select: {
+              email: true,
+              emailVerified: true,
+              isExternalUser: true,
+              authStrategy: true,
+              lastLogin: true,
+            },
+          },
         },
         skip,
         take: limit,
@@ -144,32 +152,38 @@ export class UsersService {
       select: {
         id: true,
         username: true,
-        email: true,
         firstName: true,
         lastName: true,
         avatar: true,
         bio: true,
-        authStrategy: true,
-        isExternalUser: true,
-        emailVerified: true,
         createdAt: true,
         updatedAt: true,
-        lastLogin: true,
+
         // Include related data
         preferences: true,
-        externalIdentities: {
+        authentication: {
           select: {
-            id: true,
-            provider: {
+            email: true,
+            emailVerified: true,
+            isExternalUser: true,
+            authStrategy: true,
+            lastLogin: true,
+
+            externalIdentities: {
               select: {
                 id: true,
-                name: true,
-                provider: true,
+                provider: {
+                  select: {
+                    id: true,
+                    name: true,
+                    provider: true,
+                  },
+                },
+                externalId: true,
+                email: true,
+                createdAt: true,
               },
             },
-            externalId: true,
-            email: true,
-            createdAt: true,
           },
         },
       },
@@ -188,7 +202,16 @@ export class UsersService {
   async findByUsernameOrEmail(usernameOrEmail: string) {
     return this.prisma.user.findFirst({
       where: {
-        OR: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+        OR: [
+          {
+            username: usernameOrEmail,
+          },
+          {
+            authentication: {
+              email: usernameOrEmail,
+            },
+          },
+        ],
       },
     });
   }
@@ -200,14 +223,30 @@ export class UsersService {
     // Check if user exists
     const user = await this.prisma.user.findUnique({
       where: { id },
+      include: {
+        authentication: {
+          select: {
+            email: true,
+            emailVerified: true,
+            isExternalUser: true,
+            authStrategy: true,
+          },
+        },
+      },
     });
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
+    const systemSettings = await this.prisma.systemSetting.findFirst({});
+
     // Check if username is being changed and is unique
     if (updateUserDto.username && updateUserDto.username !== user.username) {
+      if (systemSettings.allowUsernameChange === false) {
+        throw new BadRequestException('Username change is not allowed');
+      }
+
       const existingUsername = await this.prisma.user.findUnique({
         where: { username: updateUserDto.username },
       });
@@ -218,36 +257,49 @@ export class UsersService {
     }
 
     // Check if email is being changed and is unique
-    if (updateUserDto.email && updateUserDto.email !== user.email) {
-      const existingEmail = await this.prisma.user.findUnique({
+    if (updateUserDto.email && updateUserDto.email !== user.authentication.email) {
+      const existingEmail = await this.prisma.userAuthentication.findUnique({
         where: { email: updateUserDto.email },
       });
 
       if (existingEmail) {
         throw new ConflictException('Email already in use');
       }
+    }
 
-      // If email is changed, mark as unverified
-      updateUserDto.emailVerified = false;
+    const { email, ...updates } = updateUserDto;
+    if (email) {
+      (<Prisma.UserUpdateInput>updates).authentication = {
+        update: {
+          email,
+          emailVerified: false,
+        },
+      };
     }
 
     // Update the user
     const updatedUser = await this.prisma.user.update({
       where: { id },
-      data: updateUserDto,
+      data: updates,
       select: {
         id: true,
         username: true,
-        email: true,
         firstName: true,
         lastName: true,
         avatar: true,
         bio: true,
-        authStrategy: true,
-        isExternalUser: true,
-        emailVerified: true,
         createdAt: true,
         updatedAt: true,
+
+        authentication: {
+          select: {
+            email: true,
+            emailVerified: true,
+            isExternalUser: true,
+            authStrategy: true,
+            lastLogin: true,
+          },
+        },
       },
     });
 
@@ -282,26 +334,36 @@ export class UsersService {
     // Check if user exists
     const user = await this.prisma.user.findUnique({
       where: { id },
+      include: {
+        authentication: {
+          select: {
+            id: true,
+            isExternalUser: true,
+            password: true,
+          },
+        },
+      },
     });
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    // If external user without password, can't change password
-    if (user.isExternalUser && !user.password) {
+    // If external user without password, can't change password. For now...
+    if (user.authentication.isExternalUser && !user.authentication.password) {
       throw new BadRequestException('External users without a password cannot change their password');
     }
 
     // Verify current password
-    const isPasswordValid = await bcrypt.compare(changePasswordDto.currentPassword, user.password);
+    const isPasswordValid = await bcrypt.compare(changePasswordDto.currentPassword, user.authentication.password);
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Current password is incorrect');
     }
 
     const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 12);
-    await this.prisma.user.update({
-      where: { id },
+    await this.prisma.userAuthentication.update({
+      where: { id: user.authentication.id },
       data: {
         password: hashedPassword,
         lastPasswordChange: new Date(),

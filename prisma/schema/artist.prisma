@@ -13,16 +13,16 @@ model Artist {
 
   games GameArtist[] // Games with artwork by this artist
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("artists")
 }
 
 model GameArtist {
   id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
   game      Game     @relation(fields: [gameId], references: [id])
   gameId    String
   artist    Artist   @relation(fields: [artistId], references: [id])

@@ -34,9 +34,9 @@ export class IdentityProviderService {
   /**
    * Get one identity provider
    */
-  async findOne(id: string) {
+  async findOne(providerId: string) {
     const provider = await this.prisma.identityProvider.findUnique({
-      where: { id },
+      where: { id: providerId },
       select: {
         id: true,
         name: true,
@@ -56,7 +56,7 @@ export class IdentityProviderService {
     });
 
     if (!provider) {
-      throw new NotFoundException(`Identity provider with ID "${id}" not found`);
+      throw new NotFoundException(`Identity provider with ID "${providerId}" not found`);
     }
 
     return provider;
@@ -96,7 +96,7 @@ export class IdentityProviderService {
     }
 
     // Create provider
-    const provider = await this.prisma.identityProvider.create({
+    return this.prisma.identityProvider.create({
       data: createIdentityProviderDto,
       select: {
         id: true,
@@ -115,21 +115,19 @@ export class IdentityProviderService {
         updatedAt: true,
       },
     });
-
-    return provider;
   }
 
   /**
    * Update an identity provider
    */
-  async update(id: string, updateIdentityProviderDto: UpdateIdentityProviderDto) {
+  async update(providerId: string, updateIdentityProviderDto: UpdateIdentityProviderDto) {
     // Check if provider exists
     const provider = await this.prisma.identityProvider.findUnique({
-      where: { id },
+      where: { id: providerId },
     });
 
     if (!provider) {
-      throw new NotFoundException(`Identity provider with ID "${id}" not found`);
+      throw new NotFoundException(`Identity provider with ID "${providerId}" not found`);
     }
 
     // If name or provider is changed, check for uniqueness
@@ -140,7 +138,7 @@ export class IdentityProviderService {
             updateIdentityProviderDto.name ? { name: updateIdentityProviderDto.name } : {},
             updateIdentityProviderDto.provider ? { provider: updateIdentityProviderDto.provider } : {},
           ],
-          NOT: { id },
+          NOT: { id: providerId },
         },
       });
 
@@ -168,8 +166,8 @@ export class IdentityProviderService {
     }
 
     // Update provider
-    const updatedProvider = await this.prisma.identityProvider.update({
-      where: { id },
+    return this.prisma.identityProvider.update({
+      where: { id: providerId },
       data: updateIdentityProviderDto,
       select: {
         id: true,
@@ -188,17 +186,15 @@ export class IdentityProviderService {
         updatedAt: true,
       },
     });
-
-    return updatedProvider;
   }
 
   /**
    * Delete an identity provider
    */
-  async remove(id: string) {
+  async remove(providerId: string) {
     // Check if provider exists
     const provider = await this.prisma.identityProvider.findUnique({
-      where: { id },
+      where: { id: providerId },
       include: {
         identities: {
           select: { id: true },
@@ -207,7 +203,7 @@ export class IdentityProviderService {
     });
 
     if (!provider) {
-      throw new NotFoundException(`Identity provider with ID "${id}" not found`);
+      throw new NotFoundException(`Identity provider with ID "${providerId}" not found`);
     }
 
     // Check if provider is in use
@@ -217,7 +213,7 @@ export class IdentityProviderService {
 
     // Delete provider
     await this.prisma.identityProvider.delete({
-      where: { id },
+      where: { id: providerId },
     });
 
     return { message: 'Identity provider deleted successfully' };

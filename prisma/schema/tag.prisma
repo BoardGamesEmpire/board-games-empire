@@ -6,8 +6,8 @@ model Tag {
   // Related tags
   games GameTag[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("tags")
 }
@@ -22,7 +22,7 @@ model GameTag {
   addedBy   User   @relation(fields: [addedById], references: [id])
   addedById String
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@unique([gameId, tagId])
   @@map("game_tags")

@@ -10,8 +10,8 @@ model Campaign {
 
   // Campaign Status
   status    CampaignStatus @default(Active)
-  startDate DateTime       @default(now())
-  endDate   DateTime?
+  startDate DateTime       @default(now()) @db.Timestamptz(3)
+  endDate   DateTime? @db.Timestamptz(3)
 
   // Campaign Context
   household   Household @relation(fields: [householdId], references: [id])
@@ -51,8 +51,8 @@ model Campaign {
   // Campaign progression and tracking
   sessionOutcomes CampaignSessionOutcome[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("campaigns")
 }
@@ -83,8 +83,8 @@ model CampaignCharacter {
   sessions           CharacterSession[]
   gameParticipations GamePlayParticipant[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("campaign_characters")
 }
@@ -111,8 +111,8 @@ model CampaignLocation {
   // Sessions that took place here
   sessions GamePlaySession[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("campaign_locations")
 }
@@ -136,8 +136,8 @@ model CampaignNPC {
   // Track NPC appearances in sessions
   appearances CampaignNPCAppearance[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("campaign_npcs")
 }
@@ -201,8 +201,8 @@ model CampaignMemberPermission {
   grantedBy   User   @relation("CampaignPermissionGranter", fields: [grantedById], references: [id])
   grantedById String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([campaignId, userId, permission])
   @@map("campaign_member_permissions")
@@ -228,8 +228,8 @@ model CampaignSessionOutcome {
   treasureFound     Json? // Loot, gold, magic items discovered
   experienceAwarded Int? // Total XP awarded in session
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("campaign_session_outcomes")
 }

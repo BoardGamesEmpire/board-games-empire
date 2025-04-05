@@ -61,7 +61,7 @@ export class OidcController {
   })
   @UseGuards(JwtAuthGuard)
   @Post('unlink/:provider')
-  async unlinkAccount(@Param('provider') provider: string, @Request() req) {
+  async unlinkAccount(@Param('provider') provider: string, @Request() req: any) {
     return this.oidcService.unlinkAccount(provider, req.user.id);
   }
 
@@ -72,7 +72,7 @@ export class OidcController {
   })
   @UseGuards(JwtAuthGuard)
   @Get('accounts')
-  async getLinkedAccounts(@Request() req) {
+  async getLinkedAccounts(@Request() req: any) {
     return this.oidcService.getLinkedAccounts(req.user.id);
   }
 }

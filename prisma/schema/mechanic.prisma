@@ -13,8 +13,8 @@ model Mechanic {
   usageCount         Int? // How many games use this mechanic
   compatibilityScore Float? // How well this mechanic works with others (0-1)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("mechanics")
 }
@@ -40,8 +40,8 @@ model MechanicRelationship {
   communityRating Float? // Community agreement with relationship (0-1)
   supportEvidence String? // Evidence supporting this relationship (e.g., games using both)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([primaryMechanicId, relatedMechanicId, relationshipType])
   @@index([primaryMechanicId])
@@ -63,8 +63,8 @@ enum MechanicRelationshipType {
 
 model GameMechanic {
   id         String   @id @default(cuid())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now())
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @default(now()) @db.Timestamptz(3)
   game       Game     @relation(fields: [gameId], references: [id])
   gameId     String
   mechanic   Mechanic @relation(fields: [mechanicId], references: [id])
