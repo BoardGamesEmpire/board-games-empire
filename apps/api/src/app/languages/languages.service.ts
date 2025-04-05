@@ -1,4 +1,4 @@
-import { PrismaService } from '@bg-empire/api/prisma';
+import { PrismaService } from '@bg-empire/api-prisma';
 import { Injectable } from '@nestjs/common';
 import { CreateLanguageDto } from './dto/create-language.dto';
 import { UpdateLanguageDto } from './dto/update-language.dto';

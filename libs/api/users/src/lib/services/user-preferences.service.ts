@@ -1,4 +1,4 @@
-import { PrismaService } from '@bg-empire/api/prisma';
+import { PrismaService } from '@bg-empire/api-prisma';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateUserPreferencesDto } from '../dto/update-user-preferences.dto';
 

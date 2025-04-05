@@ -4,13 +4,19 @@
   "include": [],
   "references": [
     {
+      "path": "../../libs/api/users"
+    },
+    {
+      "path": "../../libs/api/prisma"
+    },
+    {
+      "path": "../../libs/api/auth"
+    },
+    {
       "path": "./tsconfig.app.json"
     },
     {
       "path": "./tsconfig.spec.json"
     }
-  ],
-  "compilerOptions": {
-    "esModuleInterop": true
-  }
+  ]
 }

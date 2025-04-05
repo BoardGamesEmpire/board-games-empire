@@ -1,4 +1,4 @@
-import { PrismaModule } from '@bg-empire/api/prisma';
+import { PrismaModule } from '@bg-empire/api-prisma';
 import { Module } from '@nestjs/common';
 import { GamesController } from './games.controller';
 import { GamesService } from './games.service';

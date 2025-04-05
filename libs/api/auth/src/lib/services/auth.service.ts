@@ -1,7 +1,7 @@
-import { PrismaService } from '@bg-empire/api/prisma';
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { PrismaService } from '@bg-empire/api-prisma';
+import { BadRequestException, ConflictException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService as NestJwtService } from '@nestjs/jwt';
-import * as cuid2 from '@paralleldrive/cuid2';
+import cuid2 from '@paralleldrive/cuid2';
 import { AuthStrategy, TokenType, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { DateTime } from 'luxon';
@@ -156,15 +156,14 @@ export class AuthService {
     return {
       browser,
       os,
-      userAgent: userAgent.substring(0, 255), // Truncate to reasonable length
+      userAgent: userAgent.substring(0, 255),
     };
   }
 
   /**
-   * Register a new user
+   * Register a new user. Create user and authentication records.
    */
   async register(registerDto: RegisterDto) {
-    // Check if username already exists
     const existingUsername = await this.prisma.user.findUnique({
       where: { username: registerDto.username },
       select: { id: true },
@@ -174,7 +173,6 @@ export class AuthService {
       throw new ConflictException('Username already exists');
     }
 
-    // Check if email already exists
     const existingEmail = await this.prisma.userAuthentication.findUnique({
       where: { email: registerDto.email },
       select: { id: true },
@@ -184,64 +182,65 @@ export class AuthService {
       throw new ConflictException('Email already in use');
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(registerDto.password, 12);
 
     try {
-      // Generate email verification token
       const verificationToken = crypto.randomBytes(32).toString('hex');
       const tokenExpiry = DateTime.now().plus({ days: 1 }).toJSDate();
 
-      // Create user
-      const user = await this.prisma.user.create({
-        data: {
-          username: registerDto.username,
-          firstName: registerDto.firstName,
-          lastName: registerDto.lastName,
-          authentication: {
-            create: {
-              authStrategy: AuthStrategy.Local,
-              email: registerDto.email,
-              password: hashedPassword,
-              lastLogin: new Date(),
-              emailVerified: false,
+      let user;
+      await this.prisma.$transaction(async (tx) => {
+        user = await tx.user.create({
+          data: {
+            username: registerDto.username,
+            firstName: registerDto.firstName,
+            lastName: registerDto.lastName,
+            authentication: {
+              create: {
+                authStrategy: AuthStrategy.Local,
+                email: registerDto.email,
+                password: hashedPassword,
+                lastLogin: new Date(),
+                emailVerified: false,
+              },
             },
           },
-        },
-        include: {
-          authentication: {
-            select: {
-              id: true,
+          include: {
+            authentication: {
+              select: {
+                id: true,
+              },
             },
           },
-        },
-      });
+        });
 
-      await this.prisma.token.create({
-        data: {
-          authenticationId: user.authentication.id,
-          token: verificationToken,
-          type: TokenType.EmailVerification,
-          expiresAt: tokenExpiry,
-        },
+        await tx.token.create({
+          data: {
+            authenticationId: user.authentication!.id,
+            token: verificationToken,
+            type: TokenType.EmailVerification,
+            expiresAt: tokenExpiry,
+          },
+        });
+
+        // Create default user preferences
+        await this.prisma.userPreferences.create({
+          data: {
+            userId: user.id,
+          },
+        });
       });
 
       // TODO: Create user roles and permissions
       // TODO: Send verification email
-      // TODO: Login
-
-      // Create default user preferences
-      await this.prisma.userPreferences.create({
-        data: {
-          userId: user.id,
-        },
-      });
+      // TODO: Login?
 
       return {
         message: 'User registered successfully. Please verify your email.',
         user,
       };
     } catch (error) {
+      Logger.error('Error creating user:', error);
       throw new BadRequestException('Could not create user');
     }
   }

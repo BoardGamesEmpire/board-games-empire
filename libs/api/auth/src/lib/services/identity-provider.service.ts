@@ -1,4 +1,4 @@
-import { PrismaService } from '@bg-empire/api/prisma';
+import { PrismaService } from '@bg-empire/api-prisma';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateIdentityProviderDto } from '../dto/create-identity-provider.dto';
 import { UpdateIdentityProviderDto } from '../dto/update-identity-provider.dto';
