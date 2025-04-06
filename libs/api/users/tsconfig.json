@@ -1,11 +1,14 @@
 {
   "extends": "../../../tsconfig.base.json",
-  "compilerOptions": {
-    "module": "commonjs"
-  },
   "files": [],
   "include": [],
   "references": [
+    {
+      "path": "../prisma"
+    },
+    {
+      "path": "../auth"
+    },
     {
       "path": "./tsconfig.lib.json"
     },

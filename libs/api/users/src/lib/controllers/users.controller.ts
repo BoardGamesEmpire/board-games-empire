@@ -1,4 +1,4 @@
-import { CurrentUser, JwtAuthGuard, Roles, RolesGuard } from '@bg-empire/api/auth';
+import { CurrentUser, JwtAuthGuard, Roles, RolesGuard } from '@bg-empire/api-auth';
 import {
   Body,
   Controller,

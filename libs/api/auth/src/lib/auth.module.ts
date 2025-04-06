@@ -1,4 +1,4 @@
-import { PrismaModule } from '@bg-empire/api/prisma';
+import { PrismaModule } from '@bg-empire/api-prisma';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';

@@ -10,29 +10,24 @@ export class JoseService {
    */
   async verifyIdToken(idToken: string, clientId: string, nonce?: string): Promise<any> {
     try {
-      // Parse the token to get the issuer
       const tokenParts = idToken.split('.');
       if (tokenParts.length !== 3) {
         throw new Error('Invalid token format');
       }
 
       const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-      const issuer = payload.iss;
 
-      // Get or create a JWKS client for this issuer
-      let jwks = this.jwkSets.get(issuer);
+      let jwks = this.jwkSets.get(payload.iss);
       if (!jwks) {
-        jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
-        this.jwkSets.set(issuer, jwks);
+        jwks = createRemoteJWKSet(new URL(`${payload.iss}/.well-known/jwks.json`));
+        this.jwkSets.set(payload.iss, jwks);
       }
 
-      // Verify the token
       const { payload: verifiedPayload } = await jwtVerify(idToken, jwks, {
         audience: clientId,
-        issuer,
+        issuer: payload.iss,
         ...(nonce ? { nonce } : {}),
       });
-
       return verifiedPayload;
     } catch (error) {
       throw new Error(`ID token verification failed: ${(<Error>error).message}`);

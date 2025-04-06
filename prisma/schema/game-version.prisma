@@ -1,5 +1,5 @@
 model GameVersion {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   game   Game   @relation(fields: [gameId], references: [id])
   gameId String
 
@@ -22,7 +22,7 @@ model GameVersion {
 
 // Junction table for RuleVariants to GameVersions
 model GameVersionRuleVariant {
-  id            String      @id @default(cuid())
+  id            String      @id @default(cuid(2))
   ruleVariant   RuleVariant @relation(fields: [ruleVariantId], references: [id])
   ruleVariantId String
   gameVersion   GameVersion @relation(fields: [gameVersionId], references: [id])

@@ -1,24 +1,20 @@
 {
-  "compileOnSave": false,
   "compilerOptions": {
-    "rootDir": ".",
-    "sourceMap": true,
-    "declaration": false,
-    "moduleResolution": "node",
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
+    "composite": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
     "importHelpers": true,
-    "target": "es2015",
-    "module": "esnext",
-    "lib": ["es2020", "dom"],
+    "isolatedModules": true,
+    "lib": ["es2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmitOnError": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
     "skipLibCheck": true,
-    "skipDefaultLibCheck": true,
-    "baseUrl": ".",
-    "paths": {
-      "@bg-empire/api/auth": ["libs/api/auth/src/index.ts"],
-      "@bg-empire/api/prisma": ["libs/api/prisma/src/index.ts"],
-      "@bg-empire/api/users": ["libs/api/users/src/index.ts"]
-    }
-  },
-  "exclude": ["node_modules", "tmp"]
+    "target": "es2022",
+    "customConditions": ["development"]
+  }
 }

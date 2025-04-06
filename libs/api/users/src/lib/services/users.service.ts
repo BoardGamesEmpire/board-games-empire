@@ -1,5 +1,5 @@
-import { AuthService } from '@bg-empire/api/auth';
-import { PrismaService } from '@bg-empire/api/prisma';
+import { AuthService } from '@bg-empire/api-auth';
+import { PrismaService } from '@bg-empire/api-prisma';
 import {
   BadRequestException,
   ConflictException,
@@ -240,6 +240,9 @@ export class UsersService {
     }
 
     const systemSettings = await this.prisma.systemSetting.findFirst({});
+    if (!systemSettings) {
+      throw new NotFoundException('System settings not found');
+    }
 
     // Check if username is being changed and is unique
     if (updateUserDto.username && updateUserDto.username !== user.username) {

@@ -1,5 +1,5 @@
 model PermissionPolicy {
-  id          String  @id @default(cuid())
+  id          String  @id @default(cuid(2))
   name        String  @unique
   description String?
 
@@ -28,7 +28,7 @@ model PermissionPolicy {
 }
 
 model RolePolicyAssignment {
-  id       String           @id @default(cuid())
+  id       String           @id @default(cuid(2))
   role     Role             @relation(fields: [roleId], references: [id])
   roleId   String
   policy   PermissionPolicy @relation(fields: [policyId], references: [id])
@@ -45,7 +45,7 @@ model RolePolicyAssignment {
 }
 
 model UserPolicyAssignment {
-  id       String           @id @default(cuid())
+  id       String           @id @default(cuid(2))
   user     User             @relation(fields: [userId], references: [id])
   userId   String
   policy   PermissionPolicy @relation(fields: [policyId], references: [id])
@@ -63,7 +63,7 @@ model UserPolicyAssignment {
 }
 
 model GroupPolicyAssignment {
-  id       String           @id @default(cuid())
+  id       String           @id @default(cuid(2))
   group    PermissionGroup  @relation(fields: [groupId], references: [id])
   groupId  String
   policy   PermissionPolicy @relation(fields: [policyId], references: [id])
@@ -80,7 +80,7 @@ model GroupPolicyAssignment {
 }
 
 model ResourcePolicyAssignment {
-  id       String           @id @default(cuid())
+  id       String           @id @default(cuid(2))
   policy   PermissionPolicy @relation(fields: [policyId], references: [id])
   policyId String
 

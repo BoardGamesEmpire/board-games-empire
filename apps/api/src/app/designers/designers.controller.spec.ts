@@ -1,3 +1,4 @@
+import { PrismaModule } from '@bg-empire/api-prisma';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DesignersController } from './designers.controller';
 import { DesignersService } from './designers.service';
@@ -9,6 +10,7 @@ describe('DesignersController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DesignersController],
       providers: [DesignersService],
+      imports: [PrismaModule],
     }).compile();
 
     controller = module.get<DesignersController>(DesignersController);

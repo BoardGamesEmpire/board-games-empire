@@ -1,5 +1,5 @@
 model Artist {
-  id        String  @id @default(cuid())
+  id        String  @id @default(cuid(2))
   name      String // No unique constraint to handle same-named artists
   fullName  String? // Optional full/legal name if different
   website   String? // Personal or portfolio website
@@ -20,7 +20,7 @@ model Artist {
 }
 
 model GameArtist {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid(2))
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   game      Game     @relation(fields: [gameId], references: [id])

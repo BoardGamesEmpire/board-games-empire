@@ -1,5 +1,5 @@
 model GameExpansion {
-  id         String @id @default(cuid())
+  id         String @id @default(cuid(2))
   name       String
   baseGame   Game   @relation("BaseGame", fields: [baseGameId], references: [id])
   baseGameId String
@@ -26,7 +26,7 @@ model GameExpansion {
 }
 
 model ExpansionCompatibility {
-  id          String        @id @default(cuid())
+  id          String        @id @default(cuid(2))
   game        Game          @relation(fields: [gameId], references: [id])
   gameId      String
   expansion   GameExpansion @relation(fields: [expansionId], references: [id])
@@ -45,7 +45,7 @@ model ExpansionCompatibility {
 
 // Junction table for RuleVariants to GameExpansions
 model GameExpansionRuleVariant {
-  id              String        @id @default(cuid())
+  id              String        @id @default(cuid(2))
   ruleVariant     RuleVariant   @relation(fields: [ruleVariantId], references: [id])
   ruleVariantId   String
   gameExpansion   GameExpansion @relation(fields: [gameExpansionId], references: [id])

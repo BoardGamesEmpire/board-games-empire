@@ -1,5 +1,5 @@
 model Mechanic {
-  id          String         @id @default(cuid())
+  id          String         @id @default(cuid(2))
   name        String         @unique
   description String? // Added description field
   complexity  Int? // Optional 1-10 complexity rating
@@ -21,7 +21,7 @@ model Mechanic {
 
 // Model for related mechanics
 model MechanicRelationship {
-  id                String   @id @default(cuid())
+  id                String   @id @default(cuid(2))
   primaryMechanic   Mechanic @relation("PrimaryMechanic", fields: [primaryMechanicId], references: [id])
   primaryMechanicId String
   relatedMechanic   Mechanic @relation("RelatedMechanic", fields: [relatedMechanicId], references: [id])
@@ -62,7 +62,7 @@ enum MechanicRelationshipType {
 }
 
 model GameMechanic {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid(2))
   createdAt  DateTime @default(now()) @db.Timestamptz(3)
   updatedAt  DateTime @default(now()) @db.Timestamptz(3)
   game       Game     @relation(fields: [gameId], references: [id])

@@ -14,7 +14,7 @@ export class JwtService {
       return await this.jwtService.verifyAsync(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
-    } catch (error) {
+    } catch {
       return null;
     }
   }

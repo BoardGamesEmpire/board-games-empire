@@ -1,5 +1,5 @@
 model Household {
-  id          String  @id @default(cuid())
+  id          String  @id @default(cuid(2))
   description String?
   name        String
   image       String?
@@ -33,7 +33,7 @@ model Household {
 }
 
 model HouseholdRole {
-  id          String    @id @default(cuid())
+  id          String    @id @default(cuid(2))
   household   Household @relation(fields: [householdId], references: [id])
   householdId String
   user        User      @relation(fields: [userId], references: [id])
@@ -49,7 +49,7 @@ model HouseholdRole {
 }
 
 model HouseholdMember {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   user   User   @relation(fields: [userId], references: [id])
   userId String
 

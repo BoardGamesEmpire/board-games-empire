@@ -1,5 +1,5 @@
 model Campaign {
-  id          String  @id @default(cuid())
+  id          String  @id @default(cuid(2))
   name        String
   description String?
   image       String?
@@ -58,7 +58,7 @@ model Campaign {
 }
 
 model CampaignCharacter {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid(2))
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String
 
@@ -90,7 +90,7 @@ model CampaignCharacter {
 }
 
 model CampaignLocation {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid(2))
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String
 
@@ -118,7 +118,7 @@ model CampaignLocation {
 }
 
 model CampaignNPC {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid(2))
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String
 
@@ -143,7 +143,7 @@ model CampaignNPC {
 }
 
 model CampaignNPCAppearance {
-  id        String          @id @default(cuid())
+  id        String          @id @default(cuid(2))
   npc       CampaignNPC     @relation(fields: [npcId], references: [id])
   npcId     String
   session   GamePlaySession @relation(fields: [sessionId], references: [id])
@@ -163,7 +163,7 @@ model CampaignNPCAppearance {
 }
 
 model CharacterSession {
-  id                String            @id @default(cuid())
+  id                String            @id @default(cuid(2))
   character         CampaignCharacter @relation(fields: [characterId], references: [id])
   characterId       String
   gamePlaySession   GamePlaySession   @relation(fields: [gamePlaySessionId], references: [id])
@@ -190,7 +190,7 @@ enum CampaignStatus {
 }
 
 model CampaignMemberPermission {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid(2))
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String
   user       User     @relation(fields: [userId], references: [id])
@@ -209,7 +209,7 @@ model CampaignMemberPermission {
 }
 
 model CampaignSessionOutcome {
-  id                String          @id @default(cuid())
+  id                String          @id @default(cuid(2))
   gamePlaySession   GamePlaySession @relation(fields: [gamePlaySessionId], references: [id])
   gamePlaySessionId String          @unique
 

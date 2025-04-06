@@ -1,5 +1,5 @@
 model GroupPermission {
-  id      String          @id @default(cuid())
+  id      String          @id @default(cuid(2))
   group   PermissionGroup @relation(fields: [groupId], references: [id])
   groupId String
 
@@ -13,7 +13,7 @@ model GroupPermission {
 
 // Group permissions for easier management
 model PermissionGroup {
-  id          String  @id @default(cuid())
+  id          String  @id @default(cuid(2))
   name        String  @unique
   description String?
 
@@ -31,7 +31,7 @@ model PermissionGroup {
 }
 
 model GroupMember {
-  id      String          @id @default(cuid())
+  id      String          @id @default(cuid(2))
   group   PermissionGroup @relation(fields: [groupId], references: [id])
   groupId String
   user    User            @relation(fields: [userId], references: [id])

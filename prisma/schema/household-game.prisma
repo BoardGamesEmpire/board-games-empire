@@ -1,5 +1,5 @@
 model HouseholdGame {
-  id          String    @id @default(cuid())
+  id          String    @id @default(cuid(2))
   household   Household @relation(fields: [householdId], references: [id])
   householdId String
   game        Game      @relation(fields: [gameId], references: [id])
@@ -80,7 +80,7 @@ enum HouseholdGameOwnership {
 }
 
 model HouseholdGameCustomization {
-  id          String    @id @default(cuid())
+  id          String    @id @default(cuid(2))
   household   Household @relation(fields: [householdId], references: [id])
   householdId String
   game        Game      @relation(fields: [gameId], references: [id])
@@ -118,7 +118,7 @@ model HouseholdGameCustomization {
 }
 
 model HouseholdGameExperience {
-  id              String        @id @default(cuid())
+  id              String        @id @default(cuid(2))
   householdGame   HouseholdGame @relation(fields: [householdGameId], references: [id])
   householdGameId String
 
@@ -145,7 +145,7 @@ model HouseholdGameExperience {
 }
 
 model HouseholdGameExperienceParticipant {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   // Experience relationship
   experience   HouseholdGameExperience @relation(fields: [experienceId], references: [id])
@@ -169,7 +169,7 @@ model HouseholdGameExperienceParticipant {
 }
 
 model HouseholdGameInterest {
-  id                String          @id @default(cuid())
+  id                String          @id @default(cuid(2))
   householdGame     HouseholdGame   @relation(fields: [householdGameId], references: [id])
   householdGameId   String
   member            HouseholdMember @relation(fields: [householdMemberId], references: [id])
@@ -187,7 +187,7 @@ model HouseholdGameInterest {
 }
 
 model HouseholdGameCustomizationPermission {
-  id              String                     @id @default(cuid())
+  id              String                     @id @default(cuid(2))
   customization   HouseholdGameCustomization @relation(fields: [customizationId], references: [id])
   customizationId String
   user            User                       @relation(fields: [userId], references: [id])

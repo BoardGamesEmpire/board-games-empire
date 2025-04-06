@@ -1,5 +1,5 @@
 model Tag {
-  id          String  @id @default(cuid())
+  id          String  @id @default(cuid(2))
   name        String  @unique
   description String?
 
@@ -13,7 +13,7 @@ model Tag {
 }
 
 model GameTag {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   game   Game   @relation(fields: [gameId], references: [id])
   gameId String
   tag    Tag    @relation(fields: [tagId], references: [id])

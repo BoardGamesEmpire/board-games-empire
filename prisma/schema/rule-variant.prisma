@@ -1,5 +1,5 @@
 model RuleVariant {
-  id          String @id @default(cuid())
+  id          String @id @default(cuid(2))
   name        String
   description String
 
@@ -57,7 +57,7 @@ model RuleVariant {
 }
 
 model RuleVariantUsage {
-  id            String          @id @default(cuid())
+  id            String          @id @default(cuid(2))
   ruleVariant   RuleVariant     @relation(fields: [ruleVariantId], references: [id])
   ruleVariantId String
   session       GamePlaySession @relation(fields: [sessionId], references: [id])
@@ -76,7 +76,7 @@ model RuleVariantUsage {
 }
 
 model RuleVariantUsageVersion {
-  id                 String           @id @default(cuid())
+  id                 String           @id @default(cuid(2))
   ruleVariantUsage   RuleVariantUsage @relation(fields: [ruleVariantUsageId], references: [id])
   ruleVariantUsageId String
   gameVersion        GameVersion      @relation(fields: [gameVersionId], references: [id])
@@ -92,7 +92,7 @@ model RuleVariantUsageVersion {
 }
 
 model RuleVariantUsageExpansion {
-  id                 String           @id @default(cuid())
+  id                 String           @id @default(cuid(2))
   ruleVariantUsage   RuleVariantUsage @relation(fields: [ruleVariantUsageId], references: [id])
   ruleVariantUsageId String
   gameExpansion      GameExpansion    @relation(fields: [gameExpansionId], references: [id])

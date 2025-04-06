@@ -1,6 +1,6 @@
-import { AuthModule, JwtAuthGuard } from '@bg-empire/api/auth';
-import { PrismaModule } from '@bg-empire/api/prisma';
-import { UsersModule } from '@bg-empire/api/users';
+import { AuthModule, JwtAuthGuard } from '@bg-empire/api-auth';
+import { PrismaModule } from '@bg-empire/api-prisma';
+import { UsersModule } from '@bg-empire/api-users';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';

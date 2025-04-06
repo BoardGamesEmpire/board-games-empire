@@ -1,5 +1,5 @@
 model Designer {
-  id        String  @id @default(cuid())
+  id        String  @id @default(cuid(2))
   name      String  @unique
   fullName  String? // Optional full/legal name if different
   website   String? // Personal or company website
@@ -27,7 +27,7 @@ model Designer {
 }
 
 model GameDesigner {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid(2))
   createdAt  DateTime @default(now()) @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @db.Timestamptz(3)
   game       Game     @relation(fields: [gameId], references: [id])
@@ -43,7 +43,7 @@ model GameDesigner {
 
 // model for tracking designer collaborations
 model DesignerCollaboration {
-  id                String   @id @default(cuid())
+  id                String   @id @default(cuid(2))
   primaryDesigner   Designer @relation("PrimaryDesigner", fields: [primaryDesignerId], references: [id])
   primaryDesignerId String
   collaborator      Designer @relation("Collaborator", fields: [collaboratorId], references: [id])

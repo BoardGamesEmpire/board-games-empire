@@ -1,8 +1,9 @@
-import { PrismaService } from '@bg-empire/api/prisma';
+import { PrismaService } from '@bg-empire/api-prisma';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
+import { DateTime } from 'luxon';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 @Injectable()
@@ -42,6 +43,28 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+
+    if (payload.sid) {
+      const session = await this.prisma.userSession.findFirst({
+        where: {
+          id: payload.sid,
+          isValid: true,
+          expiresAt: { gt: new Date() },
+        },
+      });
+
+      if (!session) {
+        throw new UnauthorizedException('Session has expired or been revoked');
+      }
+
+      const tenMinutesAgo = DateTime.now().minus({ minutes: 10 }).toJSDate();
+      if (session.lastActive < tenMinutesAgo) {
+        await this.prisma.userSession.update({
+          where: { id: payload.sid },
+          data: { lastActive: new Date() },
+        });
+      }
     }
 
     return user;

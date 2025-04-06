@@ -1,5 +1,5 @@
 model Friendship {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   // Users in the friendship
   requestor   User   @relation("FriendshipRequestor", fields: [requestorId], references: [id])

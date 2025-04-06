@@ -1,4 +1,4 @@
-import { PrismaService } from '@bg-empire/api/prisma';
+import { PrismaService } from '@bg-empire/api-prisma';
 import { Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -44,7 +44,6 @@ export class OidcService {
       .replace(/\//g, '_')
       .replace(/=/g, '');
 
-    // Create auth session
     await this.prisma.oidcAuthSession.create({
       data: {
         state,
@@ -58,12 +57,10 @@ export class OidcService {
       },
     });
 
-    // Determine authorization URL
     const authorizationUrl =
       provider.authorizationUrl ||
       `${provider.discoveryUrl?.replace('/.well-known/openid-configuration', '')}/authorize`;
 
-    // Build the authorization URL
     const authUrl = `${authorizationUrl}?${querystring.stringify({
       client_id: provider.clientId,
       redirect_uri: this.configService.get('API_BASE_URL') + '/auth/oidc/callback',
@@ -85,7 +82,6 @@ export class OidcService {
     state: string,
     code: string,
   ): Promise<{ access_token: string; refresh_token: string; user: any; isNewUser?: boolean }> {
-    // Find the auth session
     const session = await this.prisma.oidcAuthSession.findFirst({
       where: { state },
       include: { provider: true },
@@ -96,25 +92,20 @@ export class OidcService {
     }
 
     try {
-      // Exchange code for tokens
       const tokenResponse = await this.exchangeCodeForTokens(code, session);
 
-      // Validate ID token
       const idTokenPayload = await this.joseService.verifyIdToken(
         tokenResponse.id_token,
         session.provider.clientId,
         session.nonce,
       );
 
-      // Get user info from token or fetch from userinfo endpoint
       const userInfo = idTokenPayload;
 
-      // Clean up the session
       await this.prisma.oidcAuthSession.delete({
         where: { id: session.id },
       });
 
-      // Find or create user
       const { user, isNew } = await this.findOrCreateUser(
         session.provider.id,
         userInfo.sub,
@@ -124,18 +115,15 @@ export class OidcService {
         tokenResponse.expires_in ? new Date(Date.now() + tokenResponse.expires_in * 1000) : undefined,
       );
 
-      // Generate JWT and refresh token
       const jwtPayload = {
         sub: user.id,
         username: user.username,
         email: user.email,
       };
 
-      // Generate refresh token
       const refreshToken = randomBytes(40).toString('hex');
       const refreshTokenExpiry = DateTime.now().plus({ days: 30 }).toJSDate();
 
-      // Store refresh token
       await this.prisma.token.create({
         data: {
           authenticationId: user.authentication.id,
@@ -219,7 +207,6 @@ export class OidcService {
     refreshToken?: string,
     tokenExpiresAt?: Date,
   ): Promise<{ user: any; isNew: boolean }> {
-    // Look for existing external identity
     const existingIdentity = await this.prisma.userExternalIdentity.findUnique({
       where: {
         providerId_externalId: {
@@ -243,9 +230,7 @@ export class OidcService {
       },
     });
 
-    // If we found an existing identity, update tokens and return the associated user
     if (existingIdentity) {
-      // Update tokens if provided
       if (accessToken || refreshToken) {
         await this.prisma.userExternalIdentity.update({
           where: { id: existingIdentity.id },
@@ -258,7 +243,6 @@ export class OidcService {
         });
       }
 
-      // Update last login timestamp
       await this.prisma.userAuthentication.update({
         where: { id: existingIdentity.authentication.id },
         data: { lastLogin: new Date() },
@@ -267,7 +251,6 @@ export class OidcService {
       return { user: existingIdentity.authentication.user, isNew: false };
     }
 
-    // Look for existing user with the same email
     let auth = null;
     let isNew = false;
 
@@ -285,7 +268,6 @@ export class OidcService {
       }
     }
 
-    // If no existing user(auth), create a new one
     if (!auth) {
       const username = await this.generateUniqueUsername(userInfo);
 
@@ -320,7 +302,6 @@ export class OidcService {
       isNew = true;
     }
 
-    // Create the external identity
     await this.prisma.userExternalIdentity.create({
       data: {
         providerId,
@@ -358,7 +339,6 @@ export class OidcService {
     // Clean up the username (remove non-alphanumeric characters)
     baseUsername = baseUsername.replace(/[^a-zA-Z0-9]/g, '');
 
-    // Check if username is available
     const existingUser = await this.prisma.user.findUnique({
       where: { username: baseUsername },
     });
@@ -409,7 +389,6 @@ export class OidcService {
    * Unlink an external account from a user
    */
   async unlinkAccount(providerName: string, userId: string) {
-    // Find the provider
     const provider = await this.prisma.identityProvider.findFirst({
       where: {
         provider: providerName.toLowerCase(),
@@ -420,7 +399,6 @@ export class OidcService {
       throw new NotFoundException(`Identity provider '${providerName}' not found`);
     }
 
-    // Check if this is the only authentication method
     const auth = await this.prisma.userAuthentication.findUnique({
       where: { id: userId },
       include: {
@@ -441,7 +419,6 @@ export class OidcService {
       throw new UnauthorizedException('Cannot unlink the only authentication method. Please set a password first.');
     }
 
-    // Delete the external identity
     await this.prisma.userExternalIdentity.deleteMany({
       where: {
         authenticationId: auth.id,
@@ -456,7 +433,6 @@ export class OidcService {
    * Initiate account linking for an existing user
    */
   async initiateAccountLinking(providerName: string, userId: string): Promise<{ authUrl: string }> {
-    // Find the provider
     const provider = await this.prisma.identityProvider.findFirst({
       where: {
         provider: providerName.toLowerCase(),
@@ -496,7 +472,6 @@ export class OidcService {
       .replace(/\//g, '_')
       .replace(/=/g, '');
 
-    // Create auth session with userId for linking
     await this.prisma.oidcAuthSession.create({
       data: {
         state,
@@ -509,12 +484,10 @@ export class OidcService {
       },
     });
 
-    // Determine authorization URL
     const authorizationUrl =
       provider.authorizationUrl ||
       `${provider.discoveryUrl?.replace('/.well-known/openid-configuration', '')}/authorize`;
 
-    // Build the authorization URL
     const authUrl = `${authorizationUrl}?${querystring.stringify({
       client_id: provider.clientId,
       redirect_uri: this.configService.get('API_BASE_URL') + '/auth/oidc/callback',

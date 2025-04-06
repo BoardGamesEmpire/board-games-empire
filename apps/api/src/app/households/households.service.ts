@@ -1,4 +1,4 @@
-import { PrismaService } from '@bg-empire/api/prisma';
+import { PrismaService } from '@bg-empire/api-prisma';
 import { Injectable } from '@nestjs/common';
 import { CreateHouseholdDto } from './dto/create-household.dto';
 import { UpdateHouseholdDto } from './dto/update-household.dto';
