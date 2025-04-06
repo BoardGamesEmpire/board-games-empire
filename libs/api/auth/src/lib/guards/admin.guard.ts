@@ -9,14 +9,12 @@ export class AdminGuard extends AuthGuard('jwt') {
 
   override canActivate(context: ExecutionContext) {
     console.log('AdminGuard: canActivate called');
-    // First ensure the user is authenticated
     return super.canActivate(context);
   }
 
   override handleRequest(err: Error, user: any, info: any) {
     console.log('AdminGuard: handleRequest called');
 
-    // Validate the user has admin role
     if (err || !user) {
       throw err || new ForbiddenException('Authentication required');
     }

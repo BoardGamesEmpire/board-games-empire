@@ -1,6 +1,6 @@
 // Core model for tracking different implementations of a game
 model GameImplementation {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   game   Game   @relation(fields: [gameId], references: [id])
   gameId String
 
@@ -50,7 +50,7 @@ model GameImplementation {
 
 // User ratings for implementations
 model ImplementationRating {
-  id               String             @id @default(cuid())
+  id               String             @id @default(cuid(2))
   implementation   GameImplementation @relation(fields: [implementationId], references: [id])
   implementationId String
 

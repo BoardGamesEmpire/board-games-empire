@@ -1,3 +1,4 @@
+import { PrismaModule } from '@bg-empire/api-prisma';
 import { Test, TestingModule } from '@nestjs/testing';
 import { LanguagesService } from './languages.service';
 
@@ -7,6 +8,7 @@ describe('LanguagesService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [LanguagesService],
+      imports: [PrismaModule],
     }).compile();
 
     service = module.get<LanguagesService>(LanguagesService);

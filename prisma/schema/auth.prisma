@@ -1,5 +1,5 @@
 model IdentityProvider {
-  id             String    @id @default(cuid())
+  id             String    @id @default(cuid(2))
   name           String    @unique             // Display name (e.g., "Google")
   provider       String    @unique             // Provider identifier (e.g., "google")
 
@@ -30,7 +30,7 @@ model IdentityProvider {
 }
 
 model UserExternalIdentity {
-  id             String    @id @default(cuid())
+  id             String    @id @default(cuid(2))
 
   // User association
   authentication   UserAuthentication @relation(fields: [authenticationId], references: [id])
@@ -57,7 +57,7 @@ model UserExternalIdentity {
 }
 
 model OidcAuthSession {
-  id             String    @id @default(cuid())
+  id             String    @id @default(cuid(2))
 
   // Session details
   state          String    @unique   // OIDC state parameter for validation
@@ -83,7 +83,7 @@ model OidcAuthSession {
 }
 
 model UserSession {
-  id                String             @id @default(cuid())
+  id                String             @id @default(cuid(2))
   authentication    UserAuthentication @relation(fields: [authenticationId], references: [id], onDelete: Cascade)
   authenticationId  String
 
@@ -105,7 +105,7 @@ model UserSession {
 }
 
 model UserAuthentication {
-  id            String       @id @default(cuid())
+  id            String       @id @default(cuid(2))
 
   user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String       @unique

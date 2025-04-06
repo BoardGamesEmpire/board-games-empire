@@ -21,18 +21,14 @@ export class AuthService {
       include: { user: true },
     });
 
-    if (!auth) {
-      return null;
-    }
-
     // If user doesn't have a password (OIDC user), validation fails
-    if (!auth.password) {
+    if (!auth?.password) {
       return null;
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, auth.password);
     if (!isPasswordValid) {
+      // TODO: Increment failed login attempts
       return null;
     }
 

@@ -1,5 +1,5 @@
 model Game {
-  id          String  @id @default(cuid())
+  id          String  @id @default(cuid(2))
   title       String
   subtitle    String?
   description String?
@@ -78,7 +78,7 @@ model Game {
 }
 
 model GameCollection {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   user   User   @relation(fields: [userId], references: [id])
   userId String
   game   Game   @relation(fields: [gameId], references: [id])
@@ -105,7 +105,7 @@ model GameCollection {
 }
 
 model GameMedia {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   game   Game   @relation(fields: [gameId], references: [id])
   gameId String
 
@@ -126,7 +126,7 @@ model GameMedia {
 }
 
 model GameLoan {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   user   User   @relation("GamesOnLoan", fields: [userId], references: [id])
   userId String
   game   Game   @relation(fields: [gameId], references: [id])

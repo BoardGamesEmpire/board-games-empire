@@ -1,5 +1,5 @@
 model SystemSetting {
-  id                    String  @id @default(cuid())
+  id                    String  @id @default(cuid(2))
   allowPasswordResets   Boolean @default(true)
   allowUserRegistration Boolean @default(true)
   allowUsernameChange   Boolean @default(true)

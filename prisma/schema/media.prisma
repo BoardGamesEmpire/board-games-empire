@@ -14,7 +14,7 @@ enum MediaType {
 }
 
 model SessionMedia {
-  id        String          @id @default(cuid())
+  id        String          @id @default(cuid(2))
   session   GamePlaySession @relation(fields: [sessionId], references: [id])
   sessionId String
 

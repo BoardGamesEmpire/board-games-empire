@@ -1,5 +1,5 @@
 model GameHouseholdAccess {
-  id          String    @id @default(cuid())
+  id          String    @id @default(cuid(2))
   game        Game      @relation(fields: [gameId], references: [id])
   gameId      String
   household   Household @relation(fields: [householdId], references: [id])
@@ -19,7 +19,7 @@ model GameHouseholdAccess {
 }
 
 model GameUserAccess {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   game   Game   @relation(fields: [gameId], references: [id])
   gameId String
   user   User   @relation(fields: [userId], references: [id])

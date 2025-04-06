@@ -1,5 +1,5 @@
 model Event {
-  id          String    @id @default(cuid())
+  id          String    @id @default(cuid(2))
   household   Household @relation(fields: [householdId], references: [id])
   householdId String
   createdBy   User      @relation(fields: [createdById], references: [id])
@@ -40,7 +40,7 @@ model Event {
 }
 
 model EventAttendee {
-  id      String @id @default(cuid())
+  id      String @id @default(cuid(2))
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String
 
@@ -80,7 +80,7 @@ model EventAttendee {
 }
 
 model EventGameVote {
-  id          String    @id @default(cuid())
+  id          String    @id @default(cuid(2))
   eventGame   EventGame @relation(fields: [eventGameId], references: [id])
   eventGameId String
   user        User      @relation(fields: [userId], references: [id])
@@ -93,7 +93,7 @@ model EventGameVote {
 }
 
 model EventGame {
-  id      String @id @default(cuid())
+  id      String @id @default(cuid(2))
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String
   game    Game   @relation(fields: [gameId], references: [id])
@@ -108,7 +108,7 @@ model EventGame {
 }
 
 model EventMemberPermission {
-  id      String @id @default(cuid())
+  id      String @id @default(cuid(2))
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String
   user    User   @relation(fields: [userId], references: [id])

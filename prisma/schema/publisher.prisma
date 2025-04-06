@@ -1,5 +1,5 @@
 model Publisher {
-  id          String  @id @default(cuid())
+  id          String  @id @default(cuid(2))
   name        String  @unique
   legalName   String? // Official company name if different
   website     String?
@@ -31,7 +31,7 @@ model Publisher {
 }
 
 model GamePublisher {
-  id          String    @id @default(cuid())
+  id          String    @id @default(cuid(2))
   createdAt   DateTime  @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
   game        Game      @relation(fields: [gameId], references: [id])

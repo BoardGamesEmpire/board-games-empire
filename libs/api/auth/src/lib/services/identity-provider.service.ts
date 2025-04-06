@@ -19,7 +19,6 @@ export class IdentityProviderService {
         enabled: true,
         discoveryUrl: true,
         clientId: true,
-        // Don't include clientSecret
         authorizationUrl: true,
         tokenUrl: true,
         userInfoUrl: true,
@@ -44,7 +43,6 @@ export class IdentityProviderService {
         enabled: true,
         discoveryUrl: true,
         clientId: true,
-        // Don't include clientSecret
         authorizationUrl: true,
         tokenUrl: true,
         userInfoUrl: true,
@@ -66,7 +64,6 @@ export class IdentityProviderService {
    * Create a new identity provider
    */
   async create(createIdentityProviderDto: CreateIdentityProviderDto) {
-    // Check if provider already exists
     const existingProvider = await this.prisma.identityProvider.findFirst({
       where: {
         OR: [{ name: createIdentityProviderDto.name }, { provider: createIdentityProviderDto.provider }],
@@ -77,7 +74,6 @@ export class IdentityProviderService {
       throw new BadRequestException('Identity provider with this name or provider already exists');
     }
 
-    // If discovery URL is provided, fetch configuration
     if (createIdentityProviderDto.discoveryUrl && !createIdentityProviderDto.authorizationUrl) {
       try {
         const configResponse = await fetch(createIdentityProviderDto.discoveryUrl);
@@ -95,7 +91,6 @@ export class IdentityProviderService {
       }
     }
 
-    // Create provider
     return this.prisma.identityProvider.create({
       data: createIdentityProviderDto,
       select: {
@@ -105,7 +100,6 @@ export class IdentityProviderService {
         enabled: true,
         discoveryUrl: true,
         clientId: true,
-        // Don't include clientSecret
         authorizationUrl: true,
         tokenUrl: true,
         userInfoUrl: true,
@@ -121,7 +115,6 @@ export class IdentityProviderService {
    * Update an identity provider
    */
   async update(providerId: string, updateIdentityProviderDto: UpdateIdentityProviderDto) {
-    // Check if provider exists
     const provider = await this.prisma.identityProvider.findUnique({
       where: { id: providerId },
     });
@@ -130,7 +123,6 @@ export class IdentityProviderService {
       throw new NotFoundException(`Identity provider with ID "${providerId}" not found`);
     }
 
-    // If name or provider is changed, check for uniqueness
     if (updateIdentityProviderDto.name || updateIdentityProviderDto.provider) {
       const existingProvider = await this.prisma.identityProvider.findFirst({
         where: {
@@ -147,7 +139,6 @@ export class IdentityProviderService {
       }
     }
 
-    // If discovery URL is updated, fetch configuration
     if (updateIdentityProviderDto.discoveryUrl) {
       try {
         const configResponse = await fetch(updateIdentityProviderDto.discoveryUrl);
@@ -165,7 +156,6 @@ export class IdentityProviderService {
       }
     }
 
-    // Update provider
     return this.prisma.identityProvider.update({
       where: { id: providerId },
       data: updateIdentityProviderDto,
@@ -176,7 +166,6 @@ export class IdentityProviderService {
         enabled: true,
         discoveryUrl: true,
         clientId: true,
-        // Don't include clientSecret
         authorizationUrl: true,
         tokenUrl: true,
         userInfoUrl: true,
@@ -192,7 +181,6 @@ export class IdentityProviderService {
    * Delete an identity provider
    */
   async remove(providerId: string) {
-    // Check if provider exists
     const provider = await this.prisma.identityProvider.findUnique({
       where: { id: providerId },
       include: {
@@ -206,12 +194,10 @@ export class IdentityProviderService {
       throw new NotFoundException(`Identity provider with ID "${providerId}" not found`);
     }
 
-    // Check if provider is in use
     if (provider.identities.length > 0) {
       throw new BadRequestException('Cannot delete identity provider that is in use');
     }
 
-    // Delete provider
     await this.prisma.identityProvider.delete({
       where: { id: providerId },
     });

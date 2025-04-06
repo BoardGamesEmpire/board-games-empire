@@ -1,5 +1,5 @@
 model Category {
-  id          String  @id @default(cuid())
+  id          String  @id @default(cuid(2))
   name        String  @unique
   description String? // Description of this category/type
 
@@ -18,7 +18,7 @@ model Category {
 }
 
 model GameCategory {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid(2))
   game       Game     @relation(fields: [gameId], references: [id])
   gameId     String
   category   Category @relation(fields: [categoryId], references: [id])

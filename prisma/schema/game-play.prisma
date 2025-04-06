@@ -1,5 +1,5 @@
 model GamePlaySession {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   // Optional Event Association
   event   Event?  @relation(fields: [eventId], references: [id])
@@ -91,7 +91,7 @@ enum GamePlayContext {
 }
 
 model GamePlayParticipant {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   // Session Association
   gamePlaySession   GamePlaySession @relation(fields: [gamePlaySessionId], references: [id])
@@ -121,7 +121,7 @@ model GamePlayParticipant {
 
 // Game Play Result Model (for complex scoring or multi-phase games)
 model GamePlayResult {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   // Session Association
   gamePlaySession   GamePlaySession @relation(fields: [gamePlaySessionId], references: [id])
@@ -143,7 +143,7 @@ model GamePlayResult {
 
 // Junction table for GamePlaySession to GameExpansion
 model GamePlaySessionExpansion {
-  id          String          @id @default(cuid())
+  id          String          @id @default(cuid(2))
   session     GamePlaySession @relation(fields: [sessionId], references: [id])
   sessionId   String
   expansion   GameExpansion   @relation(fields: [expansionId], references: [id])

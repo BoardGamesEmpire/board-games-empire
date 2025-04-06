@@ -1,5 +1,5 @@
 model User {
-  id           String  @id @default(cuid())
+  id           String  @id @default(cuid(2))
 
   // Profile information
   firstName    String?
@@ -109,7 +109,7 @@ model User {
 }
 
 model UserPreferences {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   user   User   @relation(fields: [userId], references: [id])
   userId String @unique
 
@@ -148,7 +148,7 @@ model UserPreferences {
 
 // User to Role assignment (system-wide roles)
 model UserRole {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   user   User   @relation(fields: [userId], references: [id])
   userId String
   role   Role   @relation(fields: [roleId], references: [id])
@@ -161,7 +161,7 @@ model UserRole {
 }
 
 model UserPermission {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   user   User   @relation(fields: [userId], references: [id])
   userId String
 
@@ -185,7 +185,7 @@ model UserPermission {
 }
 
 model UserLoginHistory {
-  id            String   @id @default(cuid())
+  id            String   @id @default(cuid(2))
 
   authentication   UserAuthentication @relation(fields: [authenticationId], references: [id])
   authenticationId String
@@ -201,7 +201,7 @@ model UserLoginHistory {
 }
 
 model UserDevice {
-  id               String   @id @default(cuid())
+  id               String   @id @default(cuid(2))
 
   authentication   UserAuthentication @relation(fields: [authenticationId], references: [id])
   authenticationId String
@@ -219,7 +219,7 @@ model UserDevice {
 }
 
 model UserGameCustomization {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
 
   user   User   @relation(fields: [userId], references: [id])
   userId String
@@ -259,7 +259,7 @@ model UserGameCustomization {
 
 // Specific permissions for customization objects
 model UserGameCustomizationPermission {
-  id              String                @id @default(cuid())
+  id              String                @id @default(cuid(2))
 
   customization   UserGameCustomization @relation(fields: [customizationId], references: [id])
   customizationId String
@@ -280,7 +280,7 @@ model UserGameCustomizationPermission {
 }
 
 model UserAchievement {
-  id            String      @id @default(cuid())
+  id            String      @id @default(cuid(2))
 
   user          User        @relation(fields: [userId], references: [id])
   userId        String
