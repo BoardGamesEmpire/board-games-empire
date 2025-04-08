@@ -3,9 +3,9 @@ import { Injectable, InternalServerErrorException, NotFoundException, Unauthoriz
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthStrategy, TokenType } from '@prisma/client';
-import { createHash, randomBytes } from 'crypto';
 import { DateTime } from 'luxon';
-import * as querystring from 'querystring';
+import * as crypto from 'node:crypto';
+import * as querystring from 'node:querystring';
 import { JoseService } from './jose.service';
 
 @Injectable()
@@ -34,10 +34,11 @@ export class OidcService {
     }
 
     // Generate state, nonce and PKCE params
-    const state = randomBytes(32).toString('hex');
-    const nonce = randomBytes(32).toString('hex');
-    const codeVerifier = randomBytes(64).toString('hex');
-    const codeChallenge = createHash('sha256')
+    const state = crypto.randomBytes(32).toString('hex');
+    const nonce = crypto.randomBytes(32).toString('hex');
+    const codeVerifier = crypto.randomBytes(64).toString('hex');
+    const codeChallenge = crypto
+      .createHash('sha256')
       .update(codeVerifier)
       .digest('base64')
       .replace(/\+/g, '-')

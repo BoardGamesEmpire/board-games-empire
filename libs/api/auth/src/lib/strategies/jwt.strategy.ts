@@ -2,7 +2,6 @@ import { PrismaService } from '@bg-empire/api-prisma';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { Request } from 'express';
 import { DateTime } from 'luxon';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
@@ -17,7 +16,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    console.log('JWT payload:', payload);
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       select: {
@@ -68,10 +66,5 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     return user;
-  }
-
-  override authenticate(req: Request, options?: any): void {
-    console.log('JWT authenticate called', req.headers, options);
-    return super.authenticate(req, options);
   }
 }

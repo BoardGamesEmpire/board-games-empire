@@ -1,76 +1,59 @@
 model GamePlaySession {
   id String @id @default(cuid(2))
 
-  // Optional Event Association
   event   Event?  @relation(fields: [eventId], references: [id])
-  eventId String?
+  eventId String? @map("event_id")
 
-  // Game Details
   game   Game   @relation(fields: [gameId], references: [id])
-  gameId String
+  gameId String @map("game_id")
 
-  // Campaign reference
   campaign   Campaign? @relation(fields: [campaignId], references: [id])
-  campaignId String?
+  campaignId String?   @map("campaign_id")
 
-  // Track which game version was played
   gameVersion   GameVersion? @relation(fields: [gameVersionId], references: [id])
-  gameVersionId String?
+  gameVersionId String?      @map("game_version_id")
 
-  // Track which expansions were used
   expansionsUsed GamePlaySessionExpansion[]
 
-  // Rule variants used in this session
   rulesUsed RuleVariantUsage[]
 
-  // Session-specific campaign info
-  sessionNumber Int? // For tracking sequence in a campaign
-  chapter       String? // Story chapter or adventure module
-  milestone     String? // Important campaign milestone achieved
+  sessionNumber Int?    @map("session_number")
+  chapter       String? @map("chapter")
+  milestone     String? @map("milestone")
 
-  // Character tracking
   characterSessions CharacterSession[]
 
-  // Location and NPC relationships
   campaignLocation   CampaignLocation?       @relation(fields: [campaignLocationId], references: [id])
-  campaignLocationId String?
+  campaignLocationId String?                 @map("campaign_location_id")
   npcAppearances     CampaignNPCAppearance[]
   sessionOutcome     CampaignSessionOutcome?
 
-  // Session Metadata
-  playDate DateTime @default(now()) @db.Timestamptz(3)
-  duration Int? // Duration in minutes
-  location String?
+  playDate DateTime @default(now()) @map("play_date") @db.Timestamptz(3)
+  duration Int?     @map("duration")
+  location String?  @map("location")
 
-  // Play Context
-  context GamePlayContext @default(Casual)
+  context GamePlayContext @default(Casual) @map("context")
 
-  // Players in the Session
   players GamePlayParticipant[]
 
-  // Game Specific Outcomes
   results GamePlayResult[]
 
-  // Optional Household Association
   household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  householdId String?    @map("household_id")
 
-  venue          String? // Physical location name
-  isComplete     Boolean @default(false) // Is the game complete?
-  wasInterrupted Boolean @default(false) // Was the game interrupted?
+  venue          String? @map("venue")
+  isComplete     Boolean @default(false) @map("is_complete")
+  wasInterrupted Boolean @default(false) @map("was_interrupted")
 
-  // Session pictures
   sessionMedia SessionMedia[]
 
-  // Stats tracking
-  playtime Int? // Actual play time in minutes
-  turns    Int? // Number of game turns/rounds
+  playtime Int? @map("playtime")
+  turns    Int? @map("turns")
 
-  // Notes and Additional Information
-  notes String?
+  notes String? @map("notes")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("game_play_sessions")
 }
@@ -93,61 +76,52 @@ enum GamePlayContext {
 model GamePlayParticipant {
   id String @id @default(cuid(2))
 
-  // Session Association
   gamePlaySession   GamePlaySession @relation(fields: [gamePlaySessionId], references: [id])
-  gamePlaySessionId String
+  gamePlaySessionId String          @map("game_play_session_id")
 
-  // User Association (optional - might be a guest)
+  // User Association (optional - might be someone without an account)
   user   User?   @relation(fields: [userId], references: [id])
-  userId String?
+  userId String? @map("user_id")
 
-  // Guest Information
-  guestName String?
+  guestName String? @map("guest_name")
 
   campaignCharacter   CampaignCharacter? @relation(fields: [campaignCharacterId], references: [id])
-  campaignCharacterId String?
+  campaignCharacterId String?            @map("campaign_character_id")
 
-  // Player-specific Details
-  playerPosition Int? // Seat or turn order
-  team           String? // For team-based games
+  playerPosition Int?    @map("player_position")
+  team           String? @map("team")
 
-  // Performance Tracking
-  finalScore Float?
-  placement  Int? // 1st, 2nd, 3rd, etc.
-  winner     Boolean @default(false)
+  finalScore Float?  @map("final_score")
+  placement  Int?    @map("placement")
+  winner     Boolean @default(false) @map("winner")
 
   @@map("game_play_participants")
 }
 
-// Game Play Result Model (for complex scoring or multi-phase games)
+// for complex scoring or multi-phase games
 model GamePlayResult {
   id String @id @default(cuid(2))
 
-  // Session Association
   gamePlaySession   GamePlaySession @relation(fields: [gamePlaySessionId], references: [id])
-  gamePlaySessionId String
+  gamePlaySessionId String          @map("game_play_session_id")
 
-  // Detailed Result Tracking
-  resultType ResultType @default(Score)
+  resultType ResultType @default(Score) @map("result_type")
 
-  // Scoring Details
-  scoringPhase String? // e.g., "Round 1", "Final Scoring"
-  scoreDetails Json? // Flexible JSON for complex scoring systems
+  scoringPhase String? @map("scoring_phase")
+  scoreDetails Json?   @map("score_details")
 
-  // Optional Team or Individual Metrics
-  teamScores        Json?
-  individualMetrics Json?
+  teamScores        Json? @map("team_scores")
+  individualMetrics Json? @map("individual_metrics")
 
   @@map("game_play_results")
 }
 
-// Junction table for GamePlaySession to GameExpansion
 model GamePlaySessionExpansion {
   id          String          @id @default(cuid(2))
   session     GamePlaySession @relation(fields: [sessionId], references: [id])
-  sessionId   String
+  sessionId   String          @map("session_id")
   expansion   GameExpansion   @relation(fields: [expansionId], references: [id])
-  expansionId String
+  expansionId String          @map("expansion_id")
 
   @@unique([sessionId, expansionId])
   @@map("game_play_session_expansions")

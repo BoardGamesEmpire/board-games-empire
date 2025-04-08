@@ -1,47 +1,41 @@
 model Mechanic {
   id          String         @id @default(cuid(2))
   name        String         @unique
-  description String? // Added description field
-  complexity  Int? // Optional 1-10 complexity rating
+  description String?
+  complexity  Int?
   games       GameMechanic[]
 
-  // Related mechanics
   similarMechanics MechanicRelationship[] @relation("PrimaryMechanic")
   similarTo        MechanicRelationship[] @relation("RelatedMechanic")
 
-  // New metadata for network analysis
-  usageCount         Int? // How many games use this mechanic
-  compatibilityScore Float? // How well this mechanic works with others (0-1)
+  usageCount         Int?   @map("usage_count")
+  compatibilityScore Float? @map("compatibility_score")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("mechanics")
 }
 
-// Model for related mechanics
 model MechanicRelationship {
   id                String   @id @default(cuid(2))
   primaryMechanic   Mechanic @relation("PrimaryMechanic", fields: [primaryMechanicId], references: [id])
-  primaryMechanicId String
+  primaryMechanicId String   @map("primary_mechanic_id")
   relatedMechanic   Mechanic @relation("RelatedMechanic", fields: [relatedMechanicId], references: [id])
-  relatedMechanicId String
+  relatedMechanicId String   @map("related_mechanic_id")
 
-  // Relationship details
-  relationshipType MechanicRelationshipType
-  strength         Float // 0-1 score indicating relationship strength
-  description      String? // Optional explanation of the relationship
+  relationshipType MechanicRelationshipType @map("relationship_type")
+  strength         Float
+  description      String?
 
-  // Who established this relationship
   createdBy   User?   @relation(fields: [createdById], references: [id])
-  createdById String?
+  createdById String? @map("created_by_id")
 
-  // Validation metrics
-  communityRating Float? // Community agreement with relationship (0-1)
-  supportEvidence String? // Evidence supporting this relationship (e.g., games using both)
+  communityRating Float?  @map("community_rating")
+  supportEvidence String? @map("support_evidence")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([primaryMechanicId, relatedMechanicId, relationshipType])
   @@index([primaryMechanicId])
@@ -50,25 +44,25 @@ model MechanicRelationship {
 }
 
 enum MechanicRelationshipType {
-  Alternative // Mechanics that serve similar purposes
-  Complementary // Mechanics that work well together
-  Conflicting // Mechanics that are difficult to combine
-  Evolution // One evolved from the other
-  Prerequisite // One mechanic requires the other
-  Similar // Mechanics that are conceptually similar
-  SubMechanic // One is a specialized version of the other
+  Alternative
+  Complementary
+  Conflicting
+  Evolution
+  Prerequisite
+  Similar
+  SubMechanic
 
   @@map("mechanic_relationship_types")
 }
 
 model GameMechanic {
   id         String   @id @default(cuid(2))
-  createdAt  DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt  DateTime @default(now()) @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
   game       Game     @relation(fields: [gameId], references: [id])
-  gameId     String
+  gameId     String   @map("game_id")
   mechanic   Mechanic @relation(fields: [mechanicId], references: [id])
-  mechanicId String
+  mechanicId String   @map("mechanic_id")
 
   @@unique([gameId, mechanicId])
   @@map("game_mechanics")

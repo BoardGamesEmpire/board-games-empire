@@ -1,103 +1,88 @@
 model IdentityProvider {
-  id             String    @id @default(cuid(2))
-  name           String    @unique             // Display name (e.g., "Google")
-  provider       String    @unique             // Provider identifier (e.g., "google")
+  id       String @id @default(cuid(2))
+  name     String @unique
+  provider String @unique
 
-  // OIDC configuration
-  clientId       String                        // OIDC client ID
-  clientSecret   String                        // OIDC client secret (should be encrypted)
-  discoveryUrl   String?                       // OIDC discovery URL
-  authorizationUrl String?                     // Authorization endpoint URL
-  tokenUrl       String?                       // Token endpoint URL
-  userInfoUrl    String?                       // UserInfo endpoint URL
-  jwksUrl        String?                       // JWKS endpoint URL
+  clientId         String  @map("client_id")
+  clientSecret     String  @map("client_secret")
+  discoveryUrl     String? @map("discovery_url")
+  authorizationUrl String? @map("authorization_url")
+  tokenUrl         String? @map("token_url")
+  userInfoUrl      String? @map("user_info_url")
+  jwksUrl          String? @map("jwks_url")
 
-  // Provider configuration
-  scopes         String[]  @default(["openid", "email", "profile"]) // Requested scopes
-  enabled        Boolean   @default(true)      // Whether this provider is active
+  scopes  String[] @default(["openid", "email", "profile", "offline_access"]) @map("scopes")
+  enabled Boolean  @default(true)
 
-  // External identities using this provider
-  identities     UserExternalIdentity[]
+  identities UserExternalIdentity[]
 
-  // sessions
-  authSessions   OidcAuthSession[]
+  authSessions OidcAuthSession[]
 
-  // Timestamps
-  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("identity_providers")
 }
 
 model UserExternalIdentity {
-  id             String    @id @default(cuid(2))
+  id String @id @default(cuid(2))
 
-  // User association
   authentication   UserAuthentication @relation(fields: [authenticationId], references: [id])
-  authenticationId String
+  authenticationId String             @map("authentication_id")
 
-  // Provider association
-  provider       IdentityProvider @relation(fields: [providerId], references: [id])
-  providerId     String
+  provider   IdentityProvider @relation(fields: [providerId], references: [id])
+  providerId String           @map("provider_id")
 
-  // Identity details
-  externalId     String            // User ID at the external provider
-  email          String?           // Email from the provider (may differ from user.email)
-  rawProfile     Json?             // Raw profile data from provider
-  accessToken    String?           // Encrypted access token
-  refreshToken   String?           // Encrypted refresh token
-  tokenExpiresAt DateTime? @db.Timestamptz(3)         // When the token expires
+  externalId     String    @map("external_id")
+  email          String?
+  rawProfile     Json?     @map("raw_profile")
+  accessToken    String?   @map("access_token")
+  refreshToken   String?   @map("refresh_token")
+  tokenExpiresAt DateTime? @map("token_expires_at") @db.Timestamptz(3)
 
-  // Timestamps
-  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  @@unique([providerId, externalId])  // Each external ID can only be linked once per provider
+  @@unique([providerId, externalId])
   @@map("user_external_identities")
 }
 
 model OidcAuthSession {
-  id             String    @id @default(cuid(2))
+  id String @id @default(cuid(2))
 
-  // Session details
-  state          String    @unique   // OIDC state parameter for validation
-  nonce          String?             // OIDC nonce parameter for validation
-  codeVerifier   String?             // PKCE code verifier
-  redirectUri    String              // Where to redirect after auth
+  state        String  @unique
+  nonce        String?
+  codeVerifier String? @map("code_verifier")
+  redirectUri  String  @map("redirect_uri")
 
-  // User association - optional to allow flow initiation
   authentication   UserAuthentication? @relation(fields: [authenticationId], references: [id])
-  authenticationId String?
+  authenticationId String?             @map("authentication_id")
 
-  // Provider details
-  provider       IdentityProvider @relation(fields: [providerId], references: [id])
-  providerId     String
+  provider   IdentityProvider @relation(fields: [providerId], references: [id])
+  providerId String           @map("provider_id")
 
-  // Session expiration
-  expiresAt      DateTime           // When this session expires
+  expiresAt DateTime @map("expires_at")
 
-  // Timestamps
-  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@map("oidc_auth_sessions")
 }
 
 model UserSession {
-  id                String             @id @default(cuid(2))
-  authentication    UserAuthentication @relation(fields: [authenticationId], references: [id], onDelete: Cascade)
-  authenticationId  String
+  id               String             @id @default(cuid(2))
+  authentication   UserAuthentication @relation(fields: [authenticationId], references: [id], onDelete: Cascade)
+  authenticationId String             @map("authentication_id")
 
-  // Session metadata
-  token             String             @unique // Will store JWT reference
-  deviceInfo        Json?              // Browser, OS, etc.
-  ipAddress         String?
-  userAgent         String?
-  lastActive        DateTime           @default(now())
-  expiresAt         DateTime
-  isValid           Boolean            @default(true)
+  token      String   @unique
+  deviceInfo Json?    @map("device_info")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  lastActive DateTime @default(now()) @map("last_active")
+  expiresAt  DateTime @map("expires_at")
+  isValid    Boolean  @default(true) @map("is_valid")
 
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([token])
   @@index([authenticationId, isValid])
@@ -105,58 +90,52 @@ model UserSession {
 }
 
 model UserAuthentication {
-  id            String       @id @default(cuid(2))
+  id String @id @default(cuid(2))
 
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String       @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique @map("user_id")
 
-  // Credentials
-  email         String       @unique
-  password      String?
-  authStrategy  AuthStrategy @default(Local)
+  email        String       @unique
+  password     String?
+  authStrategy AuthStrategy @default(Local) @map("auth_strategy")
 
-  // Email verification
-  emailVerified Boolean      @default(false)
+  emailVerified Boolean @default(false) @map("email_verified")
 
-  lastPasswordChange DateTime? @db.Timestamptz(3)
+  lastPasswordChange DateTime? @map("last_password_change") @db.Timestamptz(3)
 
-  // Security features
-  accountLocked Boolean      @default(false)
-  accountLockedUntil DateTime? @db.Timestamptz(3)
-  failedLoginAttempts Int    @default(0)
-  lastFailedLogin DateTime? @db.Timestamptz(3)
-  lastLogin      DateTime? @db.Timestamptz(3)
+  accountLocked       Boolean   @default(false) @map("account_locked")
+  accountLockedUntil  DateTime? @map("account_locked_until") @db.Timestamptz(3)
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
+  lastFailedLogin     DateTime? @map("last_failed_login") @db.Timestamptz(3)
+  lastLogin           DateTime? @map("last_login") @db.Timestamptz(3)
 
-  // 2FA
-  twoFactorEnabled Boolean   @default(false)
-  twoFactorSecret String?
-  recoveryCodesHash String?
+  twoFactorEnabled  Boolean @default(false) @map("two_factor_enabled")
+  twoFactorSecret   String? @map("two_factor_secret")
+  recoveryCodesHash String? @map("recovery_codes_hash")
 
-  // External identity management
-  isExternalUser Boolean     @default(false)
+  isExternalUser     Boolean                @default(false) @map("is_external_user")
   externalIdentities UserExternalIdentity[]
-  oidcSessions    OidcAuthSession[]
+  oidcSessions       OidcAuthSession[]
 
-  // Devices and sessions
-  loginHistory    UserLoginHistory[]
-  sessions        UserSession[]
-  knownDevices    UserDevice[]
-  tokens          Token[]
+  loginHistory UserLoginHistory[]
+  sessions     UserSession[]
+  knownDevices UserDevice[]
+  tokens       Token[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("user_authentications")
 }
 
 enum AuthStrategy {
-  Apple          // Apple OIDC
-  Custom         // Custom OIDC provider
-  Facebook       // Facebook OIDC
-  GitHub         // GitHub OIDC
-  Google         // Google OIDC
-  Local          // Traditional email/password
-  Microsoft      // Microsoft OIDC
+  Apple
+  Custom
+  Facebook
+  GitHub
+  Google
+  Local
+  Microsoft
 
   @@map("auth_strategies")
 }

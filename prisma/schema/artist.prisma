@@ -1,47 +1,44 @@
 model Artist {
   id        String  @id @default(cuid(2))
-  name      String // No unique constraint to handle same-named artists
-  fullName  String? // Optional full/legal name if different
-  website   String? // Personal or portfolio website
-  biography String? // Brief artist bio
-  country   String? // Country of origin/residence
+  name      String
+  fullName  String? @map("full_name")
+  website   String?
+  biography String?
+  country   String?
 
-  // Social media and contact
-  boardGameGeekUrl String? // BGG profile link
-  twitterHandle    String?
-  instagramHandle  String?
+  socialMedia Json? @map("social_media")
 
-  games GameArtist[] // Games with artwork by this artist
+  games GameArtist[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("artists")
 }
 
 model GameArtist {
   id        String   @id @default(cuid(2))
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
   game      Game     @relation(fields: [gameId], references: [id])
-  gameId    String
+  gameId    String   @map("game_id")
   artist    Artist   @relation(fields: [artistId], references: [id])
-  artistId  String
+  artistId  String   @map("artist_id")
 
-  role    ArtistRole @default(Primary) // Primary, Cover, Component, etc.
-  details String? // Specific contributions (e.g., "Character Design")
+  role    ArtistRole @default(Primary) @map("role")
+  details String?
 
   @@unique([gameId, artistId])
   @@map("game_artists")
 }
 
 enum ArtistRole {
-  Primary // Main artist
-  Cover // Cover art only
-  Component // Game components
-  Illustration // Interior illustrations
-  Graphic // Graphic design
-  Supporting // Minor contributions
+  Primary
+  Cover
+  Component
+  Illustration
+  Graphic
+  Supporting
 
   @@map("artist_roles")
 }

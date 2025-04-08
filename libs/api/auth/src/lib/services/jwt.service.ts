@@ -6,9 +6,6 @@ import { JwtService as NestJwtService } from '@nestjs/jwt';
 export class JwtService {
   constructor(private jwtService: NestJwtService, private configService: ConfigService) {}
 
-  /**
-   * Validate a JWT token
-   */
   async validateToken(token: string) {
     try {
       return await this.jwtService.verifyAsync(token, {
@@ -19,9 +16,6 @@ export class JwtService {
     }
   }
 
-  /**
-   * Generate a JWT token
-   */
   sign(payload: Record<string, any>): string {
     return this.jwtService.sign(payload);
   }

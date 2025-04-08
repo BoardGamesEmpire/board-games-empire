@@ -1,14 +1,14 @@
 model Notification {
   id     String @id @default(cuid(2))
   user   User   @relation(fields: [userId], references: [id])
-  userId String
+  userId String @map("user_id")
 
   type            NotificationType
   message         String
-  relatedEntityId String?
-  isRead          Boolean          @default(false)
+  relatedEntityId String?          @map("related_entity_id")
+  isRead          Boolean          @default(false) @map("is_read")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@map("notifications")
 }
@@ -21,10 +21,10 @@ enum NotificationType {
   GameReview
   General
   HouseholdInvite
+  ListItem
   System
   UserMention
   UserTag
-  WishListItem
 
   @@map("notification_types")
 }

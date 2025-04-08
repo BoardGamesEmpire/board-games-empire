@@ -1,16 +1,15 @@
 model Friendship {
   id String @id @default(cuid(2))
 
-  // Users in the friendship
   requestor   User   @relation("FriendshipRequestor", fields: [requestorId], references: [id])
-  requestorId String
+  requestorId String @map("requestor_id")
   recipient   User   @relation("FriendshipRecipient", fields: [recipientId], references: [id])
-  recipientId String
+  recipientId String @map("recipient_id")
 
-  status FriendshipStatus @default(Pending)
+  status FriendshipStatus @default(Pending) @map("status")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([requestorId, recipientId])
   @@map("friendships")

@@ -1,32 +1,26 @@
 model Family {
   id          String  @id @default(cuid(2))
   name        String  @unique
-  description String? // What connects these games
+  description String?
 
-  // Family metadata
   publisher   Publisher? @relation(fields: [publisherId], references: [id])
-  publisherId String? // Primary publisher for this family (optional)
+  publisherId String?    @map("publisher_id")
 
-  // Branding
-  logoUrl String? // Logo image for the family
-  website String? // Official website for the family/series
+  logoUrl String? @map("logo_url")
+  website String?
 
-  // Family type
-  familyType FamilyType @default(Series)
+  familyType FamilyType @default(Series) @map("family_type")
 
-  // Family relationships - hierarchical structure
   parentFamily   Family?  @relation("FamilyHierarchy", fields: [parentFamilyId], references: [id])
-  parentFamilyId String?
+  parentFamilyId String?  @map("parent_family_id")
   subfamilies    Family[] @relation("FamilyHierarchy")
 
-  collectionFamily FamilyCollection[] // User collections for this family
+  collectionFamily FamilyCollection[]
 
-  // Games in this family through junction table
   games GameFamily[]
 
-  // Creation and update timestamps
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("families")
 }
@@ -34,61 +28,54 @@ model Family {
 model GameFamily {
   id       String @id @default(cuid(2))
   game     Game   @relation(fields: [gameId], references: [id])
-  gameId   String
+  gameId   String @map("game_id")
   family   Family @relation(fields: [familyId], references: [id])
-  familyId String
+  familyId String @map("family_id")
 
-  // Enhanced fields for tracking game position in series
-  position Int? // Chronological or release order position
+  position Int?
 
-  // Timeline and narrative information
-  releaseOrder Int? // Order of release (may differ from narrative position)
-  storyOrder   Int? // Order in the story/narrative timeline
+  releaseOrder Int? @map("release_order")
+  storyOrder   Int? @map("story_order")
 
-  // Relationship to other games in the family
-  isStandalone    Boolean  @default(true) // Can be played without other games in family
-  requiredGameIds String[] // IDs of games required to play this one
+  isStandalone    Boolean  @default(true) @map("is_standalone")
+  requiredGameIds String[] @map("required_game_ids")
 
-  // Additional metadata
-  note String? // Context for this game in the family
+  note String?
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([gameId, familyId])
   @@map("game_families")
 }
 
 enum FamilyType {
-  Series // Games in the same series (e.g., Pandemic series)
-  Universe // Games in the same fictional universe
-  Reimplementation // Games that reimagine earlier games
-  System // Games using the same system (e.g., GIPF series)
-  Brand // Games under the same brand
-  Collection // Thematic collection without strong connection
-  Publisher // Games from the same publisher (when that's the primary grouping)
+  Series
+  Universe
+  Reimplementation
+  System
+  Brand
+  Collection
+  Publisher
 
   @@map("family_types")
 }
 
-// Add a new model for tracking collections within game families
 model FamilyCollection {
   id       String @id @default(cuid(2))
   family   Family @relation(fields: [familyId], references: [id])
-  familyId String
+  familyId String @map("family_id")
   user     User   @relation(fields: [userId], references: [id])
-  userId   String
+  userId   String @map("user_id")
 
-  // Collection tracking
-  isComplete   Boolean   @default(false)
-  missingCount Int? // Number of games missing from collection
-  collectedOn  DateTime? @db.Timestamptz(3) // When the collection was completed
+  isComplete   Boolean   @default(false) @map("is_complete")
+  missingCount Int?      @map("missing_count")
+  collectedOn  DateTime? @map("collected_on") @db.Timestamptz(3)
 
-  // Notification preferences
-  notifyOnNewReleases Boolean @default(true)
+  notifyOnNewReleases Boolean @default(true) @map("notify_on_new_releases")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([familyId, userId])
   @@map("family_collections")

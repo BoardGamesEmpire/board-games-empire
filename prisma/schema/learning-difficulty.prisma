@@ -1,9 +1,9 @@
 enum LearningDifficulty {
-  Challenging // Required multiple explanations
-  Easy // Most people got it quickly
-  Moderate // Took some explanation but then understood
-  VeryDifficult // Still confusion after multiple plays
-  VeryEasy // Everyone picked it up immediately
+  Challenging
+  Easy
+  Moderate
+  VeryDifficult
+  VeryEasy
 
   @@map("learning_difficulties")
 }

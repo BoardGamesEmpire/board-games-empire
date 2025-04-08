@@ -15,17 +15,17 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(username: string, password: string): Promise<User> {
-    this.logger.debug(`Authentication attempt for user: ${username}`);
+  async validate(email: string, password: string): Promise<User> {
+    this.logger.debug(`Authentication attempt for user: ${email}`);
 
-    if (!username || !password) {
-      this.logger.warn(`Failed authentication attempt for user: ${username}`);
-      throw new UnauthorizedException('Username and password are required');
+    if (!email || !password) {
+      this.logger.warn(`Failed authentication attempt for user: ${email}`);
+      throw new UnauthorizedException('Email and password are required');
     }
 
-    const user = await this.authService.validateUser(username, password);
+    const user = await this.authService.validateUser(email, password);
     if (!user) {
-      this.logger.warn(`Failed authentication attempt for user: ${username}`);
+      this.logger.warn(`Failed authentication attempt for user: ${email}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 

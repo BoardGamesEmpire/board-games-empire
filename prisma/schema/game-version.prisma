@@ -1,38 +1,34 @@
 model GameVersion {
   id     String @id @default(cuid(2))
   game   Game   @relation(fields: [gameId], references: [id])
-  gameId String
+  gameId String @map("game_id")
 
-  versionName String // e.g., "Base Game", "2nd Edition", "Revised"
-  releaseYear Int?
-  isBaseline  Boolean @default(false) // Is this the main version?
+  versionName String  @map("version_name")
+  releaseYear Int?    @map("release_year")
+  isBaseline  Boolean @default(false) @map("is_baseline")
 
-  // Rule variant relationship
   ruleVariants GameVersionRuleVariant[]
 
-  // Track when this version was used
   playSessionsUsed  GamePlaySession[]
   ruleVariantUsages RuleVariantUsageVersion[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("game_versions")
 }
 
-// Junction table for RuleVariants to GameVersions
 model GameVersionRuleVariant {
   id            String      @id @default(cuid(2))
   ruleVariant   RuleVariant @relation(fields: [ruleVariantId], references: [id])
-  ruleVariantId String
+  ruleVariantId String      @map("rule_variant_id")
   gameVersion   GameVersion @relation(fields: [gameVersionId], references: [id])
-  gameVersionId String
+  gameVersionId String      @map("game_version_id")
 
-  // Optional override settings specific to this version
-  overrideCategory RuleCategory?
-  overrideRuleText String? // Version-specific rule text modification
+  overrideCategory RuleCategory? @map("override_category")
+  overrideRuleText String?       @map("override_rule_text")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@unique([ruleVariantId, gameVersionId])
   @@map("game_version_rule_variants")

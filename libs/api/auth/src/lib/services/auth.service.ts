@@ -21,14 +21,34 @@ export class AuthService {
       include: { user: true },
     });
 
+    if (!auth) {
+      Logger.warn(`No authentication found for email: ${email}`);
+
+      return null;
+    }
+
+    if (auth.accountLocked) {
+      Logger.warn(`Account is locked for email: ${email}`);
+
+      await this.increaseFailedLoginAttempts(auth.id);
+
+      return null;
+    }
+
     // If user doesn't have a password (OIDC user), validation fails
-    if (!auth?.password) {
+    if (!auth.password) {
+      Logger.warn(`No password found for email: ${email}`);
+
+      await this.increaseFailedLoginAttempts(auth.id);
+
       return null;
     }
 
     const isPasswordValid = await bcrypt.compare(password, auth.password);
     if (!isPasswordValid) {
-      // TODO: Increment failed login attempts
+      Logger.warn(`Invalid password for email: ${email}`);
+
+      await this.increaseFailedLoginAttempts(auth.id);
       return null;
     }
 
@@ -70,7 +90,7 @@ export class AuthService {
 
     const accessTokenExpiry = DateTime.now().plus({ hours: 1 }).toJSDate();
     const refreshTokenExpiry = DateTime.now().plus({ days: 30 }).toJSDate();
-    const sessionExpiry = refreshTokenExpiry; // Match session with refresh token
+    const sessionExpiry = refreshTokenExpiry;
 
     const deviceInfo = this.extractDeviceInfo(userAgent);
 
@@ -101,7 +121,7 @@ export class AuthService {
             type: TokenType.Refresh,
             expiresAt: refreshTokenExpiry,
             metadata: {
-              sessionId: session.id,
+              session_id: session.id,
             },
           },
         ],
@@ -137,6 +157,42 @@ export class AuthService {
         avatar: user.avatar,
       },
     };
+  }
+
+  private async increaseFailedLoginAttempts(authId: string, ipAddress?: string, userAgent?: string) {
+    const auth = await this.prisma.userAuthentication.update({
+      where: { id: authId },
+      data: {
+        lastFailedLogin: new Date(),
+        failedLoginAttempts: {
+          increment: 1,
+        },
+        loginHistory: {
+          create: {
+            ipAddress,
+            userAgent,
+            success: false,
+          },
+        },
+      },
+
+      select: {
+        failedLoginAttempts: true,
+        accountLocked: true,
+      },
+    });
+
+    // TODO: failed login attempts threshold should be configurable
+    if (auth.failedLoginAttempts >= 5) {
+      await this.prisma.userAuthentication.update({
+        where: { id: authId },
+        data: {
+          accountLocked: true,
+        },
+      });
+    }
+
+    return auth;
   }
 
   /**
@@ -178,15 +234,28 @@ export class AuthService {
       throw new ConflictException('Email already in use');
     }
 
+    const usersCount = await this.prisma.user.count();
+    const isSiteOwner = usersCount === 0;
+
     const hashedPassword = await bcrypt.hash(registerDto.password, 12);
 
     try {
       const verificationToken = crypto.randomBytes(32).toString('hex');
       const tokenExpiry = DateTime.now().plus({ days: 1 }).toJSDate();
 
+      const roleName = isSiteOwner ? 'System Administrator' : 'User';
+      const role = await this.prisma.role.findUnique({
+        where: { name: roleName },
+        select: { id: true },
+      });
+
+      if (!role) {
+        throw new ConflictException('Role not found');
+      }
+
       let user;
       await this.prisma.$transaction(async (tx) => {
-        user = await tx.user.create({
+        const createdUser = await tx.user.create({
           data: {
             username: registerDto.username,
             firstName: registerDto.firstName,
@@ -198,6 +267,22 @@ export class AuthService {
                 password: hashedPassword,
                 lastLogin: new Date(),
                 emailVerified: false,
+
+                tokens: {
+                  create: {
+                    token: verificationToken,
+                    type: TokenType.EmailVerification,
+                    expiresAt: tokenExpiry,
+                  },
+                },
+              },
+            },
+            preferences: {
+              create: {},
+            },
+            roles: {
+              create: {
+                roleId: role.id,
               },
             },
           },
@@ -210,24 +295,9 @@ export class AuthService {
           },
         });
 
-        await tx.token.create({
-          data: {
-            authenticationId: user.authentication!.id,
-            token: verificationToken,
-            type: TokenType.EmailVerification,
-            expiresAt: tokenExpiry,
-          },
-        });
-
-        // Create default user preferences
-        await this.prisma.userPreferences.create({
-          data: {
-            userId: user.id,
-          },
-        });
+        user = createdUser;
       });
 
-      // TODO: Create user roles and permissions
       // TODO: Send verification email
       // TODO: Login?
 
@@ -245,7 +315,6 @@ export class AuthService {
    * Refresh access token using refresh token
    */
   async refreshToken(refreshToken: string) {
-    // Find the refresh token
     const tokenRecord = await this.prisma.token.findUnique({
       where: { token: refreshToken, type: TokenType.Refresh },
       include: {
@@ -373,7 +442,7 @@ export class AuthService {
             type: TokenType.Refresh,
             isRevoked: false,
             metadata: {
-              path: ['sessionId'],
+              path: ['session_id'],
               equals: sessionId,
             },
           },

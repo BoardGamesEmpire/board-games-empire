@@ -1,4 +1,3 @@
-// apps/api/src/app/config/configuration.ts
 export default () => ({
   port: parseInt(process.env.PORT, 10) || 3000,
   database: {
@@ -17,6 +16,7 @@ export default () => ({
     credentials: process.env.CORS_CREDENTIALS === 'true',
   },
   swagger: {
+    basePath: process.env.SWAGGER_BASE_PATH || 'localhost/api',
     enabled: process.env.SWAGGER_ENABLED === 'true' || process.env.NODE_ENV !== 'production',
     title: process.env.SWAGGER_TITLE || 'Board Games Empire API',
     description: process.env.SWAGGER_DESCRIPTION || 'RESTful API for Board Games Empire',

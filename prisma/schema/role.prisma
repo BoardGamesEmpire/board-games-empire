@@ -2,19 +2,17 @@ model Role {
   id          String  @id @default(cuid(2))
   name        String  @unique
   description String?
-  isSystem    Boolean @default(false) // Is this a system-defined role?
+  isSystem    Boolean @default(false) @map("is_system")
 
-  // Role permissions
   permissions RolePermission[]
 
-  // Role assignments
   userRoles      UserRole[]
   householdRoles HouseholdRole[]
 
   policyAssignments RolePolicyAssignment[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("roles")
 }
@@ -22,11 +20,11 @@ model Role {
 model RolePermission {
   id     String @id @default(cuid(2))
   role   Role   @relation(fields: [roleId], references: [id])
-  roleId String
+  roleId String @map("role_id")
 
   permission Permission
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@unique([roleId, permission])
   @@map("role_permissions")

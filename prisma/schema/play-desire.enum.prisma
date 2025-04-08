@@ -1,9 +1,9 @@
 enum PlayDesire {
-  Anytime // Happy to play anytime
-  Occasionally // Every now and then
-  RarelyInterested // Only in specific moods
-  OnceMore // Willing to try once more
-  OnlyIfAsked // Would play if specifically requested
-  ReluctantlyWilling // Would play but not happily
-  NeverAgain // Refuses to play
+  Anytime
+  Occasionally
+  RarelyInterested
+  OnceMore
+  OnlyIfAsked
+  ReluctantlyWilling
+  NeverAgain
 }

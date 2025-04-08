@@ -1,68 +1,67 @@
 model Designer {
-  id        String  @id @default(cuid(2))
+  id String @id @default(cuid(2))
+
   name      String  @unique
-  fullName  String? // Optional full/legal name if different
-  website   String? // Personal or company website
-  biography String? // Brief designer bio
-  country   String? // Country of origin/residence
+  fullName  String? @map("full_name")
+  website   String?
+  biography String?
+  country   String?
 
-  // Designer metadata
-  boardGameGeekUrl String? // BGG profile link
-  debutYear        Int? // Year of first published game
+  boardGameGeekUrl String? @map("board_game_geek_url")
+  debutYear        Int?    @map("debut_year")
 
-  // Designer networks
   collaborators    DesignerCollaboration[] @relation("PrimaryDesigner")
   collaboratedWith DesignerCollaboration[] @relation("Collaborator")
 
-  // Metadata for network analysis
-  totalCollaborators         Int? // Total number of unique designers collaborated with
-  mostFrequentCollaboratorId String? // Designer they've worked with most
+  totalCollaborators         Int?    @map("total_collaborators")
+  mostFrequentCollaboratorId String? @map("most_frequent_collaborator_id")
 
-  games GameDesigner[] // Games designed by this person
+  games GameDesigner[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("designers")
 }
 
 model GameDesigner {
-  id         String   @id @default(cuid(2))
-  createdAt  DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
-  game       Game     @relation(fields: [gameId], references: [id])
-  gameId     String
-  designer   Designer @relation(fields: [designerId], references: [id])
-  designerId String
+  id String @id @default(cuid(2))
 
-  role DesignerRole @default(Primary) // Primary, Developer, etc.
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String @map("game_id")
+
+  designer   Designer @relation(fields: [designerId], references: [id])
+  designerId String   @map("designer_id")
+
+  role DesignerRole @default(Primary)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([gameId, designerId])
   @@map("game_designers")
 }
 
-// model for tracking designer collaborations
 model DesignerCollaboration {
-  id                String   @id @default(cuid(2))
+  id String @id @default(cuid(2))
+
   primaryDesigner   Designer @relation("PrimaryDesigner", fields: [primaryDesignerId], references: [id])
-  primaryDesignerId String
-  collaborator      Designer @relation("Collaborator", fields: [collaboratorId], references: [id])
-  collaboratorId    String
+  primaryDesignerId String   @map("primary_designer_id")
 
-  // Collaboration details
-  collaborationCount  Int  @default(1) // Number of games together
-  firstCollaboration  Int? // Year of first collaboration
-  latestCollaboration Int? // Year of most recent collaboration
+  collaborator   Designer @relation("Collaborator", fields: [collaboratorId], references: [id])
+  collaboratorId String   @map("collaborator_id")
 
-  // Which games they collaborated on
-  games Game[]
+  collaborationCount  Int  @default(1) @map("collaboration_count")
+  firstCollaboration  Int? @map("first_collaboration")
+  latestCollaboration Int? @map("latest_collaboration")
 
-  // Metadata
-  strength Float? // Calculated strength of collaboration (1-10)
-  notes    String? // Notes about this collaboration
+  gameCollaborations GameDesignerCollaboration[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  strength Float?
+  notes    String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([primaryDesignerId, collaboratorId])
   @@index([primaryDesignerId])
@@ -71,10 +70,32 @@ model DesignerCollaboration {
 }
 
 enum DesignerRole {
-  Primary // Lead designer
-  Secondary // Supporting designer
-  Developer // Game developer
-  Contributor // Minor contributions
+  Primary
+  Secondary
+  Developer
+  Contributor
 
   @@map("designer_roles")
+}
+
+model GameDesignerCollaboration {
+  id String @id @default(cuid(2))
+
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String @map("game_id")
+
+  designerCollaboration   DesignerCollaboration @relation(fields: [designerCollaborationId], references: [id])
+  designerCollaborationId String                @map("designer_collaboration_id")
+
+  notes            String?
+  contributionType String? @map("contribution_type")
+  year             Int?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([gameId, designerCollaborationId])
+  @@index([gameId])
+  @@index([designerCollaborationId])
+  @@map("game_designer_collaborations")
 }

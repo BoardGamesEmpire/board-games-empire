@@ -4,32 +4,30 @@ model Achievement {
   description String
   icon        String?
 
-  // Achievement criteria
   type      AchievementType
-  threshold Int             @default(1) // Number required to earn
+  threshold Int             @default(1)
 
-  // User achievements
   earnedBy UserAchievement[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("achievements")
 }
 
 enum AchievementType {
-  Collector // Games from specific category/mechanic
-  Completionist // Fill out all profile fields
+  Collector
+  Completionist
   EventsAttended
   EventsHosted
   FriendsAdded
-  GameMaster // GM a game X times
-  GameMastery // Play same game X times
+  GameMaster
+  GameMastery
   GamesOwned
   GamesPlayed
   GamesRated
   PlayStreak
-  Socialite // Interact with other users
+  Socialite
   WinStreak
 
   @@map("achievement_types")

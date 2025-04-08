@@ -1,102 +1,91 @@
-// Core model for tracking different implementations of a game
 model GameImplementation {
   id     String @id @default(cuid(2))
   game   Game   @relation(fields: [gameId], references: [id])
-  gameId String
+  gameId String @map("game_id")
 
-  // Implementation details
   platform GamePlatform
-  title    String? // Title if different from base game
-  url      String? // Link to app store, website, etc.
+  title    String?
+  url      String?
 
-  // Publisher information
   publisher   Publisher? @relation(fields: [publisherId], references: [id])
-  publisherId String? // Optional - might not have a publisher
+  publisherId String?    @map("publisher_id")
 
-  // Release details
-  releaseDate DateTime? @db.Timestamptz(3)
-  version     String? // Current version
-  lastUpdated DateTime? @db.Timestamptz(3) // Last app update
+  releaseDate DateTime? @map("release_date") @db.Timestamptz(3)
+  version     String?
+  lastUpdated DateTime? @map("last_updated") @db.Timestamptz(3)
 
-  // Pricing and access
-  pricingModel   PricingModel?
-  basePrice      Float? // Base price in USD
-  hasPurchases   Boolean       @default(false) // In-app purchases
-  isSubscription Boolean       @default(false) // Requires subscription
+  pricingModel   PricingModel? @map("pricing_model")
+  basePrice      Float?        @map("base_price")
+  hasPurchases   Boolean       @default(false) @map("has_purchases")
+  isSubscription Boolean       @default(false) @map("is_subscription")
 
-  // Features
-  supportsSolo   Boolean @default(false) // Can play against AI
-  supportsLocal  Boolean @default(false) // Local multiplayer
-  supportsOnline Boolean @default(false) // Online multiplayer
-  hasAsyncPlay   Boolean @default(false) // Turn-based async
-  hasRealtime    Boolean @default(false) // Realtime play
-  hasTutorial    Boolean @default(false) // Includes tutorial
+  supportsSolo   Boolean @default(false) @map("supports_solo")
+  supportsLocal  Boolean @default(false) @map("supports_local")
+  supportsOnline Boolean @default(false) @map("supports_online")
+  hasAsyncPlay   Boolean @default(false) @map("has_async_play")
+  hasRealtime    Boolean @default(false) @map("has_realtime")
+  hasTutorial    Boolean @default(false) @map("has_tutorial")
 
-  // User tracking
   userRatings ImplementationRating[]
 
-  // External IDs
-  appStoreId       String? // iOS App Store ID
-  googlePlayId     String? // Google Play ID
-  steamAppId       String? // Steam App ID
-  boardGameArenaId String? // BGA ID
+  appStoreId       String? @map("app_store_id")
+  googlePlayId     String? @map("google_play_id")
+  steamAppId       String? @map("steam_app_id")
+  boardGameArenaId String? @map("board_game_arena_id")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([gameId, platform])
   @@map("game_implementations")
 }
 
-// User ratings for implementations
 model ImplementationRating {
   id               String             @id @default(cuid(2))
   implementation   GameImplementation @relation(fields: [implementationId], references: [id])
-  implementationId String
+  implementationId String             @map("implementation_id")
 
   user   User   @relation(fields: [userId], references: [id])
-  userId String
+  userId String @map("user_id")
 
-  // Rating details
-  rating          Float // 1-5 star rating
-  review          String? // Optional review text
-  usabilityRating Float? // 1-5 for UI/UX
-  featureRating   Float? // 1-5 for feature completeness
-  aiRating        Float? // 1-5 for AI quality if applicable
+  rating          Float
+  review          String?
+  usabilityRating Float?  @map("usability_rating")
+  featureRating   Float?  @map("feature_rating")
+  aiRating        Float?  @map("ai_rating")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([implementationId, userId])
   @@map("implementation_ratings")
 }
 
-// Platform enum defining implementation types
 enum GamePlatform {
-  Android // Android app
-  BoardGameArena // On Board Game Arena
-  EpicGames // Epic Games Store
-  iOS // iOS app
-  OtherDigital // Other digital implementation
-  PhysicalOnly // Traditional board game only
-  PlayStation // PlayStation
-  Steam // PC via Steam
-  Switch // Nintendo Switch
-  Tabletopia // On Tabletopia
-  TabletopSimulator // On Tabletop Simulator
-  Vassal // Vassal module
-  WebBased // Browser-based implementation
-  Xbox // Xbox
+  Android
+  BoardGameArena
+  EpicGames
+  iOS
+  OtherDigital
+  PhysicalOnly
+  PlayStation
+  Steam
+  Switch
+  Tabletopia
+  TabletopSimulator
+  Vassal
+  WebBased
+  Xbox
 
   @@map("game_platforms")
 }
 
 enum PricingModel {
-  Free // Completely free
-  Freemium // Free with premium features
-  Mixed // Multiple pricing options
-  PaidUpfront // One-time purchase
-  Subscription // Requires subscription
+  Free
+  Freemium
+  Mixed
+  PaidUpfront
+  Subscription
 
   @@map("pricing_models")
 }

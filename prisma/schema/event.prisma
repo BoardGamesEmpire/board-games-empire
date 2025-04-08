@@ -1,9 +1,9 @@
 model Event {
   id          String    @id @default(cuid(2))
   household   Household @relation(fields: [householdId], references: [id])
-  householdId String
+  householdId String    @map("household_id")
   createdBy   User      @relation(fields: [createdById], references: [id])
-  createdById String
+  createdById String    @map("created_by_id")
 
   title       String
   image       String?
@@ -11,30 +11,25 @@ model Event {
   location    String?
   url         String?
 
-  // Event Visibility and Invite Policies
   visibility        Visibility @default(Friends)
-  allowGuestInvites Boolean    @default(true)
+  allowGuestInvites Boolean    @default(true) @map("allow_guest_invites")
 
-  // Event-specific permissions
   memberPermissions EventMemberPermission[]
 
-  // Attendance Controls
-  maxTotalParticipants Int?
-  strictCapacity       Boolean @default(false)
+  maxTotalParticipants Int?    @map("max_total_participants")
+  strictCapacity       Boolean @default(false) @map("strict_capacity")
 
-  // Timing
-  startDate DateTime
-  endDate   DateTime? @db.Timestamptz(3)
+  startDate DateTime  @map("start_date")
+  endDate   DateTime? @map("end_date") @db.Timestamptz(3)
 
-  // Event Management
   gamePlaySessions GamePlaySession[]
   attendees        EventAttendee[]
   votedGames       EventGameVote[]
   invites          EventInvite[]
   suggestedGames   EventGame[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("events")
 }
@@ -42,39 +37,32 @@ model Event {
 model EventAttendee {
   id      String @id @default(cuid(2))
   event   Event  @relation(fields: [eventId], references: [id])
-  eventId String
+  eventId String @map("event_id")
 
-  // Type of attendee
-  attendeeType AttendeeType @default(Participant)
+  attendeeType AttendeeType @default(Participant) @map("attendee_type")
 
-  // For registered users
   user   User?   @relation(fields: [userId], references: [id])
-  userId String?
+  userId String? @map("user_id")
 
   // For guests without accounts
-  guestName  String?
-  guestEmail String?
+  guestName  String? @map("guest_name")
+  guestEmail String? @map("guest_email")
 
-  // Participation details
   status EventParticipationStatus @default(Invited)
   role   EventParticipantRole     @default(Participant)
 
-  // Invitation tracking
   invitedBy   EventAttendee? @relation("InvitedAttendees", fields: [invitedById], references: [id])
-  invitedById String?
+  invitedById String?        @map("invited_by_id")
 
-  // People this attendee invited
   invitees EventAttendee[] @relation("InvitedAttendees")
 
-  // Game contributions
   gamesContributing EventGame[]
 
-  // Additional metadata
   notes    String?
-  rsvpDate DateTime? @db.Timestamptz(3)
+  rsvpDate DateTime? @map("rsvp_date") @db.Timestamptz(3)
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("event_attendees")
 }
@@ -82,11 +70,11 @@ model EventAttendee {
 model EventGameVote {
   id          String    @id @default(cuid(2))
   eventGame   EventGame @relation(fields: [eventGameId], references: [id])
-  eventGameId String
+  eventGameId String    @map("event_game_id")
   user        User      @relation(fields: [userId], references: [id])
-  userId      String
+  userId      String    @map("user_id")
   Event       Event?    @relation(fields: [eventId], references: [id])
-  eventId     String?
+  eventId     String?   @map("event_id")
 
   @@unique([eventGameId, userId])
   @@map("event_game_votes")
@@ -95,12 +83,12 @@ model EventGameVote {
 model EventGame {
   id      String @id @default(cuid(2))
   event   Event  @relation(fields: [eventId], references: [id])
-  eventId String
+  eventId String @map("event_id")
   game    Game   @relation(fields: [gameId], references: [id])
-  gameId  String
+  gameId  String @map("game_id")
 
   suggestedBy   EventAttendee @relation(fields: [suggestedById], references: [id])
-  suggestedById String
+  suggestedById String        @map("suggested_by_id")
 
   votes EventGameVote[]
 
@@ -110,17 +98,17 @@ model EventGame {
 model EventMemberPermission {
   id      String @id @default(cuid(2))
   event   Event  @relation(fields: [eventId], references: [id])
-  eventId String
+  eventId String @map("event_id")
   user    User   @relation(fields: [userId], references: [id])
-  userId  String
+  userId  String @map("user_id")
 
   permission Permission
 
   grantedBy   User   @relation("EventPermissionGranter", fields: [grantedById], references: [id])
-  grantedById String
+  grantedById String @map("granted_by_id")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([eventId, userId, permission])
   @@map("event_member_permissions")
@@ -148,9 +136,9 @@ enum EventParticipationStatus {
 }
 
 enum AttendeeType {
-  Participant // Formal participant with a user account
-  Guest // Guest of a participant (may or may not have user account)
-  Organizer // Event organizer
+  Participant
+  Guest
+  Organizer
 
   @@map("attendee_types")
 }

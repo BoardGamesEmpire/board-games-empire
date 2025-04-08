@@ -3,26 +3,27 @@ model Tag {
   name        String  @unique
   description String?
 
-  // Related tags
   games GameTag[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("tags")
 }
 
 model GameTag {
-  id     String @id @default(cuid(2))
+  id String @id @default(cuid(2))
+
   game   Game   @relation(fields: [gameId], references: [id])
-  gameId String
-  tag    Tag    @relation(fields: [tagId], references: [id])
-  tagId  String
+  gameId String @map("game_id")
+
+  tag   Tag    @relation(fields: [tagId], references: [id])
+  tagId String @map("tag_id")
 
   addedBy   User   @relation(fields: [addedById], references: [id])
-  addedById String
+  addedById String @map("added_by_id")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@unique([gameId, tagId])
   @@map("game_tags")

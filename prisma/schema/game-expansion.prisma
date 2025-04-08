@@ -2,25 +2,21 @@ model GameExpansion {
   id         String @id @default(cuid(2))
   name       String
   baseGame   Game   @relation("BaseGame", fields: [baseGameId], references: [id])
-  baseGameId String
+  baseGameId String @map("base_game_id")
 
-  // Expansion details
   description  String?
-  releaseYear  Int?
-  isStandalone Boolean @default(false) // Can be played without base game?
+  releaseYear  Int?    @map("release_year")
+  isStandalone Boolean @default(false) @map("is_standalone")
 
-  // Games that this expansion is compatible with
   compatibleWith ExpansionCompatibility[]
 
-  // Rule variant relationship
   ruleVariants GameExpansionRuleVariant[]
 
-  // Track when this expansion was used
   playSessionsUsed  GamePlaySessionExpansion[]
   ruleVariantUsages RuleVariantUsageExpansion[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("game_expansions")
 }
@@ -28,34 +24,31 @@ model GameExpansion {
 model ExpansionCompatibility {
   id          String        @id @default(cuid(2))
   game        Game          @relation(fields: [gameId], references: [id])
-  gameId      String
+  gameId      String        @map("game_id")
   expansion   GameExpansion @relation(fields: [expansionId], references: [id])
-  expansionId String
+  expansionId String        @map("expansion_id")
 
-  // Useful metadata
-  isRecommended Boolean @default(false) // Is this a recommended pairing?
-  notes         String? // Notes about this compatibility
+  isRecommended Boolean @default(false) @map("is_recommended")
+  notes         String?
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([gameId, expansionId])
   @@map("expansion_compatibilities")
 }
 
-// Junction table for RuleVariants to GameExpansions
 model GameExpansionRuleVariant {
   id              String        @id @default(cuid(2))
   ruleVariant     RuleVariant   @relation(fields: [ruleVariantId], references: [id])
-  ruleVariantId   String
+  ruleVariantId   String        @map("rule_variant_id")
   gameExpansion   GameExpansion @relation(fields: [gameExpansionId], references: [id])
-  gameExpansionId String
+  gameExpansionId String        @map("game_expansion_id")
 
-  // Optional override settings specific to this expansion
-  overrideCategory RuleCategory?
-  overrideRuleText String? // Expansion-specific rule text modification
+  overrideCategory RuleCategory? @map("override_category")
+  overrideRuleText String?       @map("override_rule_text")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@unique([ruleVariantId, gameExpansionId])
   @@map("game_expansion_rule_variants")

@@ -3,26 +3,22 @@ model PermissionPolicy {
   name        String  @unique
   description String?
 
-  // Policy details
-  resourceType ResourceType
+  resourceType ResourceType @map("resource_type")
   effect       PolicyEffect @default(Allow)
-  conditions   Json? // Optional JSON conditions for the policy
+  conditions   Json?
 
-  // Specific permissions (as a list of strings representing Permission enum values)
-  permissions String[] // Array of Permission enum values
+  permissions String[]
 
-  // Who created this policy
   createdBy   User   @relation("PolicyCreator", fields: [createdById], references: [id])
-  createdById String
+  createdById String @map("created_by_id")
 
-  // Relationships to models that use this policy
   appliedToRoles     RolePolicyAssignment[]
   appliedToUsers     UserPolicyAssignment[]
   appliedToGroups    GroupPolicyAssignment[]
   appliedToResources ResourcePolicyAssignment[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("permission_policies")
 }
@@ -30,15 +26,15 @@ model PermissionPolicy {
 model RolePolicyAssignment {
   id       String           @id @default(cuid(2))
   role     Role             @relation(fields: [roleId], references: [id])
-  roleId   String
+  roleId   String           @map("role_id")
   policy   PermissionPolicy @relation(fields: [policyId], references: [id])
-  policyId String
+  policyId String           @map("policy_id")
 
-  priority Int     @default(100) // Higher number = higher priority
-  isActive Boolean @default(true)
+  priority Int     @default(100)
+  isActive Boolean @default(true) @map("is_active")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([roleId, policyId])
   @@map("role_policy_assignments")
@@ -47,16 +43,16 @@ model RolePolicyAssignment {
 model UserPolicyAssignment {
   id       String           @id @default(cuid(2))
   user     User             @relation(fields: [userId], references: [id])
-  userId   String
+  userId   String           @map("user_id")
   policy   PermissionPolicy @relation(fields: [policyId], references: [id])
-  policyId String
+  policyId String           @map("policy_id")
 
   priority  Int       @default(100)
-  isActive  Boolean   @default(true)
-  expiresAt DateTime? @db.Timestamptz(3) // Optional expiration for temporary policies
+  isActive  Boolean   @default(true) @map("is_active")
+  expiresAt DateTime? @map("expires_at") @db.Timestamptz(3)
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([userId, policyId])
   @@map("user_policy_assignments")
@@ -65,15 +61,15 @@ model UserPolicyAssignment {
 model GroupPolicyAssignment {
   id       String           @id @default(cuid(2))
   group    PermissionGroup  @relation(fields: [groupId], references: [id])
-  groupId  String
+  groupId  String           @map("group_id")
   policy   PermissionPolicy @relation(fields: [policyId], references: [id])
-  policyId String
+  policyId String           @map("policy_id")
 
   priority Int     @default(100)
-  isActive Boolean @default(true)
+  isActive Boolean @default(true) @map("is_active")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([groupId, policyId])
   @@map("group_policy_assignments")
@@ -82,21 +78,19 @@ model GroupPolicyAssignment {
 model ResourcePolicyAssignment {
   id       String           @id @default(cuid(2))
   policy   PermissionPolicy @relation(fields: [policyId], references: [id])
-  policyId String
+  policyId String           @map("policy_id")
 
-  // Resource information
-  resourceType ResourceType
-  resourceId   String // ID of the resource this policy applies to
+  resourceType ResourceType @map("resource_type")
+  resourceId   String       @map("resource_id")
 
-  // Who this policy applies to (optional - if null, applies to everyone)
   appliesTo   User?   @relation(fields: [appliesToId], references: [id])
-  appliesToId String?
+  appliesToId String? @map("applies_to_id")
 
   priority Int     @default(100)
-  isActive Boolean @default(true)
+  isActive Boolean @default(true) @map("is_active")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([policyId, resourceType, resourceId, appliesToId])
   @@map("resource_policy_assignments")

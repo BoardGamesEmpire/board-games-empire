@@ -19,9 +19,6 @@ export class AdminGuard extends AuthGuard('jwt') {
       throw err || new ForbiddenException('Authentication required');
     }
 
-    // Check if user has Admin role
-    // This assumes you have a roles array in your user object
-    // You might need to adjust this based on your actual role implementation
     if (!user.roles?.includes('Admin')) {
       throw new ForbiddenException('Admin access required');
     }
