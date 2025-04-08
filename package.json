@@ -81,6 +81,7 @@
     "@nx/web": "20.7.1",
     "@nx/webpack": "20.7.1",
     "@nx/workspace": "20.7.1",
+    "@nxrocks/nx-flutter": "^10.0.1",
     "@swc-node/register": "^1.10.10",
     "@swc/core": "^1.11.16",
     "@swc/helpers": "~0.5.11",

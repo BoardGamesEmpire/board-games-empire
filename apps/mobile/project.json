@@ -1,0 +1,6 @@
+{
+  "name": "mobile",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "mobile/src",
+  "tags": []
+}
