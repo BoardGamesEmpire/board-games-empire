@@ -1,57 +1,52 @@
 model Publisher {
   id          String  @id @default(cuid(2))
   name        String  @unique
-  legalName   String? // Official company name if different
+  legalName   String? @map("legal_name")
   website     String?
-  country     String? // Country of headquarters
-  foundedYear Int?
+  country     String?
+  foundedYear Int?    @map("founded_year")
 
-  // Publisher relationships
   parentCompany   Publisher?  @relation("PublisherSubsidiary", fields: [parentCompanyId], references: [id])
-  parentCompanyId String?
+  parentCompanyId String?     @map("parent_company_id")
   subsidiaries    Publisher[] @relation("PublisherSubsidiary")
 
-  // Publishing details
-  isActive Boolean @default(true)
-  logoUrl  String?
+  isActive Boolean @default(true) @map("is_active")
+  logoUrl  String? @map("logo_url")
 
-  // Game relationships
   games GamePublisher[]
 
-  // Family relationship - a publisher can be the primary publisher for multiple families
-  publishedFamilies Family[] // Families primarily published by this publisher
+  publishedFamilies Family[]
 
-  // Game implementations published by this publisher
   publishedImplementations GameImplementation[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("publishers")
 }
 
 model GamePublisher {
   id          String    @id @default(cuid(2))
-  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   game        Game      @relation(fields: [gameId], references: [id])
-  gameId      String
+  gameId      String    @map("game_id")
   publisher   Publisher @relation(fields: [publisherId], references: [id])
-  publisherId String
+  publisherId String    @map("publisher_id")
 
-  role        PublisherRole @default(Primary)
-  releaseYear Int? // Year this publisher released the game
-  region      String? // Geographic region for this release
+  role        PublisherRole @default(Primary) @map("role")
+  releaseYear Int?          @map("release_year")
+  region      String?       @map("region")
 
   @@unique([gameId, publisherId])
   @@map("game_publishers")
 }
 
 enum PublisherRole {
-  Primary // Main publisher
-  Localization // Translated/localized version
-  Distribution // Distribution only
-  Reprint // Reprint or new edition
+  Primary
+  Localization
+  Distribution
+  Reprint
 
   @@map("publisher_roles")
 }

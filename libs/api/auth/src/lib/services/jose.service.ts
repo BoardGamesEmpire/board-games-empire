@@ -10,6 +10,8 @@ export class JoseService {
    */
   async verifyIdToken(idToken: string, clientId: string, nonce?: string): Promise<any> {
     try {
+      console.log('Verifying ID token:', idToken, clientId, nonce);
+
       const tokenParts = idToken.split('.');
       if (tokenParts.length !== 3) {
         throw new Error('Invalid token format');

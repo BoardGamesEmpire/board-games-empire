@@ -13,25 +13,20 @@ enum InviteStatus {
 model EventInvite {
   id      String @id @default(cuid(2))
   event   Event  @relation(fields: [eventId], references: [id])
-  eventId String
+  eventId String @map("event_id")
 
-  // Invited User
   invitedUser   User   @relation(fields: [invitedUserId], references: [id])
-  invitedUserId String
+  invitedUserId String @map("invited_user_id")
 
-  // Inviter (who sent the invite)
   invitedBy   User   @relation("SentInvites", fields: [invitedById], references: [id])
-  invitedById String
+  invitedById String @map("invited_by_id")
 
-  // Invite Status
   status InviteStatus @default(Pending)
 
-  // Optional Expiration
-  expiresAt DateTime? @db.Timestamptz(3)
+  expiresAt DateTime? @map("expires_at") @db.Timestamptz(3)
 
-  // Tracking
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("event_invites")
 }

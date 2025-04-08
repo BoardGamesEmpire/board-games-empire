@@ -1,20 +1,18 @@
 model GameSystem {
   id          String  @id @default(cuid(2))
-  name        String  @unique // D&D 5e, Pathfinder, etc.
-  publisher   String? // Wizards of the Coast, Paizo, etc.
-  version     String? // Version or edition (5e, 2e, etc.)
+  name        String  @unique
+  publisher   String?
+  version     String?
   description String?
 
-  // Game System Mechanics
-  attributeSchema Json? // Define character attributes for this system
-  classOptions    Json? // Available classes/archetypes
-  raceOptions     Json? // Available races/species
+  attributeSchema Json? @map("attribute_schema")
+  classOptions    Json? @map("class_options")
+  raceOptions     Json? @map("race_options")
 
-  // Campaigns using this system
   campaigns Campaign[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("game_systems")
 }

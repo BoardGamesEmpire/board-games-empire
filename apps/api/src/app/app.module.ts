@@ -45,6 +45,8 @@ import { PublishersModule } from './publishers/publishers.module';
 
     // Database
     PrismaModule,
+
+    // TODO: Move to a separate module
     PrometheusModule.register({
       defaultLabels: { app: 'BoardGamesEmpire' },
       defaultMetrics: { enabled: true },

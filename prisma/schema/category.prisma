@@ -1,18 +1,16 @@
 model Category {
   id          String  @id @default(cuid(2))
   name        String  @unique
-  description String? // Description of this category/type
+  description String?
 
-  // Category relationships - hierarchical structure
   parentCategory   Category?  @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id])
-  parentCategoryId String?
+  parentCategoryId String?    @map("parent_category_id")
   subcategories    Category[] @relation("CategoryHierarchy")
 
-  // Games that have this as a category (many-to-many)
   games GameCategory[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("categories")
 }
@@ -20,19 +18,16 @@ model Category {
 model GameCategory {
   id         String   @id @default(cuid(2))
   game       Game     @relation(fields: [gameId], references: [id])
-  gameId     String
+  gameId     String   @map("game_id")
   category   Category @relation(fields: [categoryId], references: [id])
-  categoryId String
+  categoryId String   @map("category_id")
 
-  // Flag to identify the primary category for the game
-  isPrimary Boolean @default(false)
+  isPrimary Boolean @default(false) @map("is_primary")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  // Each game-category pair must be unique
   @@unique([gameId, categoryId])
-  // Special index to ensure each game has only one primary category
   @@unique([gameId, isPrimary], name: "uniquePrimaryCategoryPerGame", map: "unique_primary_category_per_game")
   @@map("game_categories")
 }

@@ -1,18 +1,16 @@
 model GameHouseholdAccess {
   id          String    @id @default(cuid(2))
   game        Game      @relation(fields: [gameId], references: [id])
-  gameId      String
+  gameId      String    @map("game_id")
   household   Household @relation(fields: [householdId], references: [id])
-  householdId String
+  householdId String    @map("household_id")
 
-  // Access level
-  canEdit  Boolean @default(false) // Household members can edit
-  canShare Boolean @default(false) // Household members can share
+  canEdit  Boolean @default(false) @map("can_edit")
+  canShare Boolean @default(false) @map("can_share")
 
-  // Tracking
   sharedBy   User     @relation("HouseholdGameSharer", fields: [sharedById], references: [id])
-  sharedById String
-  sharedAt   DateTime @default(now()) @db.Timestamptz(3)
+  sharedById String   @map("shared_by_id")
+  sharedAt   DateTime @default(now()) @map("shared_at") @db.Timestamptz(3)
 
   @@unique([gameId, householdId])
   @@map("game_household_access")
@@ -21,18 +19,16 @@ model GameHouseholdAccess {
 model GameUserAccess {
   id     String @id @default(cuid(2))
   game   Game   @relation(fields: [gameId], references: [id])
-  gameId String
+  gameId String @map("game_id")
   user   User   @relation(fields: [userId], references: [id])
-  userId String
+  userId String @map("user_id")
 
-  // Access level
-  canEdit  Boolean @default(false) // Can edit this private game
-  canShare Boolean @default(false) // Can share this game with others
+  canEdit  Boolean @default(false) @map("can_edit")
+  canShare Boolean @default(false) @map("can_share")
 
-  // Tracking
   sharedBy   User     @relation("GameSharer", fields: [sharedById], references: [id])
-  sharedById String
-  sharedAt   DateTime @default(now()) @db.Timestamptz(3)
+  sharedById String   @map("shared_by_id")
+  sharedAt   DateTime @default(now()) @map("shared_at") @db.Timestamptz(3)
 
   @@unique([gameId, userId])
   @@map("game_user_access")

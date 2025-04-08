@@ -1,80 +1,63 @@
 model HouseholdGame {
   id          String    @id @default(cuid(2))
   household   Household @relation(fields: [householdId], references: [id])
-  householdId String
+  householdId String    @map("household_id")
   game        Game      @relation(fields: [gameId], references: [id])
-  gameId      String
+  gameId      String    @map("game_id")
 
-  // Ownership information
-  ownershipType HouseholdGameOwnership @default(MemberOwned)
+  ownershipType HouseholdGameOwnership @default(MemberOwned) @map("ownership_type")
 
-  // Physical aspects
-  storageLocation String? // Where in the house this game is stored
-  condition       GameCondition?
-  missingPieces   String? // Notes about any missing components
+  storageLocation String?        @map("storage_location")
+  condition       GameCondition? @map("condition")
+  missingPieces   String?        @map("missing_pieces")
 
-  // Household-specific metadata
-  houseRating     Float? // Collective household rating
-  playCount       Int       @default(0) // Times played in this household
-  lastPlayed      DateTime? @db.Timestamptz(3)
-  isFavorite      Boolean   @default(false)
-  bestPlayerCount Int? // Optimal player count for this group specifically
+  houseRating     Float?    @map("house_rating")
+  playCount       Int       @default(0) @map("play_count")
+  lastPlayed      DateTime? @map("last_played") @db.Timestamptz(3)
+  isFavorite      Boolean   @default(false) @map("is_favorite")
+  bestPlayerCount Int?      @map("best_player_count")
 
-  // Availability
-  isAvailable       Boolean @default(true) // Currently available to play
-  unavailableReason String? // Why it's unavailable (loaned out, damaged, etc.)
+  isAvailable       Boolean @default(true) @map("is_available")
+  unavailableReason String? @map("unavailable_reason")
 
-  // Enhanced Social Features
-
-  // Game Champion - the household evangelist for this game
   championedBy   User?   @relation("GameChampion", fields: [championedById], references: [id])
-  championedById String? // User who loves/promotes this game in the household
+  championedById String? @map("championed_by_id")
 
-  // Game Keeper - who's responsible for this game
   maintainedBy   User?   @relation("GameKeeper", fields: [maintainedById], references: [id])
-  maintainedById String? // User responsible for keeping the game in good shape
+  maintainedById String? @map("maintained_by_id")
 
-  // Game Teacher - who's best at teaching this game
-  teacherId String?
+  teacherId String? @map("teacher_id")
   teacher   User?   @relation("GameTeacher", fields: [teacherId], references: [id])
 
-  // Social history
-  mostFrequentWinner String? // Who typically wins this game
-  winHistory         Json? // Historical win record (structured data)
+  mostFrequentWinner String? @map("most_frequent_winner")
+  winHistory         Json?   @map("win_history")
 
-  // Group dynamics
-  playerDynamics PlayerDynamic[] // How this game affects the group
+  playerDynamics PlayerDynamic[]
 
-  // Game nights
-  idealFor GameNightType[] // What kind of game nights this works well for
+  idealFor GameNightType[] @map("ideal_for")
 
-  // Member engagement
   memberInterest HouseholdGameInterest[]
 
-  // Group learning
-  learningDifficulty LearningDifficulty? // How hard for the group to learn
-  teachingNotes      String? // Notes about teaching to this specific group
+  learningDifficulty LearningDifficulty? @map("learning_difficulty")
+  teachingNotes      String?             @map("teaching_notes")
 
-  // House rules
-  houseRuleCount Int @default(0) // Number of house rules applied
+  houseRuleCount Int @default(0) @map("house_rule_count")
 
-  // Household-specific notes
   notes           String?
   gameExperiences HouseholdGameExperience[]
 
-  // Timestamps
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([householdId, gameId])
   @@map("household_games")
 }
 
 enum HouseholdGameOwnership {
-  Borrowed // Borrowed from outside the household
-  Digital // Digital version (no physical copy)
-  HouseholdOwned // Owned collectively by the household
-  MemberOwned // Owned by a household member
+  Borrowed
+  Digital
+  HouseholdOwned
+  MemberOwned
 
   @@map("household_game_ownerships")
 }
@@ -82,36 +65,32 @@ enum HouseholdGameOwnership {
 model HouseholdGameCustomization {
   id          String    @id @default(cuid(2))
   household   Household @relation(fields: [householdId], references: [id])
-  householdId String
+  householdId String    @map("household_id")
   game        Game      @relation(fields: [gameId], references: [id])
-  gameId      String
+  gameId      String    @map("game_id")
 
-  // Customizable fields (same as user customizations)
-  title       String?
-  subtitle    String?
-  description String?
-  image       String?
-  publishYear Int?
-  minPlayers  Int?
-  maxPlayers  Int?
-  playingTime Int?
-  minPlayTime Int?
-  maxPlayTime Int?
-  minAge      Int?
-  complexity  Float?
+  title       String? @map("title")
+  subtitle    String? @map("subtitle")
+  description String? @map("description")
+  image       String? @map("image")
+  publishYear Int?    @map("publish_year")
+  minPlayers  Int?    @map("min_players")
+  maxPlayers  Int?    @map("max_players")
+  playingTime Int?    @map("playing_time")
+  minPlayTime Int?    @map("min_play_time")
+  maxPlayTime Int?    @map("max_play_time")
+  minAge      Int?    @map("min_age")
+  complexity  Float?  @map("complexity")
 
-  // Who made this customization
   customizedBy   User   @relation(fields: [customizedById], references: [id])
-  customizedById String
+  customizedById String @map("customized_by_id")
 
-  // Notes about customization
-  customizationNotes String?
+  customizationNotes String? @map("customization_notes")
 
-  // Permissions
   permissions HouseholdGameCustomizationPermission[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([householdId, gameId])
   @@map("household_game_customizations")
@@ -120,26 +99,24 @@ model HouseholdGameCustomization {
 model HouseholdGameExperience {
   id              String        @id @default(cuid(2))
   householdGame   HouseholdGame @relation(fields: [householdGameId], references: [id])
-  householdGameId String
+  householdGameId String        @map("household_game_id")
 
   date        DateTime @default(now()) @db.Timestamptz(3)
-  title       String // E.g., "Epic comeback night" or "First time playing"
+  title       String
   description String
 
-  // Who was involved
   participants HouseholdGameExperienceParticipant[]
 
-  // Media related to this experience
-  photos String[] // URLs to photos
+  // TODO: media model
+  photos String[]
 
-  // Experience metadata
-  tags String[] // User-defined tags like "funny", "tense", "memorable"
+  tags String[]
 
   createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
+  createdById String @map("created_by_id")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("household_game_experiences")
 }
@@ -147,22 +124,19 @@ model HouseholdGameExperience {
 model HouseholdGameExperienceParticipant {
   id String @id @default(cuid(2))
 
-  // Experience relationship
   experience   HouseholdGameExperience @relation(fields: [experienceId], references: [id])
-  experienceId String
+  experienceId String                  @map("experience_id")
 
-  // Member relationship
   member   HouseholdMember @relation(fields: [memberId], references: [id])
-  memberId String
+  memberId String          @map("member_id")
 
-  // Additional metadata about participation
-  role          String? // E.g., "Game Master", "Player", "Observer"
-  hadFun        Boolean? // Did they enjoy the experience?
-  notes         String? // Specific notes about this member's experience
-  isHighlighted Boolean  @default(false) // Was this member particularly featured in the story?
+  role          String?
+  hadFun        Boolean? @map("had_fun")
+  notes         String?
+  isHighlighted Boolean  @default(false) @map("is_highlighted")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([experienceId, memberId])
   @@map("household_game_experience_participants")
@@ -171,16 +145,18 @@ model HouseholdGameExperienceParticipant {
 model HouseholdGameInterest {
   id                String          @id @default(cuid(2))
   householdGame     HouseholdGame   @relation(fields: [householdGameId], references: [id])
-  householdGameId   String
+  householdGameId   String          @map("household_game_id")
   member            HouseholdMember @relation(fields: [householdMemberId], references: [id])
-  householdMemberId String
+  householdMemberId String          @map("household_member_id")
 
-  interestLevel InterestLevel @default(Neutral)
-  playDesire    PlayDesire    @default(Anytime)
-  comments      String?
+  interestLevel InterestLevel @default(Neutral) @map("interest_level")
+  playDesire    PlayDesire    @default(Anytime) @map("play_desire")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  // TODO: separate model?
+  comments String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([householdGameId, householdMemberId])
   @@map("household_game_interests")
@@ -189,17 +165,17 @@ model HouseholdGameInterest {
 model HouseholdGameCustomizationPermission {
   id              String                     @id @default(cuid(2))
   customization   HouseholdGameCustomization @relation(fields: [customizationId], references: [id])
-  customizationId String
+  customizationId String                     @map("customization_id")
   user            User                       @relation(fields: [userId], references: [id])
-  userId          String
+  userId          String                     @map("user_id")
 
   permission Permission
 
   grantedBy   User   @relation("HouseholdCustomizationPermissionGranter", fields: [grantedById], references: [id])
-  grantedById String
+  grantedById String @map("granted_by_id")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([customizationId, userId, permission])
   @@map("household_game_customization_permissions")

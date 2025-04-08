@@ -16,15 +16,15 @@ enum MediaType {
 model SessionMedia {
   id        String          @id @default(cuid(2))
   session   GamePlaySession @relation(fields: [sessionId], references: [id])
-  sessionId String
+  sessionId String          @map("session_id")
 
   url     String
   caption String?
 
   uploadedBy   User   @relation(fields: [uploadedById], references: [id])
-  uploadedById String
+  uploadedById String @map("uploaded_by_id")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@map("session_media")
 }

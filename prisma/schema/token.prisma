@@ -1,24 +1,24 @@
 model Token {
-  id        String   @id @default(cuid(2))
+  id String @id @default(cuid(2))
 
-  type      TokenType
-  token     String   @unique @db.VarChar(512)
+  type  TokenType
+  token String    @unique @db.VarChar(512)
 
   authentication   UserAuthentication @relation(fields: [authenticationId], references: [id])
-  authenticationId String
+  authenticationId String             @map("authentication_id")
 
-  isRevoked Boolean @default(false)
-  isUsed    Boolean @default(false)
+  isRevoked Boolean @default(false) @map("is_revoked")
+  isUsed    Boolean @default(false) @map("is_used")
 
-  revocationReason String? @db.VarChar(255)
+  revocationReason String? @map("revocation_reason") @db.VarChar(255)
 
-  metadata   Json?
+  metadata Json?
 
-  expiresAt DateTime
-  usedAt   DateTime? @db.Timestamptz(3)
-  revokedAt DateTime? @db.Timestamptz(3)
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(3)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("tokens")
 }

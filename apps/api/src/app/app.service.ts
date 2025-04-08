@@ -14,7 +14,6 @@ export class AppService {
   }
 
   async health() {
-    // Check database connection
     let dbStatus = 'ok';
     let dbError = null;
 

@@ -16,10 +16,12 @@
     "getify",
     "linebreak",
     "luxon",
+    "npcs",
     "nrwl",
     "paralleldrive",
     "Parens",
     "prerender",
+    "rulebook",
     "Timestamptz",
     "willsoto"
   ]

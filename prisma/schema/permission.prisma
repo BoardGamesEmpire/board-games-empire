@@ -81,7 +81,7 @@ enum Permission {
 
   // Game Data Management
   ImportGameFromExternalAPI
-  ManageGameMetadata // Manage global game metadata
+  ManageGameMetadata
 
   // Game Sharing Permissions
   ShareGameWithUser

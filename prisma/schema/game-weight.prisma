@@ -1,79 +1,69 @@
 model GameWeight {
   id     String @id @default(cuid(2))
   game   Game   @relation(fields: [gameId], references: [id])
-  gameId String @unique
+  gameId String @unique @map("game_id")
 
-  // Overall complexity
-  overallWeight Float? // 1-5 scale, overall complexity
+  overallWeight Float? @map("overall_weight")
 
-  // Dimensional complexity metrics
-  rulesWeight    Float? // 1-5 scale, rules complexity
-  strategyWeight Float? // 1-5 scale, strategic depth
-  luckWeight     Float? // 1-5 scale, luck factor (5 = high luck)
-  mathWeight     Float? // 1-5 scale, mathematical complexity
-  socialWeight   Float? // 1-5 scale, social interaction complexity
+  rulesWeight    Float? @map("rules_weight")
+  strategyWeight Float? @map("strategy_weight")
+  luckWeight     Float? @map("luck_weight")
+  mathWeight     Float? @map("math_weight")
+  socialWeight   Float? @map("social_weight")
 
-  // Teaching difficulty
-  teachingTime  Int? // Estimated minutes to teach
-  learningCurve LearningCurve? // Steepness of learning curve
+  teachingTime  Int?           @map("teaching_time")
+  learningCurve LearningCurve? @map("learning_curve")
 
-  // Source of weight calculation
-  weightSource WeightSource @default(Internal)
-  externalUrl  String? // Link to external rating source if applicable
+  weightSource WeightSource @default(Internal) @map("weight_source")
+  externalUrl  String?      @map("external_url")
 
-  // User contributions
   weightVotes GameWeightVote[]
 
-  // Timestamps
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("game_weights")
 }
 
-// User votes on game weight (allows for crowdsourcing)
 model GameWeightVote {
   id           String     @id @default(cuid(2))
   gameWeight   GameWeight @relation(fields: [gameWeightId], references: [id])
-  gameWeightId String
+  gameWeightId String     @map("game_weight_id")
 
   user   User   @relation(fields: [userId], references: [id])
-  userId String
+  userId String @map("user_id")
 
-  // User's ratings for each dimension
-  overallWeight  Float? // 1-5 scale
-  rulesWeight    Float? // 1-5 scale
-  strategyWeight Float? // 1-5 scale
-  luckWeight     Float? // 1-5 scale
-  mathWeight     Float? // 1-5 scale
-  socialWeight   Float? // 1-5 scale
+  overallWeight  Float? @map("overall_weight")
+  rulesWeight    Float? @map("rules_weight")
+  strategyWeight Float? @map("strategy_weight")
+  luckWeight     Float? @map("luck_weight")
+  mathWeight     Float? @map("math_weight")
+  socialWeight   Float? @map("social_weight")
 
-  // Helpful comments about difficulty
   comments String?
 
-  // Timestamps
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([gameWeightId, userId])
   @@map("game_weight_votes")
 }
 
 enum WeightSource {
-  Internal // Internal rating
-  BoardGameGeek // From BGG
-  UserAverage // Average of user ratings
-  ExpertRating // From expert/critic
+  Internal
+  BoardGameGeek
+  UserAverage
+  ExpertRating
 
   @@map("weight_sources")
 }
 
 enum LearningCurve {
-  Gentle // Easy to learn, gentle progression
-  Moderate // Some initial challenge but smooth afterward
-  Stepped // Multiple distinct learning plateaus
-  Steep // Difficult initial learning
-  Cliff // Very high barrier to entry
+  Gentle
+  Moderate
+  Stepped
+  Steep
+  Cliff
 
   @@map("learning_curves")
 }

@@ -1,6 +1,8 @@
 import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
+import { from, of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
@@ -21,12 +23,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       return true;
     }
 
-    // @ts-expect-error It's a promise
-    return super.canActivate(context)?.then((result) => {
-      console.log('superResult:', result);
+    const request = context.switchToHttp().getRequest();
+    console.log(request.headers, 'HEADERS');
 
-      return result;
-    });
+    const result = super.canActivate(context);
+    const observable = typeof result === 'boolean' ? of(result) : from(result);
+    return observable.pipe(tap((result) => console.log('canActivate result:', result)));
   }
 
   override handleRequest(err: Error, user: any, info: any) {

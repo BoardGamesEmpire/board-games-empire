@@ -1,4 +1,4 @@
-import { Logger, RequestMethod, ValidationPipe, VERSION_NEUTRAL, VersioningType } from '@nestjs/common';
+import { Logger, RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -35,12 +35,10 @@ async function bootstrap() {
     .setGlobalPrefix(globalPrefix, {
       exclude: [
         {
-          version: ['1'],
           path: 'metrics',
           method: RequestMethod.GET,
         },
         {
-          version: VERSION_NEUTRAL,
           path: 'health',
           method: RequestMethod.GET,
         },
@@ -60,7 +58,13 @@ async function bootstrap() {
       .setTitle(configService.get('swagger.title'))
       .setDescription(configService.get('swagger.description'))
       .setVersion(configService.get('swagger.version'))
+      .setBasePath(configService.get('swagger.basePath'))
       .addBearerAuth()
+      .addApiKey({
+        type: 'apiKey',
+        name: 'x-access-token',
+        in: 'header',
+      })
       .build();
 
     const document = SwaggerModule.createDocument(app, swaggerConfig);

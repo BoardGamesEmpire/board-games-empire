@@ -4,55 +4,43 @@ model Campaign {
   description String?
   image       String?
 
-  // Game System Reference
   game   Game   @relation(fields: [gameId], references: [id])
-  gameId String
+  gameId String @map("game_id")
 
-  // Campaign Status
-  status    CampaignStatus @default(Active)
-  startDate DateTime       @default(now()) @db.Timestamptz(3)
-  endDate   DateTime? @db.Timestamptz(3)
+  status    CampaignStatus @default(Active) @map("status")
+  startDate DateTime       @default(now()) @map("start_date") @db.Timestamptz(3)
+  endDate   DateTime?      @map("end_date") @db.Timestamptz(3)
 
-  // Campaign Context
   household   Household @relation(fields: [householdId], references: [id])
-  householdId String
+  householdId String    @map("household_id")
 
-  // Campaign Owner/DM/GM
   gameMaster   User   @relation("CampaignGameMaster", fields: [gameMasterId], references: [id])
-  gameMasterId String
+  gameMasterId String @map("game_master_id")
 
-  // Associated Sessions
   sessions GamePlaySession[]
 
-  // Campaign Characters
   characters CampaignCharacter[]
 
-  // Campaign Tracking
-  currentLevel   Int?
-  currentChapter String?
-  campaignNotes  String?
+  currentLevel   Int?    @map("current_level")
+  currentChapter String? @map("current_chapter")
+  campaignNotes  String? @map("campaign_notes")
 
-  // Campaign-specific permissions
   memberPermissions CampaignMemberPermission[]
 
-  // Game System Reference
   gameSystem   GameSystem? @relation(fields: [gameSystemId], references: [id])
-  gameSystemId String?
+  gameSystemId String?     @map("game_system_id")
 
-  // Whether this is a custom or standard ruleset
-  useCustomRules Boolean @default(false)
-  customRules    String? // Description of house rules or custom system
+  useCustomRules Boolean @default(false) @map("use_custom_rules")
+  customRules    String? @map("custom_rules")
 
-  // Campaign Elements
   locations    CampaignLocation[]
   npcs         CampaignNPC[]
   ruleVariants RuleVariant[]
 
-  // Campaign progression and tracking
   sessionOutcomes CampaignSessionOutcome[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("campaigns")
 }
@@ -60,31 +48,27 @@ model Campaign {
 model CampaignCharacter {
   id         String   @id @default(cuid(2))
   campaign   Campaign @relation(fields: [campaignId], references: [id])
-  campaignId String
+  campaignId String   @map("campaign_id")
 
-  // Player Reference
   player   User   @relation(fields: [playerId], references: [id])
-  playerId String
+  playerId String @map("player_id")
 
-  // Character Details
   name     String
   class    String?
   race     String?
   level    Int?
-  isActive Boolean @default(true)
+  isActive Boolean @default(true) @map("is_active")
 
-  // Character Progression
   experience Int?
-  attributes Json? // Flexible JSON for system-specific attributes
-  inventory  Json? // Items, gold, etc.
+  attributes Json?
+  inventory  Json?
   notes      String?
 
-  // Session Participation (which sessions this character participated in)
   sessions           CharacterSession[]
   gameParticipations GamePlayParticipant[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("campaign_characters")
 }
@@ -92,27 +76,24 @@ model CampaignCharacter {
 model CampaignLocation {
   id         String   @id @default(cuid(2))
   campaign   Campaign @relation(fields: [campaignId], references: [id])
-  campaignId String
+  campaignId String   @map("campaign_id")
 
   name         String
   description  String?
-  locationType String? // City, dungeon, wilderness, etc.
-  isSecret     Boolean @default(false) // Hidden from players?
+  locationType String? @map("location_type")
+  isSecret     Boolean @default(false) @map("is_secret")
 
-  // Location details
-  mapImage String? // URL to map image
-  notes    String? // GM notes about the location
+  mapImage String? @map("map_image")
+  notes    String?
 
-  // Relations to other locations
   parentLocation   CampaignLocation?  @relation("LocationHierarchy", fields: [parentLocationId], references: [id])
-  parentLocationId String?
+  parentLocationId String?            @map("parent_location_id")
   childLocations   CampaignLocation[] @relation("LocationHierarchy")
 
-  // Sessions that took place here
   sessions GamePlaySession[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("campaign_locations")
 }
@@ -120,24 +101,21 @@ model CampaignLocation {
 model CampaignNPC {
   id         String   @id @default(cuid(2))
   campaign   Campaign @relation(fields: [campaignId], references: [id])
-  campaignId String
+  campaignId String   @map("campaign_id")
 
-  // Basic NPC info
   name        String
   description String?
-  role        String? // Overall role (villain, ally, shopkeeper, etc.)
-  isSecret    Boolean @default(false) // Hidden from players?
-  isRecurring Boolean @default(false) // Is this NPC a recurring character?
+  role        String?
+  isSecret    Boolean @default(false) @map("is_secret")
+  isRecurring Boolean @default(false) @map("is_recurring")
 
-  // NPC details
-  stats Json? // System-specific stats
-  notes String? // GM notes about the NPC
+  stats Json?
+  notes String?
 
-  // Track NPC appearances in sessions
   appearances CampaignNPCAppearance[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("campaign_npcs")
 }
@@ -145,18 +123,16 @@ model CampaignNPC {
 model CampaignNPCAppearance {
   id        String          @id @default(cuid(2))
   npc       CampaignNPC     @relation(fields: [npcId], references: [id])
-  npcId     String
+  npcId     String          @map("npc_id")
   session   GamePlaySession @relation(fields: [sessionId], references: [id])
-  sessionId String
+  sessionId String          @map("session_id")
 
-  // Combined metadata from both previous models
-  role           String? // Role in the session (antagonist, ally, neutral, etc.)
-  wasEncountered Boolean @default(true) // Did players actually encounter this NPC?
-  wasSignificant Boolean @default(false) // Was this a major appearance?
+  role           String?
+  wasEncountered Boolean @default(true) @map("was_encountered")
+  wasSignificant Boolean @default(false) @map("was_significant")
 
-  // Event details
-  significantEvent String? // Any significant event involving this NPC
-  notes            String? // Session-specific notes about this NPC
+  significantEvent String? @map("significant_event")
+  notes            String?
 
   @@unique([npcId, sessionId])
   @@map("campaign_npc_appearances")
@@ -165,14 +141,13 @@ model CampaignNPCAppearance {
 model CharacterSession {
   id                String            @id @default(cuid(2))
   character         CampaignCharacter @relation(fields: [characterId], references: [id])
-  characterId       String
+  characterId       String            @map("character_id")
   gamePlaySession   GamePlaySession   @relation(fields: [gamePlaySessionId], references: [id])
-  gamePlaySessionId String
+  gamePlaySessionId String            @map("game_play_session_id")
 
-  // Session-specific character details
-  levelDuringSession Int?
-  experienceGained   Int?
-  notesDuringSession String?
+  levelDuringSession Int?    @map("level_during_session")
+  experienceGained   Int?    @map("experience_gained")
+  notesDuringSession String? @map("notes_during_session")
 
   @@unique([characterId, gamePlaySessionId])
   @@map("character_sessions")
@@ -192,17 +167,17 @@ enum CampaignStatus {
 model CampaignMemberPermission {
   id         String   @id @default(cuid(2))
   campaign   Campaign @relation(fields: [campaignId], references: [id])
-  campaignId String
+  campaignId String   @map("campaign_id")
   user       User     @relation(fields: [userId], references: [id])
-  userId     String
+  userId     String   @map("user_id")
 
   permission Permission
 
   grantedBy   User   @relation("CampaignPermissionGranter", fields: [grantedById], references: [id])
-  grantedById String
+  grantedById String @map("granted_by_id")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([campaignId, userId, permission])
   @@map("campaign_member_permissions")
@@ -211,25 +186,22 @@ model CampaignMemberPermission {
 model CampaignSessionOutcome {
   id                String          @id @default(cuid(2))
   gamePlaySession   GamePlaySession @relation(fields: [gamePlaySessionId], references: [id])
-  gamePlaySessionId String          @unique
+  gamePlaySessionId String          @unique @map("game_play_session_id")
 
   campaign   Campaign @relation(fields: [campaignId], references: [id])
-  campaignId String
+  campaignId String   @map("campaign_id")
 
-  // Narrative outcomes
-  storySummary String? // Brief summary of what happened
-  keyDecisions Json? // Major decision points in the session
+  storySummary String? @map("story_summary")
+  keyDecisions Json?   @map("key_decisions")
 
-  // World state changes
-  worldChanges Json? // Changes to the campaign world/setting
-  npcChanges   Json? // Changes to NPCs (deaths, introductions, etc)
+  worldChanges Json? @map("world_changes")
+  npcChanges   Json? @map("npc_changes")
 
-  // Resources and rewards
-  treasureFound     Json? // Loot, gold, magic items discovered
-  experienceAwarded Int? // Total XP awarded in session
+  treasureFound     Json? @map("treasure_found")
+  experienceAwarded Int?  @map("experience_awarded")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("campaign_session_outcomes")
 }

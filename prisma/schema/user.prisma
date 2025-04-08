@@ -1,15 +1,13 @@
 model User {
-  id           String  @id @default(cuid(2))
+  id String @id @default(cuid(2))
 
-  // Profile information
-  firstName    String?
-  lastName     String?
+  firstName    String? @map("first_name")
+  lastName     String? @map("last_name")
   avatar       String?
-  profileImage String?
+  profileImage String? @map("profile_image")
   username     String  @unique
   bio          String?
 
-  // Authentication link
   authentication UserAuthentication?
 
   mechanicRelationships MechanicRelationship[]
@@ -19,42 +17,36 @@ model User {
 
   gameMedia GameMedia[]
 
-  // Permission relationships
   roles             UserRole[]
   householdRoles    HouseholdRole[]
   directPermissions UserPermission[]
   permissionGroups  GroupMember[]
 
-  // Permission granter relationships
   grantedPermissions         UserPermission[]           @relation("PermissionGranter")
   grantedCampaignPermissions CampaignMemberPermission[] @relation("CampaignPermissionGranter")
   grantedEventPermissions    EventMemberPermission[]    @relation("EventPermissionGranter")
 
-  // Missing relations that need to be added
   campaignPermissions CampaignMemberPermission[]
   eventPermissions    EventMemberPermission[]
 
   tagsAdded    GameTag[]
   achievements UserAchievement[]
 
-  // Friendship management
   friendshipRequestsSent     Friendship[] @relation("FriendshipRequestor")
   friendshipRequestsReceived Friendship[] @relation("FriendshipRecipient")
 
   preferences UserPreferences?
 
-  // User Connections and Memberships
   householdMembers HouseholdMember[]
   households       Household[]
 
-  // Game Master Relationships
   campaignsRunning Campaign[]          @relation("CampaignGameMaster")
   characters       CampaignCharacter[]
 
   createdRuleVariants RuleVariant[]
 
   gameCollection GameCollection[]
-  wishLists      WishList[]
+  lists          List[]
 
   gameReviews GameReview[]
 
@@ -65,18 +57,15 @@ model User {
   gamesOnLoan   GameLoan[] @relation("GamesOnLoan")
   gamesLoanedTo GameLoan[] @relation("GamesLoanedTo")
 
-  // Event and Invite Management
   receivedInvites EventInvite[]
   sentInvites     EventInvite[]   @relation("SentInvites")
   attendees       EventAttendee[]
 
-  // Game social roles
   championedGames    HouseholdGame[]           @relation("GameChampion")
   maintainedGames    HouseholdGame[]           @relation("GameKeeper")
   teacherForGames    HouseholdGame[]           @relation("GameTeacher")
   createdExperiences HouseholdGameExperience[]
 
-  // Social and Notifications
   notifications Notification[]
 
   sessionMediaUploaded SessionMedia[]
@@ -85,25 +74,22 @@ model User {
   householdCustomizationsMade HouseholdGameCustomization[]
   gamesCreated                Game[]                       @relation("GamesCreated")
 
-  // Customization permissions
   userGameCustomizationPermissions    UserGameCustomizationPermission[]
   grantedUserCustomizationPermissions UserGameCustomizationPermission[] @relation("CustomizationPermissionGranter")
 
   householdGameCustomizationPermissions    HouseholdGameCustomizationPermission[]
   grantedHouseholdCustomizationPermissions HouseholdGameCustomizationPermission[] @relation("HouseholdCustomizationPermissionGranter")
 
-  // Game sharing relationships
   accessToGames        GameUserAccess[]
   sharedGames          GameUserAccess[]      @relation("GameSharer")
   sharedWithHouseholds GameHouseholdAccess[] @relation("HouseholdGameSharer")
 
-  // Policy relationships
   policyAssignments     UserPolicyAssignment[]
   resourcePolicyTargets ResourcePolicyAssignment[]
   createdPolicies       PermissionPolicy[]         @relation("PolicyCreator")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("users")
 }
@@ -111,50 +97,49 @@ model User {
 model UserPreferences {
   id     String @id @default(cuid(2))
   user   User   @relation(fields: [userId], references: [id])
-  userId String @unique
+  userId String @unique @map("user_id")
 
   // Theme preferences
-  theme       String  @default("system") // light, dark, system
-  accentColor String?
+  theme       String  @default("system") @map("theme") // light, dark, system
+  accentColor String? @map("accent_color")
 
   // Privacy preferences
-  showOnlineStatus        Boolean @default(true)
-  showLastActive          Boolean @default(true)
-  allowFriendRequests     Boolean @default(true)
-  showCollectionToFriends Boolean @default(true)
-  showGamePlayHistory     Boolean @default(true)
+  showOnlineStatus        Boolean @default(true) @map("show_online_status")
+  showLastActive          Boolean @default(true) @map("show_last_active")
+  allowFriendRequests     Boolean @default(true) @map("allow_friend_requests")
+  showCollectionToFriends Boolean @default(true) @map("show_collection_to_friends")
+  showGamePlayHistory     Boolean @default(true) @map("show_game_play_history")
 
   // Notification preferences
-  emailNotifications Json? // Structured notification preferences
-  pushNotifications  Json?
+  emailNotifications Json? @map("email_notifications") // Structured notification preferences
+  pushNotifications  Json? @map("push_notifications")
 
   // Game preferences
-  preferredPlayerCount Int?
-  preferredGameLength  Int? // In minutes
-  favoriteCategories   String[]
-  favoriteMechanics    String[]
-  dislikedCategories   String[]
-  dislikedMechanics    String[]
+  preferredPlayerCount Int?     @map("preferred_player_count")
+  preferredGameLength  Int?     @map("preferred_game_length") // In minutes
+  favoriteCategories   String[] @map("favorite_categories")
+  favoriteMechanics    String[] @map("favorite_mechanics")
+  dislikedCategories   String[] @map("disliked_categories")
+  dislikedMechanics    String[] @map("disliked_mechanics")
 
   language                Language?  @relation(fields: [languageId], references: [id])
-  languageId              String?
-  defaultReviewVisibility Visibility @default(Private)
+  languageId              String?    @map("language_id")
+  defaultReviewVisibility Visibility @default(Private) @map("default_review_visibility")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("user_preferences")
 }
 
-// User to Role assignment (system-wide roles)
 model UserRole {
   id     String @id @default(cuid(2))
   user   User   @relation(fields: [userId], references: [id])
-  userId String
+  userId String @map("user_id")
   role   Role   @relation(fields: [roleId], references: [id])
-  roleId String
+  roleId String @map("role_id")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@unique([userId, roleId])
   @@map("user_roles")
@@ -163,136 +148,127 @@ model UserRole {
 model UserPermission {
   id     String @id @default(cuid(2))
   user   User   @relation(fields: [userId], references: [id])
-  userId String
+  userId String @map("user_id")
 
-  // The permission being granted
-  permission Permission
+  permission Permission @map("permission")
 
-  // Scope of the permission
-  resourceType ResourceType
-  resourceId   String? // Optional specific resource ID
+  resourceType ResourceType @map("resource_type")
+  resourceId   String?      @map("resource_id")
 
-  // Permission metadata
   grantedBy   User      @relation("PermissionGranter", fields: [grantedById], references: [id])
-  grantedById String
-  expiresAt   DateTime? @db.Timestamptz(3)
+  grantedById String    @map("granted_by_id")
+  expiresAt   DateTime? @map("expires_at") @db.Timestamptz(3)
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([userId, permission, resourceType, resourceId])
   @@map("user_permissions")
 }
 
 model UserLoginHistory {
-  id            String   @id @default(cuid(2))
+  id String @id @default(cuid(2))
 
   authentication   UserAuthentication @relation(fields: [authenticationId], references: [id])
-  authenticationId String
+  authenticationId String             @map("authentication_id")
 
-  ipAddress     String?
-  userAgent     String?
-  success       Boolean  @default(true)
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+  success   Boolean @default(true)
 
-  failureReason String?
-  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  failureReason String?  @map("failure_reason")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@map("user_login_histories")
 }
 
 model UserDevice {
-  id               String   @id @default(cuid(2))
+  id String @id @default(cuid(2))
 
   authentication   UserAuthentication @relation(fields: [authenticationId], references: [id])
-  authenticationId String
+  authenticationId String             @map("authentication_id")
 
-  deviceName       String?
-  deviceIdentifier String // Unique device identifier
-  lastUsed         DateTime @default(now()) @db.Timestamptz(3)
-  isTrusted        Boolean  @default(false)
+  deviceName       String?  @map("device_name")
+  deviceIdentifier String   @map("device_identifier")
+  lastUsed         DateTime @default(now()) @map("last_used") @db.Timestamptz(3)
+  isTrusted        Boolean  @default(false) @map("is_trusted")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([authenticationId, deviceIdentifier])
   @@map("user_devices")
 }
 
 model UserGameCustomization {
-  id     String @id @default(cuid(2))
+  id String @id @default(cuid(2))
 
   user   User   @relation(fields: [userId], references: [id])
-  userId String
+  userId String @map("user_id")
 
   game   Game   @relation(fields: [gameId], references: [id])
-  gameId String
+  gameId String @map("game_id")
 
-  // Customizable fields
-  title       String?
-  subtitle    String?
-  description String?
-  image       String?
-  publishYear Int?
+  title       String? @map("title")
+  subtitle    String? @map("subtitle")
+  description String? @map("description")
+  image       String? @map("image")
+  publishYear Int?    @map("publish_year")
 
-  minPlayers  Int?
-  maxPlayers  Int?
+  minPlayers Int? @map("min_players")
+  maxPlayers Int? @map("max_players")
 
-  playingTime Int?
-  minPlayTime Int?
-  maxPlayTime Int?
+  playingTime Int? @map("playing_time")
+  minPlayTime Int? @map("min_play_time")
+  maxPlayTime Int? @map("max_play_time")
 
-  minAge      Int?
-  complexity  Float?
+  minAge     Int?   @map("min_age")
+  complexity Float? @map("complexity")
 
-  // Notes about customization
-  customizationNotes String?
+  customizationNotes String? @map("customization_notes")
 
-  // Permissions
   permissions UserGameCustomizationPermission[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([userId, gameId])
   @@map("user_game_customizations")
 }
 
-// Specific permissions for customization objects
 model UserGameCustomizationPermission {
-  id              String                @id @default(cuid(2))
+  id String @id @default(cuid(2))
 
   customization   UserGameCustomization @relation(fields: [customizationId], references: [id])
-  customizationId String
+  customizationId String                @map("customization_id")
 
-  user            User                  @relation(fields: [userId], references: [id])
-  userId          String
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
 
-  permission Permission
+  permission Permission @map("permission")
 
   grantedBy   User   @relation("CustomizationPermissionGranter", fields: [grantedById], references: [id])
-  grantedById String
+  grantedById String @map("granted_by_id")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([customizationId, userId, permission])
   @@map("user_game_customization_permissions")
 }
 
 model UserAchievement {
-  id            String      @id @default(cuid(2))
+  id String @id @default(cuid(2))
 
-  user          User        @relation(fields: [userId], references: [id])
-  userId        String
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
 
   achievement   Achievement @relation(fields: [achievementId], references: [id])
-  achievementId String
+  achievementId String      @map("achievement_id")
 
-  earnedAt DateTime @default(now()) @db.Timestamptz(3)
-  progress Int      @default(0) // Progress toward multi-step achievements
+  earnedAt DateTime @default(now()) @map("earned_at") @db.Timestamptz(3)
+  progress Int      @default(0) @map("progress") // Progress toward multi-step achievements
 
   @@unique([userId, achievementId])
   @@map("user_achievements")
 }
-
-

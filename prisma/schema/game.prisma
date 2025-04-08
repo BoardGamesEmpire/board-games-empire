@@ -4,18 +4,17 @@ model Game {
   subtitle    String?
   description String?
   image       String?
-  publishYear Int?
-  minPlayers  Int?
-  maxPlayers  Int?
-  playingTime Int?
+  publishYear Int?    @map("publish_year")
+  minPlayers  Int?    @map("min_players")
+  maxPlayers  Int?    @map("max_players")
+  playingTime Int?    @map("playing_time")
 
-  minPlayTime        Int?
-  minPlayTimeMeasure TimeMeasure?
-  maxPlayTime        Int?
-  maxPlayTimeMeasure TimeMeasure?
-  minAge             Int?
+  minPlayTime        Int?         @map("min_play_time")
+  minPlayTimeMeasure TimeMeasure? @map("min_play_time_measure")
+  maxPlayTime        Int?         @map("max_play_time")
+  maxPlayTimeMeasure TimeMeasure? @map("max_play_time_measure")
+  minAge             Int?         @map("min_age")
 
-  // Enhanced relationships for classification models
   categories GameCategory[]
   mechanics  GameMechanic[]
   families   GameFamily[]
@@ -23,20 +22,17 @@ model Game {
   artists    GameArtist[]
   publishers GamePublisher[]
 
-  // User Relations
   owned       GameCollection[]
   reviews     GameReview[]
   households  HouseholdGame[]
   loanedGames GameLoan[]
-  wishList    WishListGame[]
+  gameLists   GameList[]
 
-  // Usage statistics
-  totalPlayCount Int    @default(0) // Total plays across all users
-  averageRating  Float? // Calculated average rating
-  complexity     Float? // Game complexity rating
+  totalPlayCount Int    @default(0) @map("total_play_count")
+  averageRating  Float? @map("average_rating")
+  complexity     Float?
 
-  // Ownership statistics
-  ownedByCount Int @default(0) // How many users own this game
+  ownedByCount Int @default(0) @map("owned_by_count")
 
   gameMedia GameMedia[]
 
@@ -46,33 +42,29 @@ model Game {
   playSessions GamePlaySession[]
   tags         GameTag[]
 
-  // Version/expansion relationships
   versions             GameVersion[]
   expansions           GameExpansion[]          @relation("BaseGame")
   compatibleExpansions ExpansionCompatibility[]
 
-  // Visibility and origin info
-  isPrivate      Boolean    @default(false) // Is this a private user-created game?
+  isPrivate      Boolean    @default(false) @map("is_private")
   visibility     Visibility @default(Public)
   createdBy      User?      @relation("GamesCreated", fields: [createdById], references: [id])
-  createdById    String?
-  isFromExternal Boolean    @default(false) // Was this imported from external API?
-  externalId     String? // ID from external source if imported
+  createdById    String?    @map("created_by_id")
+  isFromExternal Boolean    @default(false) @map("is_from_external")
+  externalId     String?    @map("external_id")
 
-  // Define who has access to this private game
   sharedWithUsers      GameUserAccess[]
   sharedWithHouseholds GameHouseholdAccess[]
 
-  // Track customizations
   userCustomizations      UserGameCustomization[]
   householdCustomizations HouseholdGameCustomization[]
 
   weight                 GameWeight?
   implementations        GameImplementation[]
-  designerCollaborations DesignerCollaboration[] // Games where designers collaborated
+  designerCollaborations GameDesignerCollaboration[]
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("games")
 }
@@ -80,25 +72,24 @@ model Game {
 model GameCollection {
   id     String @id @default(cuid(2))
   user   User   @relation(fields: [userId], references: [id])
-  userId String
+  userId String @map("user_id")
   game   Game   @relation(fields: [gameId], references: [id])
-  gameId String
+  gameId String @map("game_id")
 
-  // Household Visibility Exceptions
   excludedFromHouseholds ExcludedGame[]
 
   quantity Int @default(1)
 
   rating      Int?
-  playCount   Int?
-  playAgain   Boolean?
+  playCount   Int?      @map("play_count")
+  playAgain   Boolean?  @map("play_again")
   favorite    Boolean?
   comment     String?
-  lastPlayed  DateTime? @db.Timestamptz(3)
-  lastUpdated DateTime? @db.Timestamptz(3)
+  lastPlayed  DateTime? @map("last_played") @db.Timestamptz(3)
+  lastUpdated DateTime? @map("last_updated") @db.Timestamptz(3)
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@unique([userId, gameId])
   @@map("game_collections")
@@ -107,20 +98,20 @@ model GameCollection {
 model GameMedia {
   id     String @id @default(cuid(2))
   game   Game   @relation(fields: [gameId], references: [id])
-  gameId String
+  gameId String @map("game_id")
 
-  mediaType    MediaType
+  mediaType    MediaType @map("media_type")
   url          String
-  thumbnailUrl String?
+  thumbnailUrl String?   @map("thumbnail_url")
   title        String?
   description  String?
-  isDefault    Boolean   @default(false)
+  isDefault    Boolean   @default(false) @map("is_default")
 
   uploadedBy   User   @relation(fields: [uploadedById], references: [id])
-  uploadedById String
+  uploadedById String @map("uploaded_by_id")
 
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("game_media")
 }
@@ -128,18 +119,20 @@ model GameMedia {
 model GameLoan {
   id     String @id @default(cuid(2))
   user   User   @relation("GamesOnLoan", fields: [userId], references: [id])
-  userId String
+  userId String @map("user_id")
   game   Game   @relation(fields: [gameId], references: [id])
-  gameId String
+  gameId String @map("game_id")
 
-  loanToUserId String?
-  loanToUser   User?   @relation("GamesLoanedTo", fields: [loanToUserId], references: [id])
-  loanTo       String?
-  loanToEmail  String?
+  loanedToUserId String? @map("loaned_to_user_id")
+  loanedToUser   User?   @relation("GamesLoanedTo", fields: [loanedToUserId], references: [id])
 
-  loanDate           DateTime  @default(now()) @db.Timestamptz(3)
-  expectedReturnDate DateTime? @db.Timestamptz(3)
-  actualReturnDate   DateTime? @db.Timestamptz(3)
+  // utilize these fields if the individual is not a user in the system
+  loanedTo      String? @map("loaned_to")
+  loanedToEmail String? @map("loaned_to_email")
+
+  loanDate           DateTime  @default(now()) @map("loan_date") @db.Timestamptz(3)
+  expectedReturnDate DateTime? @map("expected_return_date") @db.Timestamptz(3)
+  actualReturnDate   DateTime? @map("actual_return_date") @db.Timestamptz(3)
   notes              String?
 
   @@map("loaned_games")
