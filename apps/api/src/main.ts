@@ -49,8 +49,8 @@ async function bootstrap() {
       type: VersioningType.URI,
     })
     .enableCors({
-      origin: configService.get('cors.origin'),
-      credentials: configService.get('cors.credentials'),
+      origin: configService.get('security.cors.origin'),
+      credentials: configService.get('security.cors.credentials'),
     });
 
   if (configService.get('swagger.enabled')) {
@@ -58,7 +58,6 @@ async function bootstrap() {
       .setTitle(configService.get('swagger.title'))
       .setDescription(configService.get('swagger.description'))
       .setVersion(configService.get('swagger.version'))
-      .setBasePath(configService.get('swagger.basePath'))
       .addBearerAuth()
       .addApiKey({
         type: 'apiKey',
@@ -71,7 +70,7 @@ async function bootstrap() {
     SwaggerModule.setup(globalPrefix, app, document);
   }
 
-  const port = configService.get('port');
+  const port = configService.get('server.port');
   await app.listen(port);
 
   Logger.log(`🚀 Application is running on: http://localhost:${port}/${globalPrefix}`);
