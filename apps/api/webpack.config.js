@@ -12,9 +12,15 @@ module.exports = {
       main: './src/main.ts',
       tsConfig: './tsconfig.app.json',
       assets: ["./src/assets"],
-      optimization: false,
+      optimization: true,
       outputHashing: 'none',
       generatePackageJson: true,
+      fileReplacements: [
+        {
+          replace: './src/environments/environment.ts',
+          with: './src/environments/environment.prod.ts',
+        },
+      ],
     })
   ],
 };

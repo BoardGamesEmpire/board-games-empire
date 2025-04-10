@@ -10,7 +10,7 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CategoriesModule } from './categories/categories.module';
-import configuration from './config/configuration';
+import { configuration } from './config/configuration';
 import { validationSchema } from './config/validation-schema';
 import { DesignersModule } from './designers/designers.module';
 import { FamiliesModule } from './families/families.module';
@@ -24,7 +24,8 @@ import { PublishersModule } from './publishers/publishers.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configuration],
+      cache: true,
+      load: configuration,
       validationSchema,
     }),
 

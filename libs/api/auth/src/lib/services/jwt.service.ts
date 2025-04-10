@@ -9,7 +9,7 @@ export class JwtService {
   async validateToken(token: string) {
     try {
       return await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
+        secret: this.configService.get<string>('jwt.secret'),
       });
     } catch {
       return null;

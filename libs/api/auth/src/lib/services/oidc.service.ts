@@ -64,7 +64,7 @@ export class OidcService {
 
     const authUrl = `${authorizationUrl}?${querystring.stringify({
       client_id: provider.clientId,
-      redirect_uri: this.configService.get('API_BASE_URL') + '/auth/oidc/callback',
+      redirect_uri: this.configService.get('server.api_base_url') + '/auth/oidc/callback',
       response_type: 'code',
       scope: provider.scopes.join(' '),
       state,
@@ -179,7 +179,7 @@ export class OidcService {
           client_id: session.provider.clientId,
           client_secret: session.provider.clientSecret,
           code,
-          redirect_uri: this.configService.get('API_BASE_URL') + '/auth/oidc/callback',
+          redirect_uri: this.configService.get('server.api_base_url') + '/auth/oidc/callback',
           code_verifier: session.codeVerifier,
         }),
       });
@@ -491,7 +491,7 @@ export class OidcService {
 
     const authUrl = `${authorizationUrl}?${querystring.stringify({
       client_id: provider.clientId,
-      redirect_uri: this.configService.get('API_BASE_URL') + '/auth/oidc/callback',
+      redirect_uri: this.configService.get('server.api_base_url') + '/auth/oidc/callback',
       response_type: 'code',
       scope: provider.scopes.join(' '),
       state,
