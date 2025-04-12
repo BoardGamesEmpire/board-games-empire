@@ -1,5 +1,5 @@
 import { PrismaService } from '@bg-empire/api-prisma';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { DateTime } from 'luxon';
@@ -7,7 +7,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly configService: ConfigService, private readonly prisma: PrismaService) {
+  constructor(readonly configService: ConfigService, private readonly prisma: PrismaService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -64,6 +64,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         });
       }
     }
+
+    Logger.log('JWT Strategy', `User ${user.username} authenticated`, 'JwtStrategy');
 
     return user;
   }

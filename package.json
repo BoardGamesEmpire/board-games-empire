@@ -6,7 +6,8 @@
     "nx": "nx",
     "start": "nf start",
     "start:api": "nf start api",
-    "start:client": "nf start web",
+    "start:web": "nf start web",
+    "start:client": "nx run client:run",
     "compile": "nx run-many -t build --parallel",
     "test": "nx run-many -t test --parallel=5 --passWithNoTests",
     "lint": "nx run-many --target=lint --all",
@@ -29,7 +30,8 @@
     "db:seed": "npx prisma db seed",
     "prisma:generate": "npx prisma generate",
     "prisma:format": "npx prisma format",
-    "check": "npm-check -u"
+    "check": "npm-check -u",
+    "nx:reset": "nx reset"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

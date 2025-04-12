@@ -2,7 +2,7 @@ import { registerAs } from '@nestjs/config';
 import { env } from './env';
 
 export default registerAs('server', () => ({
-  port: env.provide<number>('PORT', {
+  port: env.provide<number>('SERVER_PORT', {
     defaultValue: 3000,
     mutators: [(value: string) => parseInt(value, 10)],
   }),
