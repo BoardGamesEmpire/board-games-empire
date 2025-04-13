@@ -6,6 +6,7 @@ import { AuthStrategy, TokenType, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { DateTime } from 'luxon';
 import * as crypto from 'node:crypto';
+import { LoginDto } from '../dto/login.dto';
 import type { RegisterDto } from '../dto/register.dto';
 
 @Injectable()
@@ -16,6 +17,7 @@ export class AuthService {
    * Validate user credentials
    */
   async validateUser(email: string, password: string): Promise<User | null> {
+    console.log('validating user', email, password);
     const auth = await this.prisma.userAuthentication.findFirst({
       where: { email },
       include: { user: true },
@@ -52,7 +54,6 @@ export class AuthService {
       return null;
     }
 
-    // Update last login timestamp
     await this.prisma.userAuthentication.update({
       where: { id: auth.id },
       data: { lastLogin: new Date() },
@@ -64,7 +65,7 @@ export class AuthService {
   /**
    * Login user and generate tokens
    */
-  async login(user: User, ipAddress?: string, userAgent?: string) {
+  async login(user: User, loginDTO: LoginDto, ipAddress?: string, userAgent?: string) {
     const auth = await this.prisma.userAuthentication.findUnique({
       where: { userId: user.id },
       select: {
@@ -88,62 +89,81 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = crypto.randomBytes(40).toString('hex');
 
+    const rememberMe = loginDTO.rememberMe || false;
+
     const accessTokenExpiry = DateTime.now().plus({ hours: 1 }).toJSDate();
-    const refreshTokenExpiry = DateTime.now().plus({ days: 30 }).toJSDate();
+    const refreshTokenExpiry = DateTime.now()
+      .plus({
+        days: rememberMe ? 30 : 1,
+      })
+      .toJSDate();
     const sessionExpiry = refreshTokenExpiry;
 
     const deviceInfo = this.extractDeviceInfo(userAgent);
 
-    await this.prisma.$transaction(async (tx) => {
-      const session = await tx.userSession.create({
-        data: {
-          id: sessionId,
-          authenticationId: auth.id,
-          token: accessToken,
-          ipAddress,
-          userAgent,
-          deviceInfo,
-          expiresAt: sessionExpiry,
-        },
-      });
-
-      await tx.token.createMany({
-        data: [
-          {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const session = await tx.userSession.create({
+          data: {
+            id: sessionId,
             authenticationId: auth.id,
             token: accessToken,
-            type: TokenType.Access,
-            expiresAt: accessTokenExpiry,
-          },
-          {
-            authenticationId: auth.id,
-            token: refreshToken,
-            type: TokenType.Refresh,
-            expiresAt: refreshTokenExpiry,
-            metadata: {
-              session_id: session.id,
+            ipAddress,
+            deviceInfo: {
+              ...deviceInfo,
+              ...loginDTO.deviceInfo,
             },
+            userAgent,
+            expiresAt: sessionExpiry,
           },
-        ],
-      });
+          select: {
+            id: true,
+          },
+        });
 
-      await tx.userLoginHistory.create({
-        data: {
-          authenticationId: auth.id,
-          ipAddress,
-          userAgent,
-          success: true,
-        },
-      });
+        await tx.token.createMany({
+          data: [
+            {
+              authenticationId: auth.id,
+              token: accessToken,
+              type: TokenType.Access,
+              expiresAt: accessTokenExpiry,
+            },
+            {
+              authenticationId: auth.id,
+              token: refreshToken,
+              type: TokenType.Refresh,
+              expiresAt: refreshTokenExpiry,
+              metadata: {
+                session_id: session.id,
+              },
+            },
+          ],
+        });
 
-      await tx.userAuthentication.update({
-        where: { id: auth.id },
-        data: {
-          lastLogin: new Date(),
-          failedLoginAttempts: 0,
-        },
+        await tx.userLoginHistory.create({
+          data: {
+            authenticationId: auth.id,
+            ipAddress,
+            userAgent,
+            success: true,
+          },
+        });
+
+        await tx.userAuthentication.update({
+          where: { id: auth.id },
+          data: {
+            lastLogin: new Date(),
+            failedLoginAttempts: 0,
+          },
+        });
       });
-    });
+    } catch (error) {
+      Logger.error('Error creating session or tokens:', error);
+      throw error;
+    }
+
+    Logger.log(`User ${user.username} logged in successfully`);
 
     return {
       access_token: accessToken,
@@ -479,7 +499,7 @@ export class AuthService {
         id: true,
         ipAddress: true,
         userAgent: true,
-        deviceInfo: true,
+        // deviceInfo: true,
         createdAt: true,
         lastActive: true,
         expiresAt: true,

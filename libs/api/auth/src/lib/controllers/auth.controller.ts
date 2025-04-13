@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Ip, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '../decorators/public.decorator';
 import { LoginDto } from '../dto/login.dto';
@@ -26,8 +26,13 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @Public()
-  async login(@Body() loginDto: LoginDto, @Request() req: any) {
-    return this.authService.login(req.user);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Request() req: any,
+    @Ip() ip: string,
+    @Headers('User-Agent') userAgent: string,
+  ) {
+    return this.authService.login(req.user, loginDto, ip, userAgent);
   }
 
   @ApiOperation({ summary: 'User registration' })

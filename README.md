@@ -1,82 +1,240 @@
-# BoardGamesEmpire
+# Board Games Empire
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A monorepo-based companion application for board game enthusiasts, providing collection management,
+play tracking, and social features. Built with Nx and Flutter to create a cross-platform experience
+that works seamlessly across web, mobile, and desktop.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is almost ready ✨.
+This project is in its early stages and is nowhere near feature-complete. Expect almost everything
+to be broken at this point.
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/node?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+## 🎯 Project Goals
 
-## Finish your CI setup
+- **Universal Access**: Create a unified experience across web, mobile, and desktop platforms
+- **Self-Hostable**: Allow users to connect to their own server instances or hosted services
+- **Robust Authentication**: Implement secure, session-tracked authentication with proper device management
+- **Rich Board Game Management**: Track collections, plays, campaigns, and social interactions
+- **Privacy-Focused**: Keep user data under their control through self-hosting options
 
-[Click here to finish setting up your workspace!](https://cloud.nx.app/connect/F3aX7lsCbP)
+## 🏗️ Technology Stack
 
+- **Nx**: Monorepo tooling for coordinated development and deployment
+- **Flutter**: Cross-platform UI framework for mobile, web, and desktop
+- **NestJS**: Backend API with PostgreSQL database (Prisma ORM)
+- **JWT + Session Tracking**: Hybrid authentication approach
 
-## Run tasks
+## 📁 Project Structure
 
-To run the dev server for your app, use:
-
-```sh
-npx nx serve api
+```
+board-games-empire/
+├── apps/
+│   ├── api/               # NestJS backend API
+│   ├── client/            # Flutter cross-platform UI
+│   └── web/               # Web application - Maybe?
+├── libs/
+│   ├── api/               # API related libraries
+├── scripts/               # Project tooling and scripts
+├── nx.json                # Nx configuration
+├── workspace.json         # Workspace configuration
+└── README.md
 ```
 
-To create a production bundle:
+## 🚀 Getting Started
 
-```sh
-npx nx build api
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v16+)
+- [Nx CLI](https://nx.dev/getting-started/intro)
+- [Flutter](https://flutter.dev/docs/get-started/install) (v3.7+)
+- [Docker](https://www.docker.com/get-started) (for development database)
+
+### Initial Setup
+
+1. Clone the repository
+
+```bash
+git clone https://github.com/BoardGamesEmpire/board-games-empire
+cd board-games-empire
 ```
 
-To see all available targets to run for a project, run:
+2. Install dependencies
 
-```sh
-npx nx show project api
+```bash
+npm install
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+3. Set up environment variables
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+   - Copy the example .env file in the project root and client directories
 
-## Add new projects
+   ```bash
+   cp apps/client/.env.example apps/client/.env
+   cp .env.example .env
+   ```
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+   - Edit the .env files with your configuration
 
-Use the plugin's generator to create new projects.
+4. Start the development database
 
-To generate a new application, use:
-
-```sh
-npx nx g @nx/node:app demo
+```bash
+supply your own db!
 ```
 
-To generate a new library, use:
+5. Run the migrations
 
-```sh
-npx nx g @nx/node:lib mylib
+```bash
+npm run db:migrate:dev
 ```
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+## 🔧 Environment Configuration
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Mobile App Configuration (.env)
 
+The mobile application uses dev environment variables for configuration. Place a `.env` file in the `apps/mobile/` directory with the following variables:
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+# API Configuration
+API_URL=http://localhost
+SERVER_PORT=33333
+```
 
-## Install Nx Console
+### Environment Handling
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+The application handles environment variables differently based on the platform:
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- **Web**: Environment variables are injected during build time using the Nx build configuration
+- **Mobile/Desktop**: Variables are read from the .env file in the client project root
 
-## Useful links
+## 🛠️ Development Workflows
 
-Learn more:
+### Running the API
 
-- [Learn more about this workspace setup](https://nx.dev/nx-api/node?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+npm start
+```
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+The API will be available at http://localhost:33333/api/v1
+
+### Running the Client App
+
+```bash
+# iOS Simulator
+nx run client:run:ios
+
+# Android Emulator
+nx run client:run:android
+
+# Web
+nx run client:run:web
+
+# Desktop (macOS)
+nx run client:run:macos
+```
+
+### Building for Production
+
+```bash
+# API
+nx build api
+
+# Mobile Apps
+nx run client:build-ipa
+nx run client:build-apk
+
+# Web
+nx build client:web - not yet
+
+# Desktop
+nx build client:desktop - not uet
+```
+
+## 📱 Current Features
+
+### Authentication
+
+- **Multi-Server Support**: Connect to multiple server instances (mobile/desktop)
+- **Server Auto-Detection**: Web version automatically connects to hosting server
+- **Session Management**: View and manage active login sessions - WIP
+- **Secure Token Storage**: Platform-specific secure storage for auth tokens
+
+### Server Configuration
+
+- **Server Setup**: First-time setup wizard for server configuration
+- **Server Switching**: Easily switch between different server connections
+- **Connection Validation**: Test connections before saving
+
+### Platform-Specific Behavior
+
+- **Web**: Uses hosting server URL, disables server configuration
+- **Mobile/Desktop**: Full server management capabilities
+
+## 🚧 Limitations & Work in Progress
+
+- User profile management is limited
+- Game collection features are still in development
+- No offline support yet
+- Limited data import/export capabilities
+
+## 🚀 Deployment
+
+### API Deployment
+
+The API can be deployed as a Node.js application or using Docker:
+
+```bash
+# Build the API
+nx build api
+
+# Start in production mode
+node dist/apps/api/main.js
+```
+
+Docker deployment:
+
+```bash
+nx run api:docker:build
+nx run api:docker:push
+```
+
+### Mobile App Deployment - Maybe?
+
+For mobile app stores:
+
+```bash
+nx run client:build:ios-prod
+nx run client:build:android-prod
+```
+
+### Web Deployment
+
+```bash
+nx run client:build:web-prod
+```
+
+The built files will be available in `dist/apps/client/web` and can be deployed to any static hosting service.
+
+## 🔄 CI/CD
+
+The project uses GitHub Actions for CI/CD:
+
+- **Pull Requests**: Builds and tests all affected projects
+- **Main Branch**: Builds, tests, and deploys to staging
+- **Release Branches**: Builds, tests, and deploys to production
+
+## 📈 Future Roadmap
+
+- Offline support with data synchronization
+- Advanced game collection management
+- Campaign tracking system
+- Statistical analysis of play data
+- Social integration and sharing
+- Import from BoardGameGeek
+- Push notifications
+- Event management and coordination
+
+## 🤝 Contributing
+
+Contributions are welcome! Please check out our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+Not yet licensed

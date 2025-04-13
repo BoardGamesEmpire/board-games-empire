@@ -6,9 +6,10 @@
     "nx": "nx",
     "start": "nf start",
     "start:api": "nf start api",
-    "start:client": "nf start web",
+    "start:web": "nf start web",
+    "start:client": "nx run client:run",
     "compile": "nx run-many -t build --parallel",
-    "test": "nx run-many -t test --parallel=5 --passWithNoTests",
+    "test": "nx run-many -t test --parallel=5 --passWithNoTests --exclude client",
     "lint": "nx run-many --target=lint --all",
     "e2e": "nx e2e",
     "affected:apps": "nx affected:apps",
@@ -29,7 +30,8 @@
     "db:seed": "npx prisma db seed",
     "prisma:generate": "npx prisma generate",
     "prisma:format": "npx prisma format",
-    "check": "npm-check -u"
+    "check": "npm-check -u",
+    "nx:reset": "nx reset"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -81,6 +83,7 @@
     "@nx/web": "20.7.1",
     "@nx/webpack": "20.7.1",
     "@nx/workspace": "20.7.1",
+    "@nxrocks/nx-flutter": "^10.0.1",
     "@swc-node/register": "^1.10.10",
     "@swc/core": "^1.11.16",
     "@swc/helpers": "~0.5.11",

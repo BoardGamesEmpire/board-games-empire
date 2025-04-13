@@ -2,9 +2,10 @@ import { registerAs } from '@nestjs/config';
 import { JwtModuleOptions } from '@nestjs/jwt';
 import type { EnvManyResult } from '@status/envirator';
 import { env } from './env';
+import { removeUndefinedFields, splitTrimFilter } from './helpers/helpers';
 
 function shape(record: EnvManyResult): JwtModuleOptions {
-  return {
+  return removeUndefinedFields({
     secret: record.secret,
     signOptions: {
       expiresIn: record.expiresIn,
@@ -15,7 +16,7 @@ function shape(record: EnvManyResult): JwtModuleOptions {
     verifyOptions: {
       ignoreExpiration: false,
     },
-  };
+  });
 }
 
 export default registerAs('jwt', () =>
@@ -38,6 +39,8 @@ export default registerAs('jwt', () =>
       {
         keyTo: 'audience',
         key: 'JWT_AUDIENCE',
+        defaultValue: [],
+        mutators: [splitTrimFilter],
         warnOnly: true,
       },
       {

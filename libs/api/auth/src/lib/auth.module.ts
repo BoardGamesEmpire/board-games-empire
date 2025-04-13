@@ -23,7 +23,11 @@ import { LocalStrategy } from './strategies/local.strategy';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => configService.get('jwt'),
+      useFactory(configService: ConfigService) {
+        const jwtConfig = configService.get('jwt');
+        console.log('JWT Config:', jwtConfig);
+        return jwtConfig;
+      },
     }),
     ConfigModule,
   ],

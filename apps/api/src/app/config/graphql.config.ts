@@ -2,7 +2,7 @@ import { registerAs } from '@nestjs/config';
 import * as path from 'node:path';
 import process from 'node:process';
 import { env } from './env';
-import { isTrue } from './helpers/is-true.helper';
+import { isTrue } from './helpers/helpers';
 
 export interface GraphQLConfig {
   debug: boolean;
