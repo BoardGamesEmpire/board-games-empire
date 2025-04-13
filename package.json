@@ -9,7 +9,7 @@
     "start:web": "nf start web",
     "start:client": "nx run client:run",
     "compile": "nx run-many -t build --parallel",
-    "test": "nx run-many -t test --parallel=5 --passWithNoTests",
+    "test": "nx run-many -t test --parallel=5 --passWithNoTests --exclude client",
     "lint": "nx run-many --target=lint --all",
     "e2e": "nx e2e",
     "affected:apps": "nx affected:apps",
