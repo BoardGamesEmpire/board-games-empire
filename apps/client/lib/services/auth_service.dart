@@ -9,7 +9,7 @@ import '../models/user.dart';
 import '../models/auth/auth.dart';
 import '../services/platform_service.dart';
 
-class AuthService with ChangeNotifier {
+class AuthService extends ChangeNotifier {
   final apiPrefix = '/auth';
 
   String _baseUrl;
@@ -339,6 +339,8 @@ class AuthService with ChangeNotifier {
     if (!isAuthenticated || accessToken == null) return;
 
     try {
+      // TODO: logging out all sessions does not redirect to home screen or possibly clear session
+      // data correctly
       await http.post(
         _buildUrl('/logout'),
         headers: {

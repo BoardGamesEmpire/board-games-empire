@@ -1,7 +1,10 @@
 import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Ip, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { User } from '@prisma/client';
+import { CurrentUser } from '../decorators/current-user.decorator';
 import { Public } from '../decorators/public.decorator';
 import { LoginDto } from '../dto/login.dto';
+import { LogoutDto } from '../dto/logout.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { RegisterDto } from '../dto/register.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -65,6 +68,7 @@ export class AuthController {
     return this.authService.refreshToken(refreshTokenDto.refreshToken);
   }
 
+  // TODO: This isn't auth related. Move to user controller
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -72,8 +76,8 @@ export class AuthController {
   })
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req: any) {
-    return req.user;
+  getProfile(@CurrentUser() user: User) {
+    return user;
   }
 
   @ApiOperation({ summary: 'Log out user' })
@@ -84,7 +88,23 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Request() req: any) {
-    return this.authService.logout(req.user.id);
+  async logout(@CurrentUser() user: User, @Body() logoutDto: LogoutDto) {
+    return this.authService.logout(user.id, logoutDto);
+  }
+
+  @ApiOperation({ summary: 'Get active sessions' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of active sessions retrieved',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get('sessions')
+  @HttpCode(HttpStatus.OK)
+  async getActiveSessions(@CurrentUser() user: User) {
+    return this.authService.getActiveSessions(user.id);
   }
 }

@@ -1,15 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import '../models/auth/auth.dart';
 import './auth_service.dart';
+import 'package:http_status/http_status.dart';
 
 class JwtHttpClient extends http.BaseClient {
-  final http.Client _inner;
-  final AuthService _authService;
-  final String baseUrl;
-  bool _isRefreshing = false;
   final List<Completer<http.StreamedResponse>> _pendingRequests = [];
+  late final AuthService _authService;
+  final http.Client _inner;
+  final String baseUrl;
+
+  bool _isRefreshing = false;
 
   JwtHttpClient({
     required this.baseUrl,
@@ -18,38 +21,35 @@ class JwtHttpClient extends http.BaseClient {
   }) : _inner = inner ?? http.Client(),
        _authService = authService;
 
+  bool get isAuthenticated => _authService.isAuthenticated;
+
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    // Add auth header if we have a token
     if (_authService.accessToken != null) {
       request.headers['Authorization'] = 'Bearer ${_authService.accessToken}';
     }
 
-    // Send the request
     final response = await _inner.send(request);
 
-    // If the response is 401 Unauthorized, try to refresh the token
-    if (response.statusCode == 401 && _authService.refreshToken != null) {
+    if (response.statusCode == HttpStatusCode.unauthorized &&
+        _authService.refreshToken != null) {
       if (_isRefreshing) {
-        // If already refreshing, queue this request to retry after refresh
         final completer = Completer<http.StreamedResponse>();
+
         _pendingRequests.add(completer);
         return completer.future;
       }
 
       try {
         _isRefreshing = true;
-        // Try to refresh the token
         final refreshed = await _refreshToken();
         _isRefreshing = false;
 
         if (refreshed) {
-          // Token refreshed, retry the original request
           final newRequest = await _copyRequest(request);
           newRequest.headers['Authorization'] =
               'Bearer ${_authService.accessToken}';
 
-          // Process any pending requests
           for (final completer in _pendingRequests) {
             try {
               final retryResponse = await _inner.send(
@@ -62,14 +62,13 @@ class JwtHttpClient extends http.BaseClient {
           }
           _pendingRequests.clear();
 
-          // Return the response for the current request
           return _inner.send(newRequest);
         } else {
-          // Token refresh failed, reject all pending requests
           final error = Exception('Authentication failed');
           for (final completer in _pendingRequests) {
             completer.completeError(error);
           }
+
           _pendingRequests.clear();
         }
       } finally {
@@ -80,7 +79,6 @@ class JwtHttpClient extends http.BaseClient {
     return response;
   }
 
-  // Helper to refresh the token
   Future<bool> _refreshToken() async {
     try {
       final response = await http.post(
@@ -89,27 +87,26 @@ class JwtHttpClient extends http.BaseClient {
         body: jsonEncode({'refresh_token': _authService.refreshToken}),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == HttpStatusCode.ok) {
         final data = jsonDecode(response.body);
         final newTokens = AuthTokens(
           accessToken: data['access_token'],
           refreshToken: _authService.refreshToken!,
         );
 
-        // Update auth service with new token
         await _authService.updateTokens(newTokens);
         return true;
       }
     } catch (e) {
-      print('Token refresh failed: $e');
+      if (kDebugMode) {
+        print('Token refresh failed: $e');
+      }
     }
 
-    // If we reach here, refresh failed - logout user
     await _authService.logout();
     return false;
   }
 
-  // Helper to create a copy of a request with a new auth header
   Future<http.BaseRequest> _copyRequest(http.BaseRequest request) async {
     final newRequest = http.Request(request.method, request.url);
 
@@ -126,9 +123,87 @@ class JwtHttpClient extends http.BaseClient {
 
     return newRequest;
   }
+
+  @override
+  Future<http.Response> get(Uri url, {Map<String, String>? headers}) async {
+    final uri = _buildUri(url);
+    return super.get(uri, headers: _addAuthHeaders(headers));
+  }
+
+  @override
+  Future<http.Response> post(
+    Uri url, {
+    Object? body,
+    Encoding? encoding,
+    Map<String, String>? headers,
+  }) async {
+    final uri = _buildUri(url);
+    return super.post(
+      uri,
+      headers: _addAuthHeaders(headers),
+      body: body,
+      encoding: encoding,
+    );
+  }
+
+  @override
+  Future<http.Response> put(
+    Uri url, {
+    Object? body,
+    Encoding? encoding,
+    Map<String, String>? headers,
+  }) async {
+    final uri = _buildUri(url);
+    return super.put(
+      uri,
+      headers: _addAuthHeaders(headers),
+      body: body,
+      encoding: encoding,
+    );
+  }
+
+  @override
+  Future<http.Response> delete(
+    Uri url, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+  }) async {
+    final uri = _buildUri(url);
+
+    return super.delete(
+      uri,
+      headers: _addAuthHeaders(headers),
+      body: body,
+      encoding: encoding,
+    );
+  }
+
+  _addAuthHeaders(Map<String, String>? headers) {
+    if (_authService.accessToken != null) {
+      headers ??= {};
+      headers['Authorization'] = 'Bearer ${_authService.accessToken}';
+    }
+
+    return headers;
+  }
+
+  Uri _buildUri(Uri uri) {
+    final path = uri.toString();
+    final fullUrl =
+        path.startsWith('http')
+            ? path
+            : '$baseUrl${path.startsWith('/') ? path : '/$path'}';
+    return Uri.parse(fullUrl);
+  }
+
+  buildBearerHeader() {
+    return _authService.accessToken != null
+        ? {'Authorization': 'Bearer ${_authService.accessToken}'}
+        : {};
+  }
 }
 
-// Add update method to AuthService
 extension AuthServiceExtension on AuthService {
   Future<void> updateTokens(AuthTokens tokens) async {
     await secureStorage.write(key: 'access_token', value: tokens.accessToken);
@@ -137,4 +212,9 @@ extension AuthServiceExtension on AuthService {
     setAuthState(newAuthState);
     notifyListeners();
   }
+
+  String? get token => accessToken;
+  String? get accessToken => authState.tokens?.accessToken;
+  String? get refreshToken => authState.tokens?.refreshToken;
+  bool get isAuthenticated => authState.isAuthenticated;
 }
