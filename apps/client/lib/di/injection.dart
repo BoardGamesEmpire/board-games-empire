@@ -1,9 +1,9 @@
-// lib/di/injection.dart - Updated
 import 'package:get_it/get_it.dart';
 import '../services/server_config_service.dart';
-import '../services/auth_service.dart';
+import '../services/auth/auth_service.dart';
 import '../services/websocket/websocket_manager.dart';
 import '../services/jwt_interceptor.dart';
+import '../services/chat/chat_service.dart';
 import 'service_registration.dart';
 import '../services/game/game_service.dart';
 
@@ -62,10 +62,16 @@ void resetAppServices() {
     getIt.resetLazySingleton<JwtHttpClient>();
   }
 
-  final wsManager = getIt<WebSocketManager>();
-  wsManager.disconnect();
+  if (getIt.isRegistered<WebSocketManager>()) {
+    final wsManager = getIt<WebSocketManager>();
+    wsManager.disconnect();
+  }
 
   if (getIt.isRegistered<GameService>()) {
     getIt.resetLazySingleton<GameService>();
+  }
+
+  if (getIt.isRegistered<ChatService>()) {
+    getIt.resetLazySingleton<ChatService>();
   }
 }

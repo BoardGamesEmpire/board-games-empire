@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import '../../di/injection.dart';
 import '../../services/websocket/websocket_manager.dart';
 import '../../services/server_config_service.dart';
-import '../../services/auth_service.dart';
+import '../../services/auth/auth_service.dart';
 import '../../services/game/game_service.dart';
 import '../account/session_management_screen.dart';
 import '../config/server_selection_screen.dart';
@@ -22,35 +23,44 @@ class _HomeScreenState extends State<HomeScreen> {
   final WebSocketManager _websocketManager = getIt<WebSocketManager>();
   final ServerConfigService _serverConfigService = getIt<ServerConfigService>();
   final GameService _gameService = getIt<GameService>();
+  final AuthService _authService = getIt<AuthService>();
+
+  late StreamSubscription _logoutSubscription;
 
   @override
   void initState() {
     super.initState();
 
     _initializeWebSocket();
+
+    _logoutSubscription = _authService.onLogout.listen((event) {
+      if (mounted) {
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(LoginScreen.routeName, (route) => false);
+      }
+    });
   }
 
   Future<void> _initializeWebSocket() async {
     if (_serverConfigService.activeServer != null) {
-      final authService = getIt<AuthService>();
       final server = _serverConfigService.activeServer!;
 
-      Map<String, String>? headers;
-      if (authService.isAuthenticated) {
-        headers = {'Authorization': 'Bearer ${authService.accessToken}'};
-      }
-
-      await _websocketManager.connect(server.url, server.id, headers: headers);
+      await _websocketManager.connect(server.url, server.id);
     }
   }
 
   void _logout(BuildContext context) async {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    await authService.logout();
-
-    if (!context.mounted) return;
-
-    Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
+    try {
+      await _authService.logout();
+    } catch (e) {
+      if (mounted) {
+        // TODO: context across multiple async calls
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error logging out: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   void _showLogoutConfirmation(BuildContext context) {
@@ -322,5 +332,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _logoutSubscription.cancel();
+    super.dispose();
   }
 }

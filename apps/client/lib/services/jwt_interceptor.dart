@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/auth/auth.dart';
-import './auth_service.dart';
+import './auth/auth_service.dart';
 import 'package:http_status/http_status.dart';
 
 class JwtHttpClient extends http.BaseClient {

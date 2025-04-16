@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../services/auth_service.dart';
+import '../../services/auth/auth_service.dart';
+import '../../di/injection.dart';
+import '../auth/login_screen.dart';
 import '../../models/user.dart';
 
 class SessionManagementScreen extends StatefulWidget {
@@ -15,6 +17,7 @@ class SessionManagementScreen extends StatefulWidget {
 }
 
 class _SessionManagementScreenState extends State<SessionManagementScreen> {
+  late StreamSubscription _logoutSubscription;
   List<UserSession> _sessions = [];
   bool _isLoading = true;
   String? _error;
@@ -23,6 +26,15 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
   void initState() {
     super.initState();
     _loadSessions();
+
+    final authService = getIt<AuthService>();
+    _logoutSubscription = authService.onLogout.listen((event) {
+      if (mounted) {
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(LoginScreen.routeName, (route) => false);
+      }
+    });
   }
 
   Future<void> _loadSessions() async {
@@ -32,7 +44,7 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
     });
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
+      final authService = getIt<AuthService>();
       final sessions = await authService.getActiveSessions();
 
       if (mounted) {
@@ -57,13 +69,12 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
     });
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
+      final authService = getIt<AuthService>();
       final success = await authService.logoutSession(session.id);
 
       if (success) {
         if (session.isCurrentSession) {
-          if (!mounted) return;
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          // Redirect will be handled by the logout subscription
           return;
         }
 
@@ -135,11 +146,8 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
     });
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
+      final authService = getIt<AuthService>();
       await authService.logout(allSessions: true);
-
-      if (!mounted) return;
-      Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -269,6 +277,12 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _logoutSubscription.cancel();
+    super.dispose();
   }
 }
 
