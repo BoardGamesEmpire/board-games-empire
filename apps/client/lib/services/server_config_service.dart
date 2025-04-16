@@ -5,6 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/config/server_config.dart';
 import './platform_service.dart';
 import '../config/environment_config.dart';
+import '../di/injection.dart';
+import './websocket/websocket_manager.dart';
+import 'package:http_status/http_status.dart';
 
 class ServerConfigService with ChangeNotifier {
   static const String _storageKey = 'server_configs';
@@ -20,6 +23,12 @@ class ServerConfigService with ChangeNotifier {
   bool get isInitialized => _isInitialized;
   bool get hasServers => _serverConfigs.isNotEmpty;
   bool get isWeb => _isWebPlatform;
+
+  WebSocketManager? _websocketManager;
+
+  ServerConfigService({WebSocketManager? websocketManager}) {
+    _websocketManager = websocketManager;
+  }
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -108,13 +117,12 @@ class ServerConfigService with ChangeNotifier {
 
     final existingServer = _serverConfigs.firstWhere(
       (s) => s.url == sanitizedUrl,
-      orElse: () => null as ServerConfig,
+      orElse: () => ServerConfig(id: 'dummy-not-found', name: 'Dummy', url: ''),
     );
 
-    if (existingServer != null) {
+    if (existingServer.id != 'dummy-not-found') {
       throw Exception('A server with this URL already exists');
     }
-
     await validateServer(sanitizedUrl);
 
     final newConfig = ServerConfig(
@@ -161,10 +169,13 @@ class ServerConfigService with ChangeNotifier {
     );
 
     await _saveConfigs();
+
+    _websocketManager ??= getIt<WebSocketManager>();
+    _websocketManager?.disconnect();
+
     notifyListeners();
   }
 
-  // Update a server config
   Future<void> updateServer(
     String serverId, {
     String? name,
@@ -186,10 +197,11 @@ class ServerConfigService with ChangeNotifier {
 
       final conflictingServer = _serverConfigs.firstWhere(
         (s) => s.id != serverId && s.url == sanitizedUrl,
-        orElse: () => null as ServerConfig,
+        orElse:
+            () => ServerConfig(id: 'dummy-not-found', name: 'Dummy', url: ''),
       );
 
-      if (conflictingServer != null) {
+      if (conflictingServer.id != 'dummy-not-found') {
         throw Exception('Another server with this URL already exists');
       }
 
@@ -203,6 +215,11 @@ class ServerConfigService with ChangeNotifier {
 
     if (_activeServer?.id == serverId) {
       _activeServer = _serverConfigs[index];
+
+      if (sanitizedUrl != null) {
+        _websocketManager ??= getIt<WebSocketManager>();
+        _websocketManager?.disconnect();
+      }
     }
 
     await _saveConfigs();
@@ -224,6 +241,9 @@ class ServerConfigService with ChangeNotifier {
     _serverConfigs.removeAt(index);
 
     if (isActiveServer) {
+      _websocketManager ??= getIt<WebSocketManager>();
+      _websocketManager?.disconnect();
+
       if (_serverConfigs.isNotEmpty) {
         await setActiveServer(_serverConfigs[0].id);
       } else {
@@ -248,7 +268,7 @@ class ServerConfigService with ChangeNotifier {
           )
           .timeout(const Duration(seconds: 10));
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == HttpStatusCode.ok) {
         try {
           final data = jsonDecode(response.body);
           if (data.containsKey('status') && data['status'] == 'ok') {
@@ -259,6 +279,7 @@ class ServerConfigService with ChangeNotifier {
               response.body.contains('ok')) {
             return true;
           }
+
           throw Exception('Invalid API response format');
         }
       }
@@ -270,7 +291,8 @@ class ServerConfigService with ChangeNotifier {
           )
           .timeout(const Duration(seconds: 10));
 
-      if (baseResponse.statusCode >= 200 && baseResponse.statusCode < 300) {
+      if (baseResponse.statusCode >= HttpStatusCode.ok &&
+          baseResponse.statusCode < HttpStatusCode.multipleChoices) {
         return true;
       }
 

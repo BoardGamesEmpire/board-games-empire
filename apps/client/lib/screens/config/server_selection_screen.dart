@@ -5,6 +5,7 @@ import '../../services/server_config_service.dart';
 import '../../services/auth_service.dart';
 import '../../models/config/server_config.dart';
 import '../auth/login_screen.dart';
+import '../../di/injection.dart';
 import 'server_config_screen.dart';
 
 class ServerSelectionScreen extends StatefulWidget {

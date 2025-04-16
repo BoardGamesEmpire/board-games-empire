@@ -898,7 +898,6 @@ CREATE TABLE "games" (
     "average_rating" DOUBLE PRECISION,
     "complexity" DOUBLE PRECISION,
     "owned_by_count" INTEGER NOT NULL DEFAULT 0,
-    "is_private" BOOLEAN NOT NULL DEFAULT false,
     "visibility" "visibility_types" NOT NULL DEFAULT 'Public',
     "created_by_id" TEXT,
     "is_from_external" BOOLEAN NOT NULL DEFAULT false,

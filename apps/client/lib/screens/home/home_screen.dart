@@ -1,16 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../services/auth_service.dart';
-import '../../services/platform_service.dart';
-import '../../screens/auth/login_screen.dart';
-import '../../screens/account/session_management_screen.dart';
-import '../../screens/config/server_selection_screen.dart';
+import '../../di/injection.dart';
+import '../../services/websocket/websocket_manager.dart';
 import '../../services/server_config_service.dart';
+import '../../services/auth_service.dart';
+import '../../services/game/game_service.dart';
+import '../account/session_management_screen.dart';
+import '../config/server_selection_screen.dart';
+import '../auth/login_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   static const routeName = '/home';
 
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final WebSocketManager _websocketManager = getIt<WebSocketManager>();
+  final ServerConfigService _serverConfigService = getIt<ServerConfigService>();
+  final GameService _gameService = getIt<GameService>();
+
+  @override
+  void initState() {
+    super.initState();
+
+    _initializeWebSocket();
+  }
+
+  Future<void> _initializeWebSocket() async {
+    if (_serverConfigService.activeServer != null) {
+      final authService = getIt<AuthService>();
+      final server = _serverConfigService.activeServer!;
+
+      Map<String, String>? headers;
+      if (authService.isAuthenticated) {
+        headers = {'Authorization': 'Bearer ${authService.accessToken}'};
+      }
+
+      await _websocketManager.connect(server.url, server.id, headers: headers);
+    }
+  }
 
   void _logout(BuildContext context) async {
     final authService = Provider.of<AuthService>(context, listen: false);
@@ -57,6 +89,31 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Board Games Empire'),
         actions: [
+          StreamBuilder<bool>(
+            stream: _websocketManager.statusStream,
+            initialData: _websocketManager.isConnected,
+            builder: (context, snapshot) {
+              final isConnected = snapshot.data ?? false;
+              return Tooltip(
+                message:
+                    isConnected
+                        ? 'Using WebSocket Connection'
+                        : 'Using REST API',
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Icon(
+                    isConnected ? Icons.wifi : Icons.wifi_off,
+                    color: isConnected ? Colors.green : Colors.orange,
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Reconnect WebSocket',
+            onPressed: _initializeWebSocket,
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _showLogoutConfirmation(context),
@@ -85,7 +142,7 @@ class HomeScreen extends StatelessWidget {
               decoration: BoxDecoration(color: Theme.of(context).primaryColor),
             ),
 
-            if (activeServer != null && !PlatformService.isWeb)
+            if (activeServer != null)
               ListTile(
                 leading: const Icon(Icons.dns),
                 title: Text(activeServer.name),
@@ -115,20 +172,51 @@ class HomeScreen extends StatelessWidget {
                 ).pushNamed(SessionManagementScreen.routeName);
               },
             ),
+
             ListTile(
-              leading: const Icon(Icons.security),
-              title: const Text('Security Settings'),
+              leading: const Icon(Icons.search),
+              title: const Text('Search Games'),
               onTap: () {
                 Navigator.of(context).pop(); // Close drawer
-                // TODO: Navigate to security settings screen
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Security settings not implemented yet'),
-                  ),
-                );
+                Navigator.pushNamed(context, '/games/search');
               },
             ),
+
+            ListTile(
+              leading: const Icon(Icons.chat),
+              title: const Text('Chat'),
+              onTap: () {
+                Navigator.of(context).pop(); // Close drawer
+                Navigator.pushNamed(context, '/chat');
+              },
+            ),
+
             const Divider(),
+
+            ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('Connection Status'),
+              subtitle: StreamBuilder<bool>(
+                stream: _websocketManager.statusStream,
+                initialData: _websocketManager.isConnected,
+                builder: (context, snapshot) {
+                  final isConnected = snapshot.data ?? false;
+                  return Text(
+                    isConnected ? 'WebSocket Connected' : 'Using REST API',
+                    style: TextStyle(
+                      color: isConnected ? Colors.green : Colors.orange,
+                    ),
+                  );
+                },
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: _initializeWebSocket,
+              ),
+            ),
+
+            const Divider(),
+
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
@@ -161,18 +249,72 @@ class HomeScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(
-                  context,
-                ).pushNamed(SessionManagementScreen.routeName);
-              },
-              icon: const Icon(Icons.security),
-              label: const Text('Manage Sessions'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+
+            // WebSocket status card
+            Card(
+              margin: const EdgeInsets.all(16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Text(
+                      'Connection Status',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    StreamBuilder<bool>(
+                      stream: _websocketManager.statusStream,
+                      initialData: _websocketManager.isConnected,
+                      builder: (context, snapshot) {
+                        final isConnected = snapshot.data ?? false;
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              isConnected ? Icons.check_circle : Icons.error,
+                              color: isConnected ? Colors.green : Colors.orange,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isConnected
+                                  ? 'WebSocket Connected'
+                                  : 'Using REST Fallback',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    isConnected ? Colors.green : Colors.orange,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    ElevatedButton.icon(
+                      onPressed: _initializeWebSocket,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Reconnect WebSocket'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+                    Text(
+                      'Server: ${activeServer?.name ?? 'None'}',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      activeServer?.url ?? '',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                 ),
               ),
             ),

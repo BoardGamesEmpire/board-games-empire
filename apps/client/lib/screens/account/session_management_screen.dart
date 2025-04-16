@@ -420,11 +420,10 @@ class _InfoRow extends StatelessWidget {
   final String value;
 
   const _InfoRow({
-    Key? key,
     required this.icon,
     required this.label,
     required this.value,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

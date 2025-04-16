@@ -46,7 +46,6 @@ model Game {
   expansions           GameExpansion[]          @relation("BaseGame")
   compatibleExpansions ExpansionCompatibility[]
 
-  isPrivate      Boolean    @default(false) @map("is_private")
   visibility     Visibility @default(Public)
   createdBy      User?      @relation("GamesCreated", fields: [createdById], references: [id])
   createdById    String?    @map("created_by_id")

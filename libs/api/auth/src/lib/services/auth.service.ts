@@ -7,6 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { DateTime } from 'luxon';
 import * as crypto from 'node:crypto';
 import { LoginDto } from '../dto/login.dto';
+import { LogoutDto } from '../dto/logout.dto';
 import type { RegisterDto } from '../dto/register.dto';
 
 @Injectable()
@@ -410,7 +411,7 @@ export class AuthService {
   /**
    * Log out user by invalidating sessions and refresh tokens
    */
-  async logout(userId: string, sessionId?: string, allSessions = false) {
+  async logout(userId: string, logoutDto: LogoutDto) {
     const auth = await this.prisma.userAuthentication.findUnique({
       where: { userId },
       select: { id: true },
@@ -421,7 +422,7 @@ export class AuthService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      if (allSessions) {
+      if (logoutDto?.allSessions) {
         await tx.userSession.updateMany({
           where: {
             authenticationId: auth.id,
@@ -444,10 +445,10 @@ export class AuthService {
             revocationReason: 'User logged out from all sessions',
           },
         });
-      } else if (sessionId) {
+      } else if (logoutDto?.sessionId) {
         await tx.userSession.updateMany({
           where: {
-            id: sessionId,
+            id: logoutDto.sessionId,
             authenticationId: auth.id,
             isValid: true,
           },
@@ -463,7 +464,7 @@ export class AuthService {
             isRevoked: false,
             metadata: {
               path: ['session_id'],
-              equals: sessionId,
+              equals: logoutDto.sessionId,
             },
           },
           data: {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'di/injection.dart';
 import 'services/auth_service.dart';
-import 'services/jwt_interceptor.dart';
 import 'services/server_config_service.dart';
 import 'services/platform_service.dart';
 import 'screens/auth/login_screen.dart';
@@ -12,7 +12,11 @@ import 'screens/config/server_config_screen.dart';
 import 'screens/config/server_selection_screen.dart';
 import 'screens/home/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await setupDependencyInjection();
+
   runApp(const BoardGamesEmpire());
 }
 
@@ -25,37 +29,14 @@ class BoardGamesEmpire extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ServerConfigService()),
-
-        ChangeNotifierProxyProvider<ServerConfigService, AuthService>(
-          create: (_) => AuthService(),
-          update: (_, serverConfigService, previousAuthService) {
-            final authService = previousAuthService ?? AuthService();
-
-            if (serverConfigService.activeServer != null) {
-              authService.setBaseUrl(serverConfigService.activeServer!.url);
-              authService.setCurrentServer(
-                serverConfigService.activeServer!.id,
-              );
-            }
-
-            return authService;
-          },
+        ChangeNotifierProvider<ServerConfigService>.value(
+          value: getIt<ServerConfigService>(),
         ),
-
-        ProxyProvider2<ServerConfigService, AuthService, JwtHttpClient>(
-          update:
-              (_, serverConfigService, authService, __) => JwtHttpClient(
-                baseUrl: serverConfigService.activeServer?.url ?? '',
-                authService: authService,
-              ),
-        ),
+        ChangeNotifierProvider<AuthService>.value(value: getIt<AuthService>()),
       ],
       child: Consumer<ServerConfigService>(
         builder: (ctx, serverConfigService, _) {
           if (!serverConfigService.isInitialized) {
-            Future.microtask(() => serverConfigService.initialize());
-
             return MaterialApp(
               title: title,
               theme: _buildLightTheme(),
