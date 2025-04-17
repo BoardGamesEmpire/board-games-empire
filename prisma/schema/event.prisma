@@ -16,6 +16,8 @@ model Event {
 
   memberPermissions EventMemberPermission[]
 
+  chatRoom ChatRoom?
+
   maxTotalParticipants Int?    @map("max_total_participants")
   strictCapacity       Boolean @default(false) @map("strict_capacity")
 

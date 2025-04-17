@@ -1,3 +1,4 @@
+import { WebSocketModule } from '@bg-empire/api-websocket';
 import { Logger, RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -15,6 +16,8 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: environment.production ? ['error', 'log', 'warn'] : ['debug', 'error', 'log', 'verbose', 'warn'],
   });
+
+  app.useWebSocketAdapter(WebSocketModule.getAdapter(app));
 
   const configService = app.get(ConfigService);
 

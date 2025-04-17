@@ -17,6 +17,9 @@
     },
     {
       "path": "./libs/api/users"
+    },
+    {
+      "path": "./libs/api/websocket"
     }
   ]
 }

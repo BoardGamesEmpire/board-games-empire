@@ -36,7 +36,7 @@
           "watchDepsName": "watch-deps"
         }
       },
-      "exclude": ["libs/api/auth/*", "libs/api/prisma/*", "libs/api/users/*"]
+      "exclude": ["libs/api/auth/*", "libs/api/prisma/*", "libs/api/users/*", "libs/api/websocket/*"]
     },
     {
       "plugin": "@nx/webpack/plugin",
@@ -63,7 +63,7 @@
     },
     {
       "plugin": "@nx/js/typescript",
-      "include": ["libs/api/auth/*", "libs/api/prisma/*", "libs/api/users/*"],
+      "include": ["libs/api/auth/*", "libs/api/prisma/*", "libs/api/users/*", "libs/api/websocket/*"],
       "options": {
         "typecheck": {
           "targetName": "typecheck"

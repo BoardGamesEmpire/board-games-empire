@@ -7,6 +7,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
+import { WebSocketModule } from '@bg-empire/api-websocket';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CategoriesModule } from './categories/categories.module';
@@ -56,6 +57,7 @@ import { PublishersModule } from './publishers/publishers.module';
     // Feature modules
     AuthModule,
     UsersModule,
+    WebSocketModule,
     CategoriesModule,
     PublishersModule,
     GamesModule,

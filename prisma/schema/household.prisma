@@ -17,6 +17,8 @@ model Household {
 
   roleAssignments HouseholdRole[]
 
+  chatRoom ChatRoom?
+
   campaigns    Campaign[]
   ruleVariants RuleVariant[]
 
