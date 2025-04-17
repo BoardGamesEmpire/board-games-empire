@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import 'di/injection.dart';
-import 'services/auth_service.dart';
+import 'services/auth/auth_service.dart';
 import 'services/server_config_service.dart';
 import 'services/platform_service.dart';
 import 'screens/auth/login_screen.dart';
@@ -20,10 +21,36 @@ void main() async {
   runApp(const BoardGamesEmpire());
 }
 
-class BoardGamesEmpire extends StatelessWidget {
-  final String title = 'Board Games Empire';
-
+class BoardGamesEmpire extends StatefulWidget {
   const BoardGamesEmpire({super.key});
+
+  @override
+  State<BoardGamesEmpire> createState() => _BoardGamesEmpireState();
+}
+
+class _BoardGamesEmpireState extends State<BoardGamesEmpire> {
+  final String title = 'Board Games Empire';
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  late StreamSubscription _logoutSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final authService = getIt<AuthService>();
+    _logoutSubscription = authService.onLogout.listen((event) {
+      _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        LoginScreen.routeName,
+        (route) => false,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _logoutSubscription.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +91,7 @@ class BoardGamesEmpire extends StatelessWidget {
 
               return MaterialApp(
                 title: title,
+                navigatorKey: _navigatorKey,
                 theme: _buildLightTheme(),
                 darkTheme: _buildDarkTheme(),
                 themeMode: ThemeMode.system,

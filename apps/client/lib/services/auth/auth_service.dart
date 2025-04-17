@@ -1,13 +1,17 @@
 import 'dart:convert';
+import 'dart:async';
+import '../../di/injection.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../models/user.dart';
-import '../models/auth/auth.dart';
-import '../services/platform_service.dart';
+import '../../models/user.dart';
+import '../../models/auth/auth.dart';
+import '../../services/platform_service.dart';
+import 'package:http_status/http_status.dart';
+import './logout_event.dart';
 
 class AuthService extends ChangeNotifier {
   final apiPrefix = '/auth';
@@ -15,6 +19,9 @@ class AuthService extends ChangeNotifier {
   String _baseUrl;
 
   final FlutterSecureStorage secureStorage;
+  final StreamController<LogoutEvent> _logoutController =
+      StreamController<LogoutEvent>.broadcast();
+  Stream<LogoutEvent> get onLogout => _logoutController.stream;
 
   late SharedPreferences _prefs;
   AuthState _authState = AuthState();
@@ -240,10 +247,7 @@ class AuthService extends ChangeNotifier {
         }),
       );
 
-      print(response.body);
-      print(response.statusCode);
-
-      if (response.statusCode == 200) {
+      if (response.statusCode == HttpStatusCode.ok) {
         final data = jsonDecode(response.body);
         final tokens = AuthTokens.fromJson(data);
         final user = User.fromJson(data['user']);
@@ -265,7 +269,7 @@ class AuthService extends ChangeNotifier {
         return true;
       } else {
         final error =
-            response.statusCode == 401
+            response.statusCode == HttpStatusCode.unauthorized
                 ? 'Invalid email or password'
                 : 'Login failed. Please try again.';
 
@@ -311,7 +315,7 @@ class AuthService extends ChangeNotifier {
 
       _authState = _authState.copyWith(isLoading: false);
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == HttpStatusCode.created) {
         // Registration successful, but we don't auto-login
         notifyListeners();
         return true;
@@ -339,8 +343,6 @@ class AuthService extends ChangeNotifier {
     if (!isAuthenticated || accessToken == null) return;
 
     try {
-      // TODO: logging out all sessions does not redirect to home screen or possibly clear session
-      // data correctly
       await http.post(
         _buildUrl('/logout'),
         headers: {
@@ -354,9 +356,17 @@ class AuthService extends ChangeNotifier {
       );
     } catch (e) {
       // TODO: proper logging
-      print('Logout API error: ${e.toString()}');
+
+      if (kDebugMode) {
+        print('Logout API error: ${e.toString()}');
+      }
     } finally {
       await _clearAuthData();
+
+      resetAppServices();
+
+      _logoutController.add(LogoutEvent(allSessions: allSessions));
+
       notifyListeners();
     }
   }
@@ -379,7 +389,7 @@ class AuthService extends ChangeNotifier {
         body: jsonEncode({'refresh_token': refreshToken}),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == HttpStatusCode.ok) {
         final data = jsonDecode(response.body);
 
         final newTokens = AuthTokens(
@@ -414,7 +424,7 @@ class AuthService extends ChangeNotifier {
         headers: {'Authorization': 'Bearer $accessToken'},
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == HttpStatusCode.ok) {
         final List<dynamic> sessionsJson = jsonDecode(response.body);
         return sessionsJson
             .map(
@@ -446,12 +456,13 @@ class AuthService extends ChangeNotifier {
       );
 
       // If we logged out our current session, clear auth data
-      if (response.statusCode == 200 && sessionId == _currentSessionId) {
+      if (response.statusCode == HttpStatusCode.ok &&
+          sessionId == _currentSessionId) {
         await _clearAuthData();
         notifyListeners();
       }
 
-      return response.statusCode == 200;
+      return response.statusCode == HttpStatusCode.ok;
     } catch (e) {
       print('Error logging out session: ${e.toString()}');
       return false;
@@ -466,7 +477,7 @@ class AuthService extends ChangeNotifier {
         body: jsonEncode({'email': email}),
       );
 
-      return response.statusCode == 200;
+      return response.statusCode == HttpStatusCode.ok;
     } catch (e) {
       return false;
     }
@@ -480,7 +491,7 @@ class AuthService extends ChangeNotifier {
         body: jsonEncode({'token': token, 'password': newPassword}),
       );
 
-      return response.statusCode == 200;
+      return response.statusCode == HttpStatusCode.ok;
     } catch (e) {
       return false;
     }
@@ -493,5 +504,11 @@ class AuthService extends ChangeNotifier {
       await _prefs.setString('current_server_id', serverId);
       await _loadTokensFromStorage();
     }
+  }
+
+  @override
+  void dispose() {
+    _logoutController.close();
+    super.dispose();
   }
 }

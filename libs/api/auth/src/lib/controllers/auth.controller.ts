@@ -33,7 +33,7 @@ export class AuthController {
     @Body() loginDto: LoginDto,
     @Request() req: any,
     @Ip() ip: string,
-    @Headers('User-Agent') userAgent: string,
+    @Headers('User-Agent') userAgent?: string,
   ) {
     return this.authService.login(req.user, loginDto, ip, userAgent);
   }

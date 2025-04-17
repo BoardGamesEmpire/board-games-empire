@@ -3,7 +3,7 @@ import '../../di/injection.dart';
 import '../../models/chat_message.dart';
 import '../../services/chat/chat_service.dart';
 import '../../services/websocket/websocket_manager.dart';
-import '../../services/auth_service.dart';
+import '../../services/auth/auth_service.dart';
 
 class ChatScreen extends StatefulWidget {
   static const routeName = '/chat';

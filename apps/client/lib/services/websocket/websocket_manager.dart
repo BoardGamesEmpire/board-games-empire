@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:board_games_empire/services/auth_service.dart';
+import 'package:board_games_empire/services/auth/auth_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
@@ -179,9 +179,10 @@ class WebSocketManager {
     }
   }
 
-  Map<String, String>? _addAuthHeaders(Map<String, String>? headers) {
+  Map<String, String> _addAuthHeaders(Map<String, String>? headers) {
+    headers ??= {};
+
     if (_authService?.accessToken != null) {
-      headers ??= {};
       headers['Authorization'] = 'Bearer ${_authService!.accessToken}';
     }
 
