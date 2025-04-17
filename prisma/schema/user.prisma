@@ -40,6 +40,10 @@ model User {
   householdMembers HouseholdMember[]
   households       Household[]
 
+  chatMessageReactions ChatMessageReaction[]
+  chatRoomMembers      ChatRoomMember[]
+  chatMessages         ChatMessage[]
+
   campaignsRunning Campaign[]          @relation("CampaignGameMaster")
   characters       CampaignCharacter[]
 

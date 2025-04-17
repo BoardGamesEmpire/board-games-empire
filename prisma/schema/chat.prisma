@@ -1,0 +1,108 @@
+model ChatRoom {
+  id          String       @id @default(cuid(2))
+  name        String
+  description String?
+  type        ChatRoomType @default(Public)
+
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?    @unique @map("household_id")
+
+  game   Game?   @relation(fields: [gameId], references: [id])
+  gameId String? @unique @map("game_id")
+
+  event   Event?  @relation(fields: [eventId], references: [id])
+  eventId String? @unique @map("event_id")
+
+  messages ChatMessage[]
+  members  ChatRoomMember[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("chat_rooms")
+}
+
+enum ChatRoomType {
+  Public
+  Private
+  Direct
+  Household
+  Game
+  Event
+  System
+
+  @@map("chat_room_types")
+}
+
+model ChatRoomMember {
+  id String @id @default(cuid(2))
+
+  room   ChatRoom @relation(fields: [roomId], references: [id])
+  roomId String   @map("room_id")
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+
+  role     ChatRoomRole @default(Member)
+  joinedAt DateTime     @default(now()) @map("joined_at") @db.Timestamptz(3)
+  lastRead DateTime?    @map("last_read") @db.Timestamptz(3)
+  isMuted  Boolean      @default(false) @map("is_muted")
+
+  @@unique([roomId, userId])
+  @@map("chat_room_members")
+}
+
+enum ChatRoomRole {
+  Owner
+  Admin
+  Moderator
+  Member
+  Guest
+
+  @@map("chat_room_roles")
+}
+
+model ChatMessage {
+  id String @id @default(cuid(2))
+
+  room   ChatRoom @relation(fields: [roomId], references: [id])
+  roomId String   @map("room_id")
+
+  sender   User   @relation(fields: [senderId], references: [id])
+  senderId String @map("sender_id")
+
+  content  String
+  isSystem Boolean   @default(false) @map("is_system")
+  isEdited Boolean   @default(false) @map("is_edited")
+  editedAt DateTime? @map("edited_at") @db.Timestamptz(3)
+
+  replyTo   ChatMessage?  @relation("Replies", fields: [replyToId], references: [id])
+  replyToId String?       @map("reply_to_id")
+  replies   ChatMessage[] @relation("Replies")
+
+  // For structured data like game results or event info
+  metadata Json?
+
+  reactions ChatMessageReaction[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([roomId, createdAt])
+  @@map("chat_messages")
+}
+
+model ChatMessageReaction {
+  id String @id @default(cuid(2))
+
+  message   ChatMessage @relation(fields: [messageId], references: [id])
+  messageId String      @map("message_id")
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+
+  emoji     String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([messageId, userId, emoji])
+  @@map("chat_message_reactions")
+}

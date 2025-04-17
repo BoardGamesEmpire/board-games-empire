@@ -52,6 +52,8 @@ model Game {
   isFromExternal Boolean    @default(false) @map("is_from_external")
   externalId     String?    @map("external_id")
 
+  gameChat ChatRoom?
+
   sharedWithUsers      GameUserAccess[]
   sharedWithHouseholds GameHouseholdAccess[]
 

@@ -46,7 +46,11 @@ class WebSocketManager {
     }
 
     try {
-      var wsUrl = '${url.replaceFirst(RegExp(r'^http'), 'ws')}/socket';
+      final baseUrl = Uri.parse(url);
+      final path = baseUrl.path;
+      final pathless = url.replaceRange(url.indexOf(path), url.length, '');
+
+      var wsUrl = pathless.replaceFirst(RegExp(r'^http'), 'ws');
 
       headers = _addAuthHeaders(headers);
 
@@ -121,6 +125,14 @@ class WebSocketManager {
   void _handleError(dynamic error) {
     if (kDebugMode) {
       print('WebSocket error: $error');
+      if (error is WebSocketChannelException) {
+        if (error.inner != null) {
+          final err = error.inner as dynamic;
+          print('Websocket inner error: ${err.message.toString()}');
+        }
+
+        print('Websocket error: ${error.message}');
+      }
     }
     _handleDisconnection();
   }
