@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth/auth_service.dart';
 import '../../widgets/ui/custom_text_field.dart';
@@ -187,7 +188,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           height: 50,
           child: OutlinedButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              context.pop();
             },
             style: OutlinedButton.styleFrom(
               shape: RoundedRectangleBorder(

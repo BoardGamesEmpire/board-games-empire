@@ -1,8 +1,9 @@
+import 'package:board_games_empire/router/route_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth/auth_service.dart';
 import '../../widgets/ui/custom_text_field.dart';
-import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   static const routeName = '/api/v1/auth/register';
@@ -61,10 +62,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.of(ctx).pop();
-                  Navigator.of(
-                    context,
-                  ).pushReplacementNamed(LoginScreen.routeName);
+                  ctx.pop();
+                  context.go(AppRoutes.login);
                 },
                 child: const Text('OK'),
               ),
@@ -310,11 +309,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     TextButton(
-                      onPressed: () {
-                        Navigator.of(
-                          context,
-                        ).pushReplacementNamed(LoginScreen.routeName);
-                      },
+                      onPressed: () => context.go('/login'),
                       child: const Text(
                         'Sign In',
                         style: TextStyle(fontWeight: FontWeight.bold),

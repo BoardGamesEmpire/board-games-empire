@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import '../../router/route_constants.dart';
 import '../../di/injection.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -238,7 +239,7 @@ class AuthService extends ChangeNotifier {
       final deviceInfo = await _getDeviceInfo();
 
       final response = await http.post(
-        _buildUrl('/login'),
+        _buildUrl(AppRoutes.login),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,

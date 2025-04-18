@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../services/auth/auth_service.dart';
 import '../../widgets/auth/login_form.dart';
 import '../../widgets/auth/social_login_buttons.dart';
-import '../home/home_screen.dart';
-import 'register_screen.dart';
-import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   static const routeName = '/auth/login';
+  final String? redirectPath;
 
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.redirectPath});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -20,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -63,7 +63,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (success) {
         if (!mounted) return;
 
-        Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
+        final redirectPath = widget.redirectPath ?? '/home';
+        context.go(redirectPath);
       } else {
         setState(() {
           _errorMessage = authService.authState.error ?? 'Login failed';
@@ -87,11 +88,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToRegister() {
-    Navigator.of(context).pushNamed(RegisterScreen.routeName);
+    context.push('/register');
   }
 
   void _navigateToForgotPassword() {
-    Navigator.of(context).pushNamed(ForgotPasswordScreen.routeName);
+    context.push('/forgot-password');
   }
 
   @override

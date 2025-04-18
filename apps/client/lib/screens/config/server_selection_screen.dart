@@ -1,11 +1,11 @@
+import 'package:board_games_empire/router/route_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../services/server_config_service.dart';
 import '../../services/auth/auth_service.dart';
 import '../../models/config/server_config.dart';
-import '../auth/login_screen.dart';
-import '../../di/injection.dart';
 import 'server_config_screen.dart';
 
 class ServerSelectionScreen extends StatefulWidget {
@@ -60,7 +60,6 @@ class _ServerSelectionScreenState extends State<ServerSelectionScreen> {
       );
       final authService = Provider.of<AuthService>(context, listen: false);
 
-      // Set this server as active
       await configService.setActiveServer(serverId);
 
       // Reset auth service with new server URL
@@ -70,7 +69,7 @@ class _ServerSelectionScreenState extends State<ServerSelectionScreen> {
       }
 
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
+      context.go(AppRoutes.login);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -90,9 +89,7 @@ class _ServerSelectionScreenState extends State<ServerSelectionScreen> {
   }
 
   Future<void> _addNewServer() async {
-    final result = await Navigator.of(context).push<ServerConfig>(
-      MaterialPageRoute(builder: (context) => const ServerConfigScreen()),
-    );
+    final result = await context.push<ServerConfig>('/server-config');
 
     if (result != null) {
       await _selectServer(result.id);
@@ -116,11 +113,11 @@ class _ServerSelectionScreenState extends State<ServerSelectionScreen> {
             content: Text('Are you sure you want to remove "${server.name}"?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
+                onPressed: () => ctx.pop(false),
                 child: const Text('Cancel'),
               ),
               TextButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
+                onPressed: () => ctx.pop(true),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
                 child: const Text('Remove'),
               ),
@@ -143,12 +140,7 @@ class _ServerSelectionScreenState extends State<ServerSelectionScreen> {
         if (!mounted) return;
 
         if (!configService.hasServers) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder:
-                  (context) => const ServerConfigScreen(isInitialSetup: true),
-            ),
-          );
+          context.go('/server-config?initial=true');
         }
       } catch (e) {
         if (mounted) {
