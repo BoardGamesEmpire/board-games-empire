@@ -1,17 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:async';
 import 'di/injection.dart';
 import 'services/auth/auth_service.dart';
 import 'services/server_config_service.dart';
-import 'services/platform_service.dart';
-import 'screens/auth/login_screen.dart';
-import 'screens/auth/register_screen.dart';
-import 'screens/auth/forgot_password_screen.dart';
-import 'screens/account/session_management_screen.dart';
-import 'screens/config/server_config_screen.dart';
-import 'screens/config/server_selection_screen.dart';
-import 'screens/home/home_screen.dart';
+import 'router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,27 +22,6 @@ class BoardGamesEmpire extends StatefulWidget {
 
 class _BoardGamesEmpireState extends State<BoardGamesEmpire> {
   final String title = 'Board Games Empire';
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-  late StreamSubscription _logoutSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-
-    final authService = getIt<AuthService>();
-    _logoutSubscription = authService.onLogout.listen((event) {
-      _navigatorKey.currentState?.pushNamedAndRemoveUntil(
-        LoginScreen.routeName,
-        (route) => false,
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _logoutSubscription.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,42 +46,12 @@ class _BoardGamesEmpireState extends State<BoardGamesEmpire> {
             );
           }
 
-          return Consumer<AuthService>(
-            builder: (ctx, auth, _) {
-              Widget initialScreen;
-
-              if (PlatformService.isWeb) {
-                initialScreen = const LoginScreen();
-              } else if (!serverConfigService.hasServers) {
-                initialScreen = const ServerConfigScreen(isInitialSetup: true);
-              } else if (!auth.isAuthenticated) {
-                initialScreen = const LoginScreen();
-              } else {
-                initialScreen = const HomeScreen();
-              }
-
-              return MaterialApp(
-                title: title,
-                navigatorKey: _navigatorKey,
-                theme: _buildLightTheme(),
-                darkTheme: _buildDarkTheme(),
-                themeMode: ThemeMode.system,
-                home: initialScreen,
-                routes: {
-                  LoginScreen.routeName: (ctx) => const LoginScreen(),
-                  RegisterScreen.routeName: (ctx) => const RegisterScreen(),
-                  ForgotPasswordScreen.routeName:
-                      (ctx) => const ForgotPasswordScreen(),
-                  HomeScreen.routeName: (ctx) => const HomeScreen(),
-                  SessionManagementScreen.routeName:
-                      (ctx) => const SessionManagementScreen(),
-                  ServerConfigScreen.routeName:
-                      (ctx) => const ServerConfigScreen(),
-                  ServerSelectionScreen.routeName:
-                      (ctx) => const ServerSelectionScreen(),
-                },
-              );
-            },
+          return MaterialApp.router(
+            title: title,
+            theme: _buildLightTheme(),
+            darkTheme: _buildDarkTheme(),
+            themeMode: ThemeMode.system,
+            routerConfig: appRouter,
           );
         },
       ),

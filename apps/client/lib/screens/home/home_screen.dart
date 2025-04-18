@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
 import '../../di/injection.dart';
@@ -35,9 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _logoutSubscription = _authService.onLogout.listen((event) {
       if (mounted) {
-        Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil(LoginScreen.routeName, (route) => false);
+        context.go(LoginScreen.routeName);
       }
     });
   }
@@ -53,6 +52,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _logout(BuildContext context) async {
     try {
       await _authService.logout();
+
+      // Go Router automatically handles the redirect to login via the refreshListenable
     } catch (e) {
       if (mounted) {
         // TODO: context across multiple async calls
@@ -72,12 +73,12 @@ class _HomeScreenState extends State<HomeScreen> {
             content: const Text('Are you sure you want to logout?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
+                onPressed: () => ctx.pop(),
                 child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.of(ctx).pop();
+                  ctx.pop();
                   _logout(context);
                 },
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -163,10 +164,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 trailing: const Icon(Icons.swap_horiz),
                 onTap: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(
-                    context,
-                  ).pushNamed(ServerSelectionScreen.routeName);
+                  context.pop();
+                  context.push(ServerSelectionScreen.routeName);
                 },
               ),
 
@@ -176,10 +175,8 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.device_hub),
               title: const Text('Manage Sessions'),
               onTap: () {
-                Navigator.of(context).pop(); // Close drawer
-                Navigator.of(
-                  context,
-                ).pushNamed(SessionManagementScreen.routeName);
+                context.pop();
+                context.push('/sessions');
               },
             ),
 
@@ -187,8 +184,8 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.search),
               title: const Text('Search Games'),
               onTap: () {
-                Navigator.of(context).pop(); // Close drawer
-                Navigator.pushNamed(context, '/games/search');
+                context.pop();
+                context.push('/games/search');
               },
             ),
 
@@ -196,8 +193,8 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.chat),
               title: const Text('Chat'),
               onTap: () {
-                Navigator.of(context).pop(); // Close drawer
-                Navigator.pushNamed(context, '/chat');
+                context.pop();
+                context.push('/chat');
               },
             ),
 
@@ -231,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () {
-                Navigator.of(context).pop();
+                context.pop();
                 _showLogoutConfirmation(context);
               },
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../services/server_config_service.dart';
 import '../../models/config/server_config.dart';
@@ -53,10 +54,10 @@ class _ServerConfigScreenState extends State<ServerConfigScreen> {
 
       if (widget.isInitialSetup) {
         if (!mounted) return;
-        Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
+        context.replace(LoginScreen.routeName);
       } else {
         if (!mounted) return;
-        Navigator.of(context).pop(newServer);
+        context.pop(newServer);
       }
     } catch (e) {
       if (mounted) {

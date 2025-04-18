@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../services/auth/auth_service.dart';
 import '../../di/injection.dart';
@@ -30,9 +31,7 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
     final authService = getIt<AuthService>();
     _logoutSubscription = authService.onLogout.listen((event) {
       if (mounted) {
-        Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil(LoginScreen.routeName, (route) => false);
+        context.go(LoginScreen.routeName);
       }
     });
   }
@@ -127,11 +126,11 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
+                onPressed: () => ctx.pop(false),
                 child: const Text('Cancel'),
               ),
               TextButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
+                onPressed: () => ctx.pop(true),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
                 child: const Text('Terminate All'),
               ),
