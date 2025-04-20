@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../models/game.dart';
+import '../../models/game/game.dart';
 import '../../models/search_result.dart';
 import 'package:http_status/http_status.dart';
 

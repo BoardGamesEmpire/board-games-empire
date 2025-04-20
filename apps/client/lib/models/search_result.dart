@@ -1,4 +1,4 @@
-import './game.dart';
+import './game/game.dart';
 
 class SearchResult {
   final List<Game> internalResults;
