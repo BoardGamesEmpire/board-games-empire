@@ -1,5 +1,5 @@
 import 'dart:async';
-import '../../models/game.dart';
+import '../../models/game/game.dart';
 import '../../models/search_result.dart';
 import '../websocket/websocket_manager.dart';
 

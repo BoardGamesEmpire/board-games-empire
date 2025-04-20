@@ -1,7 +1,7 @@
-// lib/screens/game/game_search_screen.dart
 import 'package:flutter/material.dart';
+
 import '../../di/injection.dart';
-import '../../models/game.dart';
+import '../../models/game/game.dart';
 import '../../models/search_result.dart';
 import '../../services/game/game_service.dart';
 import '../../services/websocket/websocket_manager.dart';

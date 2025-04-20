@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+
 import '../websocket/websocket_manager.dart';
 import '../server_config_service.dart';
 import '../jwt_interceptor.dart';
 import '../../di/injection.dart';
-import '../../models/game.dart';
+import '../../models/game/game.dart';
 import '../../models/search_result.dart';
 
 class GameService {
