@@ -34,6 +34,10 @@ class LoginRememberMeChanged extends LoginEvent {
   List<Object> get props => [value];
 }
 
+class LoginTogglePasswordVisibility extends LoginEvent {
+  const LoginTogglePasswordVisibility();
+}
+
 class LoginSubmitted extends LoginEvent {
   const LoginSubmitted();
 }

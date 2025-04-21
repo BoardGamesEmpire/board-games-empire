@@ -1,7 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+
 import '../../services/auth/auth_service.dart';
 import '../../di/injection.dart';
 import '../auth/login_screen.dart';

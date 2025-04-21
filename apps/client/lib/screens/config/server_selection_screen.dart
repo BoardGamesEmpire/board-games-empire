@@ -1,12 +1,12 @@
-import 'package:board_games_empire/router/route_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+
 import '../../services/server_config_service.dart';
-import '../../services/auth/auth_service.dart';
 import '../../models/config/server_config.dart';
-import 'server_config_screen.dart';
+import '../../services/auth/auth_service.dart';
+import '../../router/route_constants.dart';
 
 class ServerSelectionScreen extends StatefulWidget {
   static const routeName = '/server-selection';

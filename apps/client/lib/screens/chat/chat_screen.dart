@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../di/injection.dart';
 import '../../models/chat_message.dart';
 import '../../services/chat/chat_service.dart';

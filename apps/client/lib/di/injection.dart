@@ -34,6 +34,7 @@ import '../blocs/server/server_bloc.dart';
 import '../blocs/connection/connection_bloc.dart';
 import '../blocs/chat/chat_bloc.dart';
 import '../blocs/game/game_search/game_search_bloc.dart';
+import '../blocs/router/router_bloc.dart';
 
 // Services
 import '../services/server_config_service.dart';
@@ -139,9 +140,7 @@ Future<void> _registerRepositories() async {
 
   // API clients
   getIt.registerLazySingleton<AuthApi>(() => AuthApi(baseUrl: baseUrl));
-
   getIt.registerLazySingleton<ChatApi>(() => ChatApi(baseUrl: baseUrl));
-
   getIt.registerLazySingleton<GameApi>(() => GameApi(baseUrl: baseUrl));
 
   getIt.registerLazySingleton<GameRestDataSource>(
@@ -186,13 +185,15 @@ Future<void> _registerRepositories() async {
 }
 
 Future<void> _registerBlocs() async {
-  getIt.registerFactory<AppBloc>(
+  getIt.registerLazySingleton<AppBloc>(
     () => AppBloc(connectionChecker: getIt<InternetConnectionChecker>()),
   );
 
-  getIt.registerFactory<AuthBloc>(
+  getIt.registerLazySingleton<AuthBloc>(
     () => AuthBloc(authRepository: getIt<AuthRepository>()),
   );
+
+  getIt.registerLazySingleton<RouterBloc>(() => RouterBloc());
 
   getIt.registerFactory<LoginBloc>(
     () => LoginBloc(authRepository: getIt<AuthRepository>()),
@@ -252,23 +253,9 @@ void resetAppServices() {
     chatRepo.dispose();
   }
 
-  // Unregister blocs
-  if (getIt.isRegistered<AuthBloc>()) {
-    getIt.unregister<AuthBloc>();
-  }
+  // Reset feature blocs
+  getIt.resetLazySingleton<AuthBloc>();
 
-  if (getIt.isRegistered<ChatBloc>()) {
-    getIt.unregister<ChatBloc>();
-  }
-
-  if (getIt.isRegistered<ConnectionBloc>()) {
-    getIt.unregister<ConnectionBloc>();
-  }
-
-  if (getIt.isRegistered<GameSearchBloc>()) {
-    getIt.unregister<GameSearchBloc>();
-  }
-
-  // Re-register blocs
+  // Re-register feature blocs
   _registerBlocs();
 }

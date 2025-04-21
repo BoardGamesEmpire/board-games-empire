@@ -1,14 +1,27 @@
+import 'package:board_games_empire/blocs/utils/app_bloc_ovserver.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-import 'di/injection.dart';
-import 'services/auth/auth_service.dart';
-import 'services/server_config_service.dart';
-import 'router/app_router.dart';
+
+import './di/injection.dart';
+import './services/auth/auth_service.dart';
+import './services/server_config_service.dart';
+import './router/app_router.dart';
+import './blocs/auth/auth_bloc.dart';
+import './blocs/app/app_bloc.dart';
+import './blocs/router/router_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Set up BLoC observer for debugging
+  Bloc.observer = AppBlocObserver();
+
+  // Initialize dependency injection
   await setupDependencyInjection();
+
+  // Initialize the router
+  AppRouter.initialize();
 
   runApp(const BoardGamesEmpire());
 }
@@ -25,35 +38,53 @@ class _BoardGamesEmpireState extends State<BoardGamesEmpire> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
+    return MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider<ServerConfigService>.value(
-          value: getIt<ServerConfigService>(),
+        BlocProvider<AppBloc>(
+          create: (context) => getIt<AppBloc>()..add(const AppStarted()),
         ),
-        ChangeNotifierProvider<AuthService>.value(value: getIt<AuthService>()),
+        BlocProvider<AuthBloc>(create: (context) => getIt<AuthBloc>()),
+        BlocProvider<RouterBloc>(create: (context) => getIt<RouterBloc>()),
+        // Add other global BLoCs here
       ],
-      child: Consumer<ServerConfigService>(
-        builder: (ctx, serverConfigService, _) {
-          if (!serverConfigService.isInitialized) {
-            return MaterialApp(
+      child: MultiProvider(
+        providers: [
+          // Keep these for backward compatibility while refactoring
+          ChangeNotifierProvider<ServerConfigService>.value(
+            value: getIt<ServerConfigService>(),
+          ),
+          ChangeNotifierProvider<AuthService>.value(
+            value: getIt<AuthService>(),
+          ),
+        ],
+        child: BlocBuilder<AppBloc, AppState>(
+          buildWhen:
+              (previous, current) =>
+                  previous.themeMode != current.themeMode ||
+                  previous.status != current.status,
+          builder: (context, state) {
+            if (state.status == AppStatus.initializing) {
+              return MaterialApp(
+                title: title,
+                theme: _buildLightTheme(),
+                darkTheme: _buildDarkTheme(),
+                themeMode: state.themeMode,
+                home: const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            }
+
+            return MaterialApp.router(
               title: title,
               theme: _buildLightTheme(),
               darkTheme: _buildDarkTheme(),
-              themeMode: ThemeMode.system,
-              home: const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              ),
+              themeMode: state.themeMode,
+              routerConfig: AppRouter.router,
+              debugShowCheckedModeBanner: false,
             );
-          }
-
-          return MaterialApp.router(
-            title: title,
-            theme: _buildLightTheme(),
-            darkTheme: _buildDarkTheme(),
-            themeMode: ThemeMode.system,
-            routerConfig: appRouter,
-          );
-        },
+          },
+        ),
       ),
     );
   }
