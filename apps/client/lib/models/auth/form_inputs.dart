@@ -20,14 +20,31 @@ class EmailInput extends FormzInput<String, EmailValidationError> {
 enum PasswordValidationError { empty, invalid }
 
 class PasswordInput extends FormzInput<String, PasswordValidationError> {
-  const PasswordInput.pure() : super.pure('');
-  const PasswordInput.dirty([super.value = '']) : super.dirty();
+  final bool obscureText;
+
+  const PasswordInput.pure() : obscureText = true, super.pure('');
+
+  const PasswordInput.dirty([super.value = ''])
+    : obscureText = true,
+      super.dirty();
+
+  const PasswordInput.dirtyWithVisibility({
+    required String value,
+    required this.obscureText,
+  }) : super.dirty(value);
 
   @override
   PasswordValidationError? validator(String value) {
     if (value.isEmpty) return PasswordValidationError.empty;
     if (value.length < 8) return PasswordValidationError.invalid;
     return null;
+  }
+
+  PasswordInput copyWith({String? value, bool? obscureText}) {
+    return PasswordInput.dirtyWithVisibility(
+      value: value ?? this.value,
+      obscureText: obscureText ?? this.obscureText,
+    );
   }
 }
 

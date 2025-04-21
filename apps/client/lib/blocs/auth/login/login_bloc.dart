@@ -17,6 +17,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<LoginEmailChanged>(_onEmailChanged);
     on<LoginPasswordChanged>(_onPasswordChanged);
     on<LoginRememberMeChanged>(_onRememberMeChanged);
+    on<LoginTogglePasswordVisibility>(_onTogglePasswordVisibility);
     on<LoginSubmitted>(_onSubmitted);
   }
 
@@ -27,7 +28,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         email: email,
         status:
             Formz.validate([email, state.password])
-                ? FormzSubmissionStatus.success
+                ? FormzSubmissionStatus.initial
                 : FormzSubmissionStatus.failure,
       ),
     );
@@ -43,7 +44,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         password: password,
         status:
             Formz.validate([state.email, password])
-                ? FormzSubmissionStatus.success
+                ? FormzSubmissionStatus.initial
                 : FormzSubmissionStatus.failure,
       ),
     );
@@ -56,11 +57,21 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     emit(state.copyWith(rememberMe: event.value));
   }
 
+  void _onTogglePasswordVisibility(
+    LoginTogglePasswordVisibility event,
+    Emitter<LoginState> emit,
+  ) {
+    final updatedPassword = state.password.copyWith(
+      obscureText: !state.password.obscureText,
+    );
+    emit(state.copyWith(password: updatedPassword));
+  }
+
   Future<void> _onSubmitted(
     LoginSubmitted event,
     Emitter<LoginState> emit,
   ) async {
-    if (state.status.isSuccess) {
+    if (Formz.validate([state.email, state.password])) {
       emit(state.copyWith(status: FormzSubmissionStatus.inProgress));
       try {
         final deviceInfo = await _authRepository.getDeviceInfo();
@@ -89,6 +100,13 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
           ),
         );
       }
+    } else {
+      emit(
+        state.copyWith(
+          status: FormzSubmissionStatus.failure,
+          errorMessage: 'Please enter valid email and password',
+        ),
+      );
     }
   }
 }
