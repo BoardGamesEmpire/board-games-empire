@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../models/config/server_config.dart';
 import '../../repositories/websocket/websocket_repository.dart';
 

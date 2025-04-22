@@ -54,12 +54,10 @@ class WebSocketManager {
 
       headers = _addAuthHeaders(headers);
 
-      if (headers != null) {
-        final authHeader = headers['Authorization'];
-        if (authHeader != null) {
-          wsUrl +=
-              '?authorization=${Uri.encodeComponent(authHeader.split(' ').last)}';
-        }
+      final authHeader = headers['Authorization'];
+      if (authHeader != null) {
+        wsUrl +=
+            '?authorization=${Uri.encodeComponent(authHeader.split(' ').last)}';
       }
 
       if (kDebugMode) {

@@ -12,8 +12,10 @@
   "words": [
     "Buildable",
     "cuid",
+    "cupertino",
     "devkit",
     "Envirator",
+    "formz",
     "getify",
     "IGDB",
     "linebreak",
@@ -25,6 +27,7 @@
     "prefs",
     "prerender",
     "rulebook",
+    "rxdart",
     "Timestamptz",
     "willsoto"
   ]

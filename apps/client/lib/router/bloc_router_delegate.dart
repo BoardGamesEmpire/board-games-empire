@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/platform_service.dart';
@@ -8,26 +8,31 @@ import '../services/server_config_service.dart';
 import './route_constants.dart';
 import '../di/injection.dart';
 
-import '../blocs/auth/login/login_bloc.dart';
 import '../blocs/auth/auth_bloc.dart';
-import '../blocs/router/router_bloc.dart';
+import '../blocs/auth/forgot_password/forgot_password_bloc.dart';
+import '../blocs/auth/login/login_bloc.dart';
 import '../blocs/auth/register/register_bloc.dart';
+import '../blocs/auth/session/session_bloc.dart';
 import '../blocs/chat/chat_bloc.dart';
-import '../blocs/connection/connection_bloc.dart';
 import '../blocs/game/game_search/game_search_bloc.dart';
-import '../blocs/server/server_bloc.dart';
+import '../blocs/home/home_bloc.dart';
+import '../blocs/router/router_bloc.dart';
+import '../blocs/server/selection/server_selection_bloc.dart';
+import '../blocs/server/server_config/server_config_bloc.dart';
+import '../blocs/settings/theme/theme_bloc.dart';
 
 import '../repositories/auth/auth_repository.dart';
 
 import '../screens/account/session_management_screen.dart';
 import '../screens/auth/forgot_password_screen.dart';
-import '../screens/auth/login_screen_bloc.dart';
+import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/config/server_config_screen.dart';
 import '../screens/config/server_selection_screen.dart';
 import '../screens/game/game_search_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/theme/theme_settings_screen.dart';
 
 class BlocRouterDelegate {
   final routerNotifier = ValueNotifier<String>('/');
@@ -138,6 +143,12 @@ class BlocRouterDelegate {
         builder: (context, state) => _buildForgotPasswordScreen(),
       ),
 
+      GoRoute(
+        path: AppRoutes.themeSettings,
+        name: 'themeSettings',
+        builder: (context, state) => _buildThemeSettingsScreen(),
+      ),
+
       // Main app routes
       GoRoute(path: '/', redirect: (_, __) => AppRoutes.home),
       GoRoute(
@@ -199,39 +210,49 @@ class BlocRouterDelegate {
   Widget _buildRegisterScreen() {
     return BlocProvider(
       create: (context) => getIt<RegisterBloc>(),
-      child: const RegisterScreen(),
+      child: const RegisterScreenBloc(),
     );
   }
 
   Widget _buildForgotPasswordScreen() {
-    // We'll implement a ForgotPasswordBloc later
-    return const ForgotPasswordScreen();
-  }
-
-  Widget _buildHomeScreen() {
-    return MultiBlocProvider(
-      providers: [BlocProvider(create: (context) => getIt<ConnectionBloc>())],
-      child: const HomeScreen(),
+    return BlocProvider(
+      create: (context) => getIt<ForgotPasswordBloc>(),
+      child: const ForgotPasswordScreenBloc(),
     );
   }
 
-  Widget _buildSessionManagementScreen() {
-    return const SessionManagementScreen();
+  Widget _buildHomeScreen() {
+    return BlocProvider(
+      create: (context) => getIt<HomeBloc>(),
+      child: const HomeScreenBloc(),
+    );
+  }
+
+  Widget _buildThemeSettingsScreen() {
+    return BlocProvider(
+      create: (context) => getIt<ThemeBloc>(),
+      child: const ThemeSettingsScreen(),
+    );
   }
 
   Widget _buildServerConfigScreen(bool isInitialSetup) {
     return BlocProvider(
-      create: (context) => getIt<ServerBloc>(),
-      child: ServerConfigScreen(isInitialSetup: isInitialSetup),
+      create: (context) => getIt<ServerConfigBloc>(),
+      child: ServerConfigScreenBloc(isInitialSetup: isInitialSetup),
     );
   }
 
   Widget _buildServerSelectionScreen() {
     return BlocProvider(
-      create:
-          (context) =>
-              getIt<ServerBloc>()..add(const ServerInitializeRequested()),
-      child: const ServerSelectionScreen(),
+      create: (context) => getIt<ServerSelectionBloc>(),
+      child: const ServerSelectionScreenBloc(),
+    );
+  }
+
+  Widget _buildSessionManagementScreen() {
+    return BlocProvider(
+      create: (context) => getIt<SessionBloc>(),
+      child: const SessionManagementScreenBloc(),
     );
   }
 
@@ -245,7 +266,7 @@ class BlocRouterDelegate {
   Widget _buildChatScreen() {
     return BlocProvider(
       create: (context) => getIt<ChatBloc>(),
-      child: const ChatScreen(),
+      child: const ChatScreenBloc(),
     );
   }
 

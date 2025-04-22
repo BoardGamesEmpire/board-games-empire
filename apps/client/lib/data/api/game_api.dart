@@ -56,7 +56,7 @@ class GameApi extends BaseApi {
 
   Future<List<Map<String, dynamic>>> getUserCollection(String userId) async {
     try {
-      final response = await get('/users/${userId}/collection');
+      final response = await get('/users/$userId/collection');
       if (response is List) {
         return response.cast<Map<String, dynamic>>();
       } else {
@@ -86,7 +86,7 @@ class GameApi extends BaseApi {
 
   Future<void> removeGameFromCollection(String gameId) async {
     try {
-      await delete('/games/collection/${gameId}');
+      await delete('/games/collection/$gameId');
     } catch (e) {
       if (e is ApiException) rethrow;
       throw ApiException(
@@ -110,7 +110,7 @@ class GameApi extends BaseApi {
         if (favorite != null) 'favorite': favorite,
       };
 
-      await put('/games/collection/${gameId}', body: updateData);
+      await put('/games/collection/$gameId', body: updateData);
     } catch (e) {
       if (e is ApiException) rethrow;
       throw ApiException(

@@ -1,122 +1,49 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../blocs/auth/session/session_bloc.dart';
+import '../../models/user.dart';
 import '../../services/auth/auth_service.dart';
 import '../../di/injection.dart';
-import '../auth/login_screen.dart';
-import '../../models/user.dart';
+import '../../router/app_router.dart';
+import '../../router/route_constants.dart';
 
-class SessionManagementScreen extends StatefulWidget {
-  static const routeName = '/account/sessions';
-
-  const SessionManagementScreen({super.key});
+class SessionManagementScreenBloc extends StatefulWidget {
+  const SessionManagementScreenBloc({super.key});
 
   @override
-  State<SessionManagementScreen> createState() =>
-      _SessionManagementScreenState();
+  State<SessionManagementScreenBloc> createState() =>
+      _SessionManagementScreenBlocState();
 }
 
-class _SessionManagementScreenState extends State<SessionManagementScreen> {
+class _SessionManagementScreenBlocState
+    extends State<SessionManagementScreenBloc> {
   late StreamSubscription _logoutSubscription;
-  List<UserSession> _sessions = [];
-  bool _isLoading = true;
-  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadSessions();
 
     final authService = getIt<AuthService>();
     _logoutSubscription = authService.onLogout.listen((event) {
-      if (mounted) {
-        context.go(LoginScreen.routeName);
-      }
-    });
-  }
-
-  Future<void> _loadSessions() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
+      AppRouter.navigateTo(AppRoutes.login);
     });
 
-    try {
-      final authService = getIt<AuthService>();
-      final sessions = await authService.getActiveSessions();
-
-      if (mounted) {
-        setState(() {
-          _sessions = sessions;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = 'Failed to load sessions: ${e.toString()}';
-          _isLoading = false;
-        });
-      }
-    }
+    // Load sessions when screen opens
+    context.read<SessionBloc>().add(const SessionsRequested());
   }
 
-  Future<void> _terminateSession(UserSession session) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final authService = getIt<AuthService>();
-      final success = await authService.logoutSession(session.id);
-
-      if (success) {
-        if (session.isCurrentSession) {
-          // Redirect will be handled by the logout subscription
-          return;
-        }
-
-        if (mounted) {
-          await _loadSessions();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Session terminated successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to terminate session'),
-              backgroundColor: Colors.red,
-            ),
-          );
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+  void _terminateSession(UserSession session) {
+    context.read<SessionBloc>().add(
+      SessionTerminated(session.id, isCurrentSession: session.isCurrentSession),
+    );
   }
 
-  Future<void> _terminateAllSessions() async {
+  void _terminateAllSessions() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder:
@@ -140,27 +67,8 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
           ),
     );
 
-    if (confirmed != true) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final authService = getIt<AuthService>();
-      await authService.logout(allSessions: true);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    if (confirmed == true) {
+      context.read<SessionBloc>().add(const AllSessionsTerminated());
     }
   }
 
@@ -170,43 +78,96 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
       appBar: AppBar(
         title: const Text('Active Sessions'),
         actions: [
-          if (_sessions.isNotEmpty && !_isLoading)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _loadSessions,
-              tooltip: 'Refresh',
-            ),
+          BlocBuilder<SessionBloc, SessionState>(
+            buildWhen:
+                (previous, current) =>
+                    previous.status != current.status ||
+                    previous.isEmpty != current.isEmpty,
+            builder: (context, state) {
+              if (!state.isLoading && !state.isEmpty) {
+                return IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed:
+                      () => context.read<SessionBloc>().add(
+                        const SessionRefreshed(),
+                      ),
+                  tooltip: 'Refresh',
+                );
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
         ],
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-              ? _buildErrorView()
-              : _sessions.isEmpty
-              ? _buildEmptyView()
-              : _buildSessionsList(),
-      bottomNavigationBar:
-          _sessions.isNotEmpty && !_isLoading
-              ? Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: SizedBox(
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    onPressed: _terminateAllSessions,
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Log Out From All Devices'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+      body: BlocConsumer<SessionBloc, SessionState>(
+        listenWhen:
+            (previous, current) =>
+                previous.terminationSuccess != current.terminationSuccess,
+        listener: (context, state) {
+          if (state.terminationSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Session terminated successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        },
+
+        buildWhen:
+            (previous, current) =>
+                previous.status != current.status ||
+                previous.sessions != current.sessions ||
+                previous.error != current.error,
+
+        builder: (context, state) {
+          if (state.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state.error != null) {
+            return _buildErrorView(state.error!);
+          } else if (state.isEmpty) {
+            return _buildEmptyView();
+          } else {
+            return _buildSessionsList(
+              state.sessions,
+              state.terminatingSessionId,
+            );
+          }
+        },
+      ),
+
+      bottomNavigationBar: BlocBuilder<SessionBloc, SessionState>(
+        buildWhen:
+            (previous, current) =>
+                previous.isEmpty != current.isEmpty ||
+                previous.isLoading != current.isLoading,
+
+        builder: (context, state) {
+          if (!state.isEmpty && !state.isLoading) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SizedBox(
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: _terminateAllSessions,
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Log Out From All Devices'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 ),
-              )
-              : null,
+              ),
+            );
+          }
+
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 
@@ -221,15 +182,18 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
             'No active sessions',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
+
           const SizedBox(height: 8),
           Text(
             'You are currently only logged in on this device.',
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
+
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            onPressed: _loadSessions,
+            onPressed:
+                () => context.read<SessionBloc>().add(const SessionRefreshed()),
             icon: const Icon(Icons.refresh),
             label: const Text('Refresh'),
           ),
@@ -238,7 +202,7 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
     );
   }
 
-  Widget _buildErrorView() {
+  Widget _buildErrorView(String error) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -246,18 +210,21 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
           const Icon(Icons.error_outline, size: 64, color: Colors.red),
           const SizedBox(height: 16),
           Text('Error', style: Theme.of(context).textTheme.headlineSmall),
+
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Text(
-              _error ?? 'Unknown error occurred',
+              error,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
           ),
+
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            onPressed: _loadSessions,
+            onPressed:
+                () => context.read<SessionBloc>().add(const SessionRefreshed()),
             icon: const Icon(Icons.refresh),
             label: const Text('Try Again'),
           ),
@@ -266,15 +233,21 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
     );
   }
 
-  Widget _buildSessionsList() {
+  Widget _buildSessionsList(
+    List<UserSession> sessions,
+    String? terminatingSessionId,
+  ) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _sessions.length,
+      itemCount: sessions.length,
       itemBuilder: (context, index) {
-        final session = _sessions[index];
+        final session = sessions[index];
+        final isTerminating = session.id == terminatingSessionId;
+
         return _SessionCard(
           session: session,
           onTerminate: () => _terminateSession(session),
+          isTerminating: isTerminating,
         );
       },
     );
@@ -290,8 +263,13 @@ class _SessionManagementScreenState extends State<SessionManagementScreen> {
 class _SessionCard extends StatelessWidget {
   final UserSession session;
   final VoidCallback onTerminate;
+  final bool isTerminating;
 
-  const _SessionCard({required this.session, required this.onTerminate});
+  const _SessionCard({
+    required this.session,
+    required this.onTerminate,
+    this.isTerminating = false,
+  });
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -366,12 +344,21 @@ class _SessionCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed: onTerminate,
-                  tooltip: 'Terminate Session',
-                  color: Colors.red,
-                ),
+                isTerminating
+                    ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                      ),
+                    )
+                    : IconButton(
+                      icon: const Icon(Icons.logout),
+                      onPressed: onTerminate,
+                      tooltip: 'Terminate Session',
+                      color: Colors.red,
+                    ),
               ],
             ),
             const Divider(height: 24),
