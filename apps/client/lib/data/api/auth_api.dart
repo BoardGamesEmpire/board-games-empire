@@ -130,7 +130,7 @@ class AuthApi extends BaseApi {
       final response = await http.post(
         buildUrl('$apiPrefix/refresh'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'refresh_token': refreshToken}),
+        body: jsonEncode({'refreshToken': refreshToken}),
       );
 
       if (response.statusCode == HttpStatusCode.ok) {

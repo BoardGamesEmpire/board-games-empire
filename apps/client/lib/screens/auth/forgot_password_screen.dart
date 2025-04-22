@@ -1,77 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:formz/formz.dart';
 
-import '../../services/auth/auth_service.dart';
+import '../../blocs/auth/forgot_password/forgot_password_bloc.dart';
 import '../../widgets/ui/custom_text_field.dart';
+import '../../router/app_router.dart';
 
-class ForgotPasswordScreen extends StatefulWidget {
-  static const routeName = '/forgot-password';
-
-  const ForgotPasswordScreen({super.key});
+class ForgotPasswordScreenBloc extends StatefulWidget {
+  const ForgotPasswordScreenBloc({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  State<ForgotPasswordScreenBloc> createState() =>
+      _ForgotPasswordScreenBlocState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+class _ForgotPasswordScreenBlocState extends State<ForgotPasswordScreenBloc> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  bool _isLoading = false;
-  bool _requestSent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(_onEmailChanged);
+  }
+
+  void _onEmailChanged() {
+    context.read<ForgotPasswordBloc>().add(EmailChanged(_emailController.text));
+  }
+
+  void _onSubmit() {
+    if (_formKey.currentState!.validate()) {
+      context.read<ForgotPasswordBloc>().add(const PasswordResetRequested());
+    }
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     super.dispose();
-  }
-
-  Future<void> _submitRequest() async {
-    FocusScope.of(context).unfocus();
-
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    final authService = Provider.of<AuthService>(context, listen: false);
-
-    try {
-      final success = await authService.requestPasswordReset(
-        _emailController.text.trim(),
-      );
-
-      if (success && mounted) {
-        setState(() {
-          _requestSent = true;
-        });
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to send reset link. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An error occurred. Please try again later.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
   }
 
   @override
@@ -81,13 +47,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: _requestSent ? _buildSuccessView() : _buildRequestView(),
+          child: BlocConsumer<ForgotPasswordBloc, ForgotPasswordState>(
+            listenWhen:
+                (previous, current) =>
+                    previous.status != current.status &&
+                    (current.status.isFailure || current.status.isSuccess),
+            listener: (context, state) {
+              if (state.status.isFailure && state.errorMessage != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.errorMessage!),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            buildWhen: (previous, current) => previous.status != current.status,
+            builder: (context, state) {
+              if (state.status.isSuccess) {
+                return _buildSuccessView();
+              } else {
+                return _buildRequestView(state);
+              }
+            },
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildRequestView() {
+  Widget _buildRequestView(ForgotPasswordState state) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -106,55 +95,67 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const SizedBox(height: 32),
         Form(
           key: _formKey,
-          child: CustomTextField(
-            controller: _emailController,
-            labelText: 'Email',
-            hintText: 'Enter your email address',
-            prefixIcon: Icons.email_outlined,
-            keyboardType: TextInputType.emailAddress,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your email';
-              }
-              if (!RegExp(
-                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-              ).hasMatch(value)) {
-                return 'Please enter a valid email';
-              }
-              return null;
+          child: BlocBuilder<ForgotPasswordBloc, ForgotPasswordState>(
+            buildWhen: (previous, current) => previous.email != current.email,
+            builder: (context, state) {
+              return CustomTextField(
+                controller: _emailController,
+                labelText: 'Email',
+                hintText: 'Enter your email address',
+                prefixIcon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your email';
+                  }
+                  if (!RegExp(
+                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                  ).hasMatch(value)) {
+                    return 'Please enter a valid email';
+                  }
+                  return null;
+                },
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _onSubmit(),
+              );
             },
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => _submitRequest(),
           ),
         ),
         const SizedBox(height: 32),
-        SizedBox(
-          height: 50,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _submitRequest,
-            style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+        BlocBuilder<ForgotPasswordBloc, ForgotPasswordState>(
+          buildWhen: (previous, current) => previous.status != current.status,
+          builder: (context, state) {
+            return SizedBox(
+              height: 50,
+              child: ElevatedButton(
+                onPressed: state.status.isInProgress ? null : _onSubmit,
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child:
+                    state.status.isInProgress
+                        ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                        : const Text(
+                          'Send Reset Link',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
               ),
-            ),
-            child:
-                _isLoading
-                    ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                    : const Text(
-                      'Send Reset Link',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-          ),
+            );
+          },
         ),
       ],
     );
@@ -189,7 +190,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           height: 50,
           child: OutlinedButton(
             onPressed: () {
-              context.pop();
+              AppRouter.navigateTo('/login');
             },
             style: OutlinedButton.styleFrom(
               shape: RoundedRectangleBorder(

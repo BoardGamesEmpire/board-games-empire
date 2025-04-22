@@ -1,164 +1,232 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-import '../../services/server_config_service.dart';
+import '../../blocs/server/selection/server_selection_bloc.dart';
 import '../../models/config/server_config.dart';
-import '../../services/auth/auth_service.dart';
+import '../../router/app_router.dart';
 import '../../router/route_constants.dart';
 
-class ServerSelectionScreen extends StatefulWidget {
-  static const routeName = '/server-selection';
+class ServerSelectionScreenBloc extends StatefulWidget {
+  static const routeName = AppRoutes.serverSelection;
 
-  const ServerSelectionScreen({super.key});
+  const ServerSelectionScreenBloc({super.key});
 
   @override
-  State<ServerSelectionScreen> createState() => _ServerSelectionScreenState();
+  State<ServerSelectionScreenBloc> createState() =>
+      _ServerSelectionScreenBlocState();
 }
 
-class _ServerSelectionScreenState extends State<ServerSelectionScreen> {
-  bool _isLoading = false;
-
+class _ServerSelectionScreenBlocState extends State<ServerSelectionScreenBloc> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshServers();
-    });
+    context.read<ServerSelectionBloc>().add(const ServerSelectionInitialized());
   }
 
-  Future<void> _refreshServers() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final configService = Provider.of<ServerConfigService>(
-        context,
-        listen: false,
-      );
-      await configService.initialize();
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _selectServer(String serverId) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final configService = Provider.of<ServerConfigService>(
-        context,
-        listen: false,
-      );
-      final authService = Provider.of<AuthService>(context, listen: false);
-
-      await configService.setActiveServer(serverId);
-
-      // Reset auth service with new server URL
-      final server = configService.activeServer;
-      if (server != null) {
-        authService.setBaseUrl(server.url);
-      }
-
-      if (!mounted) return;
-      context.go(AppRoutes.login);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error selecting server: ${e.toString()}'),
-            backgroundColor: Colors.red,
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<ServerSelectionBloc, ServerSelectionState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: (context, state) {
+        if (state.isFailure && state.error != null) {
+          _showErrorSnackBar(state.error!);
+        } else if (state.isActiveServerChanged) {
+          AppRouter.navigateTo(AppRoutes.login);
+        } else if (state.isNavigatingToAdd) {
+          _navigateToAddServer();
+        }
+      },
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Select Server'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: state.isLoading ? null : _refreshServers,
+                tooltip: 'Refresh',
+              ),
+            ],
           ),
+          body: _buildBody(state),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+      },
+    );
   }
 
-  Future<void> _addNewServer() async {
+  Widget _buildBody(ServerSelectionState state) {
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    if (state.confirmingRemoval) {
+      return _buildRemovalConfirmation(state.serverToRemove!);
+    }
+
+    return _buildServerList(state.servers);
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.dns_outlined, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text(
+            'No Servers Configured',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Add a server to get started.',
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () {
+              context.read<ServerSelectionBloc>().add(
+                const ServerAddRequested(),
+              );
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Server'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildServerList(List<ServerConfig> servers) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: servers.length + 1, // +1 for the add button
+      itemBuilder: (ctx, index) {
+        if (index == servers.length) {
+          // Add server button at the bottom
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: OutlinedButton.icon(
+              onPressed: () {
+                context.read<ServerSelectionBloc>().add(
+                  const ServerAddRequested(),
+                );
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Add Another Server'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+          );
+        }
+
+        final server = servers[index];
+        return _ServerCard(
+          server: server,
+          onSelect: () => _selectServer(server.id),
+          onEdit: () => _editServer(server),
+          onRemove: () => _requestRemoveServer(server),
+          lastConnected: _formatDate(server.lastConnectedAt),
+        );
+      },
+    );
+  }
+
+  Widget _buildRemovalConfirmation(ServerConfig server) {
+    return Center(
+      child: Card(
+        margin: const EdgeInsets.all(32),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Remove Server',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Are you sure you want to remove "${server.name}"?',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      context.read<ServerSelectionBloc>().add(
+                        const ServerRemovalCancelled(),
+                      );
+                    },
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<ServerSelectionBloc>().add(
+                        const ServerRemovalConfirmed(),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Remove'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _refreshServers() {
+    context.read<ServerSelectionBloc>().add(
+      const ServerSelectionRefreshRequested(),
+    );
+  }
+
+  void _selectServer(String serverId) {
+    context.read<ServerSelectionBloc>().add(ServerSelected(serverId));
+  }
+
+  Future<void> _navigateToAddServer() async {
     final result = await context.push<ServerConfig>('/server-config');
-
-    if (result != null) {
-      await _selectServer(result.id);
+    if (mounted) {
+      context.read<ServerSelectionBloc>().add(
+        ServerAddCompleted(server: result),
+      );
     }
   }
 
-  Future<void> _editServer(ServerConfig server) async {
+  void _editServer(ServerConfig server) {
     // TODO: Implement edit server dialog
-    // For now, we just pop up a snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Edit server feature coming soon')),
     );
   }
 
-  Future<void> _removeServer(ServerConfig server) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Remove Server'),
-            content: Text('Are you sure you want to remove "${server.name}"?'),
-            actions: [
-              TextButton(
-                onPressed: () => ctx.pop(false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => ctx.pop(true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Remove'),
-              ),
-            ],
-          ),
+  void _requestRemoveServer(ServerConfig server) {
+    context.read<ServerSelectionBloc>().add(ServerRemovalRequested(server));
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
-
-    if (confirmed == true) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      try {
-        final configService = Provider.of<ServerConfigService>(
-          context,
-          listen: false,
-        );
-        await configService.removeServer(server.id);
-
-        if (!mounted) return;
-
-        if (!configService.hasServers) {
-          context.go('/server-config?initial=true');
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error removing server: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      }
-    }
   }
 
   String _formatDate(DateTime? date) {
@@ -176,97 +244,6 @@ class _ServerSelectionScreenState extends State<ServerSelectionScreen> {
     } else {
       return DateFormat.yMMMd().format(date);
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select Server'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _isLoading ? null : _refreshServers,
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Consumer<ServerConfigService>(
-                builder: (ctx, configService, _) {
-                  final servers = configService.serverConfigs;
-
-                  if (servers.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.dns_outlined,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No Servers Configured',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Add a server to get started.',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                          const SizedBox(height: 32),
-                          ElevatedButton.icon(
-                            onPressed: _addNewServer,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add Server'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: servers.length + 1, // +1 for the add button
-                    itemBuilder: (ctx, index) {
-                      if (index == servers.length) {
-                        // Add server button at the bottom
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          child: OutlinedButton.icon(
-                            onPressed: _addNewServer,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add Another Server'),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                          ),
-                        );
-                      }
-
-                      final server = servers[index];
-                      return _ServerCard(
-                        server: server,
-                        onSelect: () => _selectServer(server.id),
-                        onEdit: () => _editServer(server),
-                        onRemove: () => _removeServer(server),
-                        lastConnected: _formatDate(server.lastConnectedAt),
-                      );
-                    },
-                  );
-                },
-              ),
-    );
   }
 }
 

@@ -1,4 +1,5 @@
-import 'package:board_games_empire/blocs/utils/app_bloc_ovserver.dart';
+import 'package:board_games_empire/blocs/platform/platform_bloc.dart';
+import 'package:board_games_empire/blocs/utils/app_bloc_observer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,8 @@ import './router/app_router.dart';
 import './blocs/auth/auth_bloc.dart';
 import './blocs/app/app_bloc.dart';
 import './blocs/router/router_bloc.dart';
+import './blocs/settings/theme/theme_bloc.dart';
+import './theme/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,8 +36,29 @@ class BoardGamesEmpire extends StatefulWidget {
   State<BoardGamesEmpire> createState() => _BoardGamesEmpireState();
 }
 
-class _BoardGamesEmpireState extends State<BoardGamesEmpire> {
+class _BoardGamesEmpireState extends State<BoardGamesEmpire>
+    with WidgetsBindingObserver {
   final String title = 'Board Games Empire';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    final brightness =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    getIt<ThemeBloc>().add(SystemThemeChanged(brightness));
+    super.didChangePlatformBrightness();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +69,8 @@ class _BoardGamesEmpireState extends State<BoardGamesEmpire> {
         ),
         BlocProvider<AuthBloc>(create: (context) => getIt<AuthBloc>()),
         BlocProvider<RouterBloc>(create: (context) => getIt<RouterBloc>()),
+        BlocProvider<ThemeBloc>(create: (context) => getIt<ThemeBloc>()),
+        BlocProvider<PlatformBloc>(create: (context) => getIt<PlatformBloc>()),
         // Add other global BLoCs here
       ],
       child: MultiProvider(
@@ -57,72 +83,39 @@ class _BoardGamesEmpireState extends State<BoardGamesEmpire> {
             value: getIt<AuthService>(),
           ),
         ],
-        child: BlocBuilder<AppBloc, AppState>(
+        child: BlocBuilder<ThemeBloc, ThemeState>(
           buildWhen:
               (previous, current) =>
                   previous.themeMode != current.themeMode ||
-                  previous.status != current.status,
-          builder: (context, state) {
-            if (state.status == AppStatus.initializing) {
-              return MaterialApp(
-                title: title,
-                theme: _buildLightTheme(),
-                darkTheme: _buildDarkTheme(),
-                themeMode: state.themeMode,
-                home: const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                ),
-              );
-            }
+                  previous.systemBrightness != current.systemBrightness,
+          builder: (context, themeState) {
+            return BlocBuilder<AppBloc, AppState>(
+              buildWhen:
+                  (previous, current) => previous.status != current.status,
+              builder: (context, appState) {
+                if (appState.status == AppStatus.initializing) {
+                  return MaterialApp(
+                    title: title,
+                    theme: ThemeProvider.lightTheme,
+                    darkTheme: ThemeProvider.darkTheme,
+                    themeMode: themeState.themeMode,
+                    home: const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    ),
+                  );
+                }
 
-            return MaterialApp.router(
-              title: title,
-              theme: _buildLightTheme(),
-              darkTheme: _buildDarkTheme(),
-              themeMode: state.themeMode,
-              routerConfig: AppRouter.router,
-              debugShowCheckedModeBanner: false,
+                return MaterialApp.router(
+                  title: title,
+                  theme: ThemeProvider.lightTheme,
+                  darkTheme: ThemeProvider.darkTheme,
+                  themeMode: themeState.themeMode,
+                  routerConfig: AppRouter.router,
+                  debugShowCheckedModeBanner: false,
+                );
+              },
             );
           },
-        ),
-      ),
-    );
-  }
-
-  ThemeData _buildLightTheme() {
-    return ThemeData(
-      primarySwatch: Colors.indigo,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.indigo,
-        brightness: Brightness.light,
-      ),
-      useMaterial3: true,
-      inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: Colors.indigo,
-        ),
-      ),
-    );
-  }
-
-  ThemeData _buildDarkTheme() {
-    return ThemeData(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.indigo,
-        brightness: Brightness.dark,
-      ),
-      useMaterial3: true,
-      inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: Colors.indigo,
         ),
       ),
     );

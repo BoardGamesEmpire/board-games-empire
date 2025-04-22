@@ -9,32 +9,39 @@ import '../repositories/auth/user_context_provider.dart';
 
 // Repositories
 import '../repositories/auth/auth_repository.dart';
-import '../repositories/server/server_repository.dart';
-import '../repositories/websocket/websocket_repository.dart';
 import '../repositories/chat/chat_repository.dart';
 import '../repositories/game/game_repository.dart';
+import '../repositories/server/server_repository.dart';
+import '../repositories/websocket/websocket_repository.dart';
 
 // Data sources
 import '../data/api/auth_api.dart';
 import '../data/api/chat_api.dart';
 import '../data/api/game_api.dart';
-import '../data/websocket/websocket_client.dart';
-import '../data/local/secure_storage.dart';
-import '../data/local/user_preferences.dart';
 import '../data/datasources/game_rest_data_source.dart';
 import '../data/datasources/game_websocket_data_source.dart';
+import '../data/local/secure_storage.dart';
+import '../data/local/user_preferences.dart';
+import '../data/websocket/websocket_client.dart';
 
 // Blocs
-import '../blocs/game/game_collection/game_collection_bloc.dart';
 import '../blocs/app/app_bloc.dart';
 import '../blocs/auth/auth_bloc.dart';
+import '../blocs/auth/forgot_password/forgot_password_bloc.dart';
 import '../blocs/auth/login/login_bloc.dart';
 import '../blocs/auth/register/register_bloc.dart';
-import '../blocs/server/server_bloc.dart';
-import '../blocs/connection/connection_bloc.dart';
+import '../blocs/auth/session/session_bloc.dart';
 import '../blocs/chat/chat_bloc.dart';
+import '../blocs/connection/connection_bloc.dart';
+import '../blocs/game/game_collection/game_collection_bloc.dart';
 import '../blocs/game/game_search/game_search_bloc.dart';
+import '../blocs/home/home_bloc.dart';
+import '../blocs/platform/platform_bloc.dart';
 import '../blocs/router/router_bloc.dart';
+import '../blocs/server/selection/server_selection_bloc.dart';
+import '../blocs/server/server_bloc.dart';
+import '../blocs/server/server_config/server_config_bloc.dart';
+import '../blocs/settings/theme/theme_bloc.dart';
 
 // Services
 import '../services/server_config_service.dart';
@@ -42,8 +49,9 @@ import '../services/auth/auth_service.dart';
 import '../services/websocket/websocket_manager.dart';
 import '../services/jwt_interceptor.dart';
 import '../services/chat/chat_service.dart';
-import './service_registration.dart';
 import '../services/game/game_service.dart';
+
+import '../providers/platform_provider.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -52,12 +60,10 @@ Future<void> setupDependencyInjection() async {
   _registerContextProviders();
   await _registerCoreServices();
 
-  registerAppServices(getIt);
-
-  await _initializeServices();
   await _registerServices();
   await _registerRepositories();
   await _registerBlocs();
+  await _initializeServices();
 
   _setupServiceDependencies();
 }
@@ -105,6 +111,8 @@ Future<void> _registerCoreServices() async {
 
 Future<void> _initializeServices() async {
   await getIt<ServerConfigService>().initialize();
+
+  PlatformProvider.initialize(getIt<PlatformBloc>());
 }
 
 void _setupServiceDependencies() {
@@ -189,6 +197,10 @@ Future<void> _registerBlocs() async {
     () => AppBloc(connectionChecker: getIt<InternetConnectionChecker>()),
   );
 
+  getIt.registerLazySingleton<PlatformBloc>(
+    () => PlatformBloc()..add(const PlatformInitialized()),
+  );
+
   getIt.registerLazySingleton<AuthBloc>(
     () => AuthBloc(authRepository: getIt<AuthRepository>()),
   );
@@ -197,6 +209,38 @@ Future<void> _registerBlocs() async {
 
   getIt.registerFactory<LoginBloc>(
     () => LoginBloc(authRepository: getIt<AuthRepository>()),
+  );
+
+  getIt.registerFactory<ServerSelectionBloc>(
+    () => ServerSelectionBloc(
+      serverRepository: getIt<ServerRepository>(),
+      authRepository: getIt<AuthRepository>(),
+    ),
+  );
+
+  getIt.registerFactory<ServerConfigBloc>(
+    () => ServerConfigBloc(serverRepository: getIt<ServerRepository>()),
+  );
+
+  getIt.registerLazySingleton<ThemeBloc>(
+    () =>
+        ThemeBloc(preferences: getIt<SharedPreferences>())
+          ..add(const ThemeInitialized()),
+  );
+
+  getIt.registerFactory<SessionBloc>(
+    () => SessionBloc(authRepository: getIt<AuthRepository>()),
+  );
+
+  getIt.registerFactory<HomeBloc>(
+    () => HomeBloc(
+      websocketRepository: getIt<WebSocketRepository>(),
+      authRepository: getIt<AuthRepository>(),
+    ),
+  );
+
+  getIt.registerFactory<ForgotPasswordBloc>(
+    () => ForgotPasswordBloc(authRepository: getIt<AuthRepository>()),
   );
 
   getIt.registerFactory<RegisterBloc>(

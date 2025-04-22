@@ -12,11 +12,9 @@ class AppRouter {
     _routerDelegate = BlocRouterDelegate();
     router = _routerDelegate.router;
 
-    // Initialize RouterBloc with default location
     getIt<RouterBloc>().add(const RouterInitialize(initialLocation: '/'));
   }
 
-  // Navigation methods that should be used throughout the app
   static void navigateTo(String location, {Map<String, dynamic>? arguments}) {
     getIt<RouterBloc>().add(RouterNavigateTo(location, arguments: arguments));
   }

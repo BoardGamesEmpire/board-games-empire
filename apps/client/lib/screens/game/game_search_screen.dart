@@ -262,10 +262,10 @@ class _GameSearchScreenState extends State<GameSearchScreen> {
                     ? const Icon(Icons.check_circle, color: Colors.green)
                     : ElevatedButton(
                       onPressed: () => _addGame(game),
-                      child: const Text('Add'),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                       ),
+                      child: const Text('Add'),
                     ),
             isThreeLine: true,
             onTap: () => _showGameDetails(game),

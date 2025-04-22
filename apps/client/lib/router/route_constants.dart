@@ -7,7 +7,10 @@ class AppRoutes {
 
   // Main app routes
   static const String home = '/home';
+
+  // Settings routes
   static const String sessionManagement = '/account/sessions';
+  static const String themeSettings = '/settings/theme';
 
   // Config routes
   static const String serverConfig = '/server-config';
@@ -19,6 +22,5 @@ class AppRoutes {
   static const String gameDetails = '/games/:id';
   static const String chat = '/chat';
 
-  // Helper method to build game details path
   static String buildGameDetailsPath(String gameId) => '/games/$gameId';
 }

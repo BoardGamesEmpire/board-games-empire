@@ -1,17 +1,18 @@
 import 'dart:convert';
 import 'dart:async';
-import '../../router/route_constants.dart';
-import '../../di/injection.dart';
+
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../../models/user.dart';
-import '../../models/auth/auth.dart';
-import '../../services/platform_service.dart';
 import 'package:http_status/http_status.dart';
+
+import '../../services/platform_service.dart';
+import '../../router/route_constants.dart';
+import '../../models/auth/auth.dart';
+import '../../models/user.dart';
 import './logout_event.dart';
 
 class AuthService extends ChangeNotifier {
@@ -364,8 +365,6 @@ class AuthService extends ChangeNotifier {
     } finally {
       await _clearAuthData();
 
-      resetAppServices();
-
       _logoutController.add(LogoutEvent(allSessions: allSessions));
 
       notifyListeners();
@@ -385,9 +384,9 @@ class AuthService extends ChangeNotifier {
 
     try {
       final response = await http.post(
-        _buildUrl('/refresh-token'),
+        _buildUrl('/refresh'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'refresh_token': refreshToken}),
+        body: jsonEncode({'refreshToken': refreshToken}),
       );
 
       if (response.statusCode == HttpStatusCode.ok) {
