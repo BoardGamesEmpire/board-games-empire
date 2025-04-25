@@ -8,45 +8,80 @@ abstract class ServerConfigEvent extends Equatable {
 }
 
 class ServerConfigInitialized extends ServerConfigEvent {
-  final bool isInitialSetup;
-
-  const ServerConfigInitialized({this.isInitialSetup = false});
-
-  @override
-  List<Object> get props => [isInitialSetup];
+  const ServerConfigInitialized();
 }
 
-class ServerConfigNameChanged extends ServerConfigEvent {
+class ServerConfigLoadRequested extends ServerConfigEvent {
+  const ServerConfigLoadRequested();
+}
+
+class ServerConfigAdded extends ServerConfigEvent {
   final String name;
-
-  const ServerConfigNameChanged(this.name);
-
-  @override
-  List<Object> get props => [name];
-}
-
-class ServerConfigUrlChanged extends ServerConfigEvent {
   final String url;
 
-  const ServerConfigUrlChanged(this.url);
+  const ServerConfigAdded({required this.name, required this.url});
+
+  @override
+  List<Object> get props => [name, url];
+}
+
+class ServerConfigUpdated extends ServerConfigEvent {
+  final String serverId;
+  final String? name;
+  final String? url;
+
+  const ServerConfigUpdated({required this.serverId, this.name, this.url});
+
+  @override
+  List<Object?> get props => [serverId, name, url];
+}
+
+class ServerConfigRemoved extends ServerConfigEvent {
+  final String serverId;
+
+  const ServerConfigRemoved(this.serverId);
+
+  @override
+  List<Object> get props => [serverId];
+}
+
+class ServerConfigActiveChanged extends ServerConfigEvent {
+  final String serverId;
+
+  const ServerConfigActiveChanged(this.serverId);
+
+  @override
+  List<Object> get props => [serverId];
+}
+
+class ServerConfigValidationRequested extends ServerConfigEvent {
+  final String url;
+
+  const ServerConfigValidationRequested(this.url);
 
   @override
   List<Object> get props => [url];
 }
 
-class ServerConfigValidationRequested extends ServerConfigEvent {
-  const ServerConfigValidationRequested();
-}
-
-class ServerConfigValidationCompleted extends ServerConfigEvent {
+class ServerValidated extends ServerConfigEvent {
+  final String url;
   final bool isValid;
 
-  const ServerConfigValidationCompleted(this.isValid);
+  const ServerValidated({required this.url, required this.isValid});
 
   @override
-  List<Object> get props => [isValid];
+  List<Object> get props => [url, isValid];
 }
 
-class ServerConfigAddRequested extends ServerConfigEvent {
-  const ServerConfigAddRequested();
+class ServerConfigError extends ServerConfigEvent {
+  final String error;
+
+  const ServerConfigError(this.error);
+
+  @override
+  List<Object> get props => [error];
+}
+
+class ServerConfigErrorCleared extends ServerConfigEvent {
+  const ServerConfigErrorCleared();
 }

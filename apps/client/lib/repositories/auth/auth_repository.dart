@@ -47,6 +47,22 @@ class AuthRepository {
     }
   }
 
+  Future<void> switchServer(String serverId) async {
+    final currentServerId = await _userPreferences.getCurrentServerId();
+
+    if (currentServerId != serverId) {
+      await _clearAuthData();
+
+      _currentServerId = serverId;
+      await _userPreferences.setCurrentServerId(serverId);
+
+      final serverUrl = await _userPreferences.getServerUrl(serverId);
+      _authApi.setBaseUrl(serverUrl!);
+
+      await _loadTokensFromStorage();
+    }
+  }
+
   Future<void> _loadTokensFromStorage() async {
     try {
       if (_currentServerId == null) return;
@@ -209,6 +225,7 @@ class AuthRepository {
     }
   }
 
+  // TODO: move to UserRepository
   Future<List<UserSession>> getActiveSessions() async {
     if (_tokens?.accessToken == null) return [];
 
@@ -254,17 +271,67 @@ class AuthRepository {
     }
   }
 
-  Future<void> setCurrentServer(String serverId) async {
-    if (_currentServerId != serverId) {
-      await _clearAuthData();
-      _currentServerId = serverId;
-      await _userPreferences.setCurrentServerId(serverId);
-      await _loadTokensFromStorage();
+  Future<bool> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    try {
+      final response = await _authApi.changePassword(
+        accessToken: accessToken ?? '',
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
 
-      _authApi.setBaseUrl(await _userPreferences.getServerUrl(serverId));
+      return response;
+    } catch (e) {
+      _lastError = e.toString();
+      return false;
     }
   }
 
+  // TODO: move to UserRepository
+  Future<User?> updateProfile({
+    required String username,
+    required String email,
+    String? firstName,
+    String? lastName,
+  }) async {
+    try {
+      final user = await _authApi.updateProfile(
+        accessToken: accessToken ?? '',
+        username: username,
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+      );
+
+      // Update local user data
+      if (user != null) {
+        _currentUser = user;
+        if (_currentServerId != null) {
+          await _userPreferences.saveUserData(_currentServerId!, user);
+        }
+        _userController.add(user);
+      }
+
+      return user;
+    } catch (e) {
+      _lastError = e.toString();
+      return null;
+    }
+  }
+
+  // TODO: maybe this should be moved to a separate repository
+  Future<void> setCurrentServer(String serverId) async {
+    if (_currentServerId != serverId) {
+      await switchServer(serverId);
+      _controller.add(
+        _tokens != null ? AuthStatus.authenticated : AuthStatus.unauthenticated,
+      );
+    }
+  }
+
+  // TODO: Platform bloc should handle this
   Future<Map<String, dynamic>> getDeviceInfo() async {
     final deviceInfo = DeviceInfoPlugin();
     final packageInfo = await PackageInfo.fromPlatform();
@@ -298,7 +365,6 @@ class AuthRepository {
         'appVersion': appVersion,
       };
     } else {
-      // Handle desktop platforms
       return {
         'device': 'Desktop',
         'os': defaultTargetPlatform.toString(),
@@ -314,6 +380,8 @@ class AuthRepository {
   Future<User?> getCurrentUser() async => _currentUser;
   String? get accessToken => _tokens?.accessToken;
   String? get refreshToken => _tokens?.refreshToken;
+  String? get currentUserId => _currentUser?.id;
+  bool get isAuthenticated => _controller.value == AuthStatus.authenticated;
 
   void dispose() {
     _controller.close();

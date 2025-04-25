@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../models/game/game.dart';
-import '../../../../models/search_result.dart';
+import '../../../models/game/game.dart';
+import '../../../models/search_result.dart';
 import '../../../repositories/game/game_repository.dart';
 
 part 'game_search_event.dart';
@@ -13,18 +13,26 @@ part 'game_search_state.dart';
 class GameSearchBloc extends Bloc<GameSearchEvent, GameSearchState> {
   final GameRepository _gameRepository;
   StreamSubscription? _searchResultsSubscription;
+  StreamSubscription? _connectionStatusSubscription;
 
   GameSearchBloc({required GameRepository gameRepository})
     : _gameRepository = gameRepository,
-      super(const GameSearchState()) {
+      super(
+        GameSearchState(isWebSocketConnected: gameRepository.isUsingWebSocket),
+      ) {
     on<GameSearchQueryChanged>(_onQueryChanged);
     on<GameSearchSourceChanged>(_onSourceChanged);
     on<GameSearchRequested>(_onSearchRequested);
     on<GameSearchResultsReceived>(_onResultsReceived);
     on<GameAddRequested>(_onAddRequested);
+    on<GameConnectionStatusChanged>(_onConnectionStatusChanged);
 
     _searchResultsSubscription = _gameRepository.searchResults.listen(
       (results) => add(GameSearchResultsReceived(results)),
+    );
+
+    _connectionStatusSubscription = _gameRepository.connectionStatus.listen(
+      (isConnected) => add(GameConnectionStatusChanged(isConnected)),
     );
   }
 
@@ -107,9 +115,17 @@ class GameSearchBloc extends Bloc<GameSearchEvent, GameSearchState> {
     }
   }
 
+  void _onConnectionStatusChanged(
+    GameConnectionStatusChanged event,
+    Emitter<GameSearchState> emit,
+  ) {
+    emit(state.copyWith(isWebSocketConnected: event.isConnected));
+  }
+
   @override
   Future<void> close() {
     _searchResultsSubscription?.cancel();
+    _connectionStatusSubscription?.cancel();
     return super.close();
   }
 }

@@ -12,6 +12,7 @@ part 'connection_state.dart';
 class ConnectionBloc extends Bloc<ConnectionEvent, ConnectionState> {
   final WebSocketRepository _websocketRepository;
   StreamSubscription? _connectionStatusSubscription;
+  StreamSubscription? _serverChangesSubscription;
 
   ConnectionBloc({required WebSocketRepository websocketRepository})
     : _websocketRepository = websocketRepository,
@@ -23,6 +24,10 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnectionState> {
 
     _connectionStatusSubscription = _websocketRepository.connectionStatus
         .listen((isConnected) => add(ConnectionStatusChanged(isConnected)));
+
+    _serverChangesSubscription = _websocketRepository.serverChanges.listen(
+      (server) => add(ConnectionServerChanged(server)),
+    );
   }
 
   Future<void> _onConnectionRequested(
@@ -34,7 +39,7 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnectionState> {
       return;
     }
 
-    emit(state.copyWith(status: ConnectionStatus.connecting));
+    emit(ConnectionState.connecting(server: event.server));
 
     try {
       final success = await _websocketRepository.connect(
@@ -49,6 +54,9 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnectionState> {
             serverId: event.server.id,
           ),
         );
+
+        // Notify the repository about the new server
+        _websocketRepository.notifyServerChanged(event.server);
       } else {
         emit(
           ConnectionState.error(
@@ -83,7 +91,7 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnectionState> {
     ConnectionStatusChanged event,
     Emitter<ConnectionState> emit,
   ) {
-    if (event.isConnected && state.status == ConnectionStatus.disconnected) {
+    if (event.isConnected && state.status != ConnectionStatus.connected) {
       emit(
         ConnectionState.connected(
           server: state.server,
@@ -118,6 +126,7 @@ class ConnectionBloc extends Bloc<ConnectionEvent, ConnectionState> {
   @override
   Future<void> close() {
     _connectionStatusSubscription?.cancel();
+    _serverChangesSubscription?.cancel();
     return super.close();
   }
 }

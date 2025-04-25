@@ -1,15 +1,16 @@
+import '../../repositories/auth/auth_repository.dart';
+import '../../blocs/auth/auth_bloc.dart';
 import './user_context_provider.dart';
-import '../../services/auth/auth_service.dart';
 
 class AuthUserContextProvider implements UserContextProvider {
-  final AuthService _authRepo;
+  final AuthBloc _authBloc;
 
-  AuthUserContextProvider({required AuthService authService})
-    : _authRepo = authService;
-
-  @override
-  String? get currentUserId => _authRepo.currentUser?.id;
+  AuthUserContextProvider({required AuthBloc authBloc}) : _authBloc = authBloc;
 
   @override
-  bool get isAuthenticated => _authRepo.isAuthenticated;
+  String? get currentUserId => _authBloc.state.user?.id;
+
+  @override
+  bool get isAuthenticated =>
+      _authBloc.state.status == AuthStatus.authenticated;
 }

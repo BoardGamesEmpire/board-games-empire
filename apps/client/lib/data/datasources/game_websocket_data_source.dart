@@ -7,6 +7,8 @@ import './game_data_source.dart';
 class GameWebSocketDataSource implements GameDataSource {
   final WebSocketClient _webSocketClient;
 
+  bool get isConnected => _webSocketClient.isConnected;
+
   GameWebSocketDataSource({required WebSocketClient webSocketClient})
     : _webSocketClient = webSocketClient;
 

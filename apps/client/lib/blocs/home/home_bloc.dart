@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../models/config/server_config.dart';
 import '../../../repositories/auth/auth_repository.dart';
 import '../../../repositories/websocket/websocket_repository.dart';
+import '../server/server_config/server_config_bloc.dart';
 
 part 'home_event.dart';
 part 'home_state.dart';
@@ -10,12 +13,17 @@ part 'home_state.dart';
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final WebSocketRepository _websocketRepository;
   final AuthRepository _authRepository;
+  final ServerConfigBloc _serverConfigBloc;
+  StreamSubscription? _websocketStatusSubscription;
+  StreamSubscription? _serverConfigSubscription;
 
   HomeBloc({
     required WebSocketRepository websocketRepository,
     required AuthRepository authRepository,
+    required ServerConfigBloc serverConfigBloc,
   }) : _websocketRepository = websocketRepository,
        _authRepository = authRepository,
+       _serverConfigBloc = serverConfigBloc,
        super(const HomeState()) {
     on<HomeInitialized>(_onInitialized);
     on<HomeWebSocketConnectRequested>(_onWebSocketConnectRequested);
@@ -23,15 +31,33 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<HomeLogoutRequested>(_onLogoutRequested);
     on<HomeLogoutConfirmed>(_onLogoutConfirmed);
     on<HomeLogoutCancelled>(_onLogoutCancelled);
+    on<HomeServerConfigChanged>(_onServerConfigChanged);
   }
 
   void _onInitialized(HomeInitialized event, Emitter<HomeState> emit) {
     // Subscribe to websocket status changes
-    _websocketRepository.connectionStatus.listen(
+    _websocketStatusSubscription = _websocketRepository.connectionStatus.listen(
       (isConnected) => add(HomeWebSocketStatusChanged(isConnected)),
     );
 
-    add(const HomeWebSocketConnectRequested());
+    // Subscribe to server config changes
+    _serverConfigSubscription = _serverConfigBloc.stream.listen((
+      serverConfigState,
+    ) {
+      if (serverConfigState.status == ServerConfigStatus.activeServerChanged) {
+        add(HomeServerConfigChanged(serverConfigState.activeServer));
+      }
+    });
+
+    // Initialize the server config bloc if not already initialized
+    if (!_serverConfigBloc.state.isInitialized) {
+      _serverConfigBloc.add(const ServerConfigInitialized());
+    }
+
+    // Try to connect to WebSocket if we have an active server
+    if (_serverConfigBloc.state.activeServer != null) {
+      add(const HomeWebSocketConnectRequested());
+    }
   }
 
   Future<void> _onWebSocketConnectRequested(
@@ -43,8 +69,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(state.copyWith(connectionStatus: ConnectionStatus.connecting));
 
     try {
-      final serverId = _websocketRepository.currentServerId;
-      if (serverId == null) {
+      final activeServer = _serverConfigBloc.state.activeServer;
+      if (activeServer == null) {
         emit(
           state.copyWith(
             connectionStatus: ConnectionStatus.disconnected,
@@ -54,10 +80,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         return;
       }
 
-      await _websocketRepository.connect(
-        _websocketRepository.currentServerId ?? '',
-        _websocketRepository.currentServerId ?? '',
-      );
+      await _websocketRepository.connect(activeServer.url, activeServer.id);
     } catch (e) {
       emit(
         state.copyWith(
@@ -91,6 +114,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(state.copyWith(showLogoutConfirmation: false, isLoggingOut: true));
 
     try {
+      // Disconnect WebSocket before logout
+      _websocketRepository.disconnect();
+
       await _authRepository.logout(allSessions: event.allSessions);
       emit(state.copyWith(isLoggingOut: false));
     } catch (e) {
@@ -105,5 +131,22 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   void _onLogoutCancelled(HomeLogoutCancelled event, Emitter<HomeState> emit) {
     emit(state.copyWith(showLogoutConfirmation: false));
+  }
+
+  void _onServerConfigChanged(
+    HomeServerConfigChanged event,
+    Emitter<HomeState> emit,
+  ) {
+    // When active server changes, attempt to reconnect
+    if (event.activeServer != null) {
+      add(const HomeWebSocketConnectRequested());
+    }
+  }
+
+  @override
+  Future<void> close() {
+    _websocketStatusSubscription?.cancel();
+    _serverConfigSubscription?.cancel();
+    return super.close();
   }
 }

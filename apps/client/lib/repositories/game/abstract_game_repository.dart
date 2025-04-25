@@ -31,6 +31,8 @@ abstract class AbstractGameRepository {
 
   Stream<SearchResult> get searchResults;
 
+  Stream<bool> get connectionStatus;
+
   bool get isUsingWebSocket;
 
   void dispose();

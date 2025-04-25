@@ -11,6 +11,28 @@ class ServerInitializeRequested extends ServerEvent {
   const ServerInitializeRequested();
 }
 
+class ServerInitializationCompleted extends ServerEvent {
+  const ServerInitializationCompleted();
+}
+
+class ServerListUpdated extends ServerEvent {
+  final List<ServerConfig> servers;
+
+  const ServerListUpdated(this.servers);
+
+  @override
+  List<Object> get props => [servers];
+}
+
+class ServerActiveUpdated extends ServerEvent {
+  final ServerConfig? server;
+
+  const ServerActiveUpdated(this.server);
+
+  @override
+  List<Object?> get props => [server];
+}
+
 class ServerAddRequested extends ServerEvent {
   const ServerAddRequested({required this.name, required this.url});
 

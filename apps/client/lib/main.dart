@@ -1,30 +1,33 @@
-import 'package:board_games_empire/blocs/platform/platform_bloc.dart';
-import 'package:board_games_empire/blocs/utils/app_bloc_observer.dart';
+import 'package:board_games_empire/blocs/server/server_config/server_config_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 
-import './di/injection.dart';
-import './services/auth/auth_service.dart';
-import './services/server_config_service.dart';
-import './router/app_router.dart';
-import './blocs/auth/auth_bloc.dart';
 import './blocs/app/app_bloc.dart';
+import './blocs/app/initialization/app_initialization_bloc.dart';
+import './blocs/auth/auth_bloc.dart';
+import './blocs/error/error_bloc.dart';
+import './blocs/platform/platform_bloc.dart';
 import './blocs/router/router_bloc.dart';
 import './blocs/settings/theme/theme_bloc.dart';
+import './blocs/utils/app_bloc_observer.dart';
+import './blocs/websocket/websocket_bloc.dart';
+
+import './di/coordinator.dart';
+import './di/injection.dart';
+import './router/app_router.dart';
 import './theme/theme_provider.dart';
+import './widgets/app/error_widget.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set up BLoC observer for debugging
   Bloc.observer = AppBlocObserver();
 
-  // Initialize dependency injection
   await setupDependencyInjection();
 
-  // Initialize the router
   AppRouter.initialize();
+
+  getIt<BlocCoordinator>();
 
   runApp(const BoardGamesEmpire());
 }
@@ -71,49 +74,31 @@ class _BoardGamesEmpireState extends State<BoardGamesEmpire>
         BlocProvider<RouterBloc>(create: (context) => getIt<RouterBloc>()),
         BlocProvider<ThemeBloc>(create: (context) => getIt<ThemeBloc>()),
         BlocProvider<PlatformBloc>(create: (context) => getIt<PlatformBloc>()),
-        // Add other global BLoCs here
+        BlocProvider(create: (context) => getIt<WebSocketBloc>()),
+        BlocProvider<ServerConfigBloc>(
+          create: (context) => getIt<ServerConfigBloc>(),
+        ),
+        BlocProvider<AppInitializationBloc>(
+          create:
+              (context) =>
+                  getIt<AppInitializationBloc>()..add(const AppInitStarted()),
+        ),
+        BlocProvider<ErrorBloc>(create: (context) => getIt<ErrorBloc>()),
       ],
-      child: MultiProvider(
-        providers: [
-          // Keep these for backward compatibility while refactoring
-          ChangeNotifierProvider<ServerConfigService>.value(
-            value: getIt<ServerConfigService>(),
-          ),
-          ChangeNotifierProvider<AuthService>.value(
-            value: getIt<AuthService>(),
-          ),
-        ],
+      child: ErrorHandler(
         child: BlocBuilder<ThemeBloc, ThemeState>(
           buildWhen:
               (previous, current) =>
                   previous.themeMode != current.themeMode ||
                   previous.systemBrightness != current.systemBrightness,
           builder: (context, themeState) {
-            return BlocBuilder<AppBloc, AppState>(
-              buildWhen:
-                  (previous, current) => previous.status != current.status,
-              builder: (context, appState) {
-                if (appState.status == AppStatus.initializing) {
-                  return MaterialApp(
-                    title: title,
-                    theme: ThemeProvider.lightTheme,
-                    darkTheme: ThemeProvider.darkTheme,
-                    themeMode: themeState.themeMode,
-                    home: const Scaffold(
-                      body: Center(child: CircularProgressIndicator()),
-                    ),
-                  );
-                }
-
-                return MaterialApp.router(
-                  title: title,
-                  theme: ThemeProvider.lightTheme,
-                  darkTheme: ThemeProvider.darkTheme,
-                  themeMode: themeState.themeMode,
-                  routerConfig: AppRouter.router,
-                  debugShowCheckedModeBanner: false,
-                );
-              },
+            return MaterialApp.router(
+              title: title,
+              theme: ThemeProvider.lightTheme,
+              darkTheme: ThemeProvider.darkTheme,
+              themeMode: themeState.themeMode,
+              routerConfig: AppRouter.router,
+              debugShowCheckedModeBanner: false,
             );
           },
         ),

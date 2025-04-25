@@ -29,6 +29,11 @@ class UserPreferences {
     await _prefs.setString(_currentServerIdKey, serverId);
   }
 
+  Future<void> removeCurrentServerId() async {
+    await init();
+    await _prefs.remove(_currentServerIdKey);
+  }
+
   Future<void> saveUserData(String serverId, User user) async {
     await init();
     await _prefs.setString(
@@ -52,16 +57,6 @@ class UserPreferences {
     await _prefs.remove('server_${serverId}_current_session_id');
   }
 
-  Future<void> saveSessionId(String serverId, String sessionId) async {
-    await init();
-    await _prefs.setString('server_${serverId}_current_session_id', sessionId);
-  }
-
-  Future<String?> getSessionId(String serverId) async {
-    await init();
-    return _prefs.getString('server_${serverId}_current_session_id');
-  }
-
   Future<List<ServerConfig>> getServerConfigs() async {
     await init();
     final configsJson = _prefs.getStringList(_serversKey) ?? [];
@@ -72,13 +67,12 @@ class UserPreferences {
 
   Future<void> saveServerConfigs(List<ServerConfig> configs) async {
     await init();
-
     final configsJson =
         configs.map((config) => jsonEncode(config.toJson())).toList();
     await _prefs.setStringList(_serversKey, configsJson);
   }
 
-  Future<String> getServerUrl(String serverId) async {
+  Future<String?> getServerUrl(String serverId) async {
     await init();
 
     final configs = await getServerConfigs();
@@ -86,8 +80,27 @@ class UserPreferences {
       (config) => config.id == serverId,
       orElse: () => ServerConfig(id: '', name: '', url: ''),
     );
+    return server.id.isNotEmpty ? server.url : null;
+  }
 
-    return server.id.isNotEmpty ? server.url : '';
+  Future<void> saveSessionId(String serverId, String sessionId) async {
+    await init();
+    await _prefs.setString('server_${serverId}_current_session_id', sessionId);
+  }
+
+  Future<String?> getSessionId(String serverId) async {
+    await init();
+    return _prefs.getString('server_${serverId}_current_session_id');
+  }
+
+  Future<Map<String, dynamic>> getAll() async {
+    await init();
+    final Map<String, dynamic> result = {};
+
+    result['currentServerId'] = _prefs.getString(_currentServerIdKey);
+    result['servers'] = await getServerConfigs();
+
+    return result;
   }
 
   Future<void> clear() async {
