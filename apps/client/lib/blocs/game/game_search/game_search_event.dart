@@ -46,3 +46,12 @@ class GameAddRequested extends GameSearchEvent {
   @override
   List<Object> get props => [game];
 }
+
+class GameConnectionStatusChanged extends GameSearchEvent {
+  const GameConnectionStatusChanged(this.isConnected);
+
+  final bool isConnected;
+
+  @override
+  List<Object> get props => [isConnected];
+}

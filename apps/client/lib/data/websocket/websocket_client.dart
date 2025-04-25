@@ -10,21 +10,26 @@ import '../../repositories/auth/auth_repository.dart';
 typedef MessageHandler = void Function(dynamic data);
 
 class WebSocketClient {
-  WebSocketChannel? _channel;
-  StreamSubscription? _subscription;
+  static const int _maxReconnectAttempts = 5;
+
   final AuthRepository _authRepository;
 
-  WebSocketClient({required AuthRepository authRepository})
-    : _authRepository = authRepository;
+  WebSocketChannel? _channel;
+  StreamSubscription? _subscription;
 
+  String? _currentServerId;
+  String? _currentServerUrl;
   bool _isConnected = false;
+  bool _isReconnecting = false;
+  int _reconnectAttempts = 0;
 
   final _statusController = StreamController<bool>.broadcast();
   final _messageController = StreamController<Map<String, dynamic>>.broadcast();
   final Map<String, Completer<dynamic>> _requestHandlers = {};
   final Map<String, List<MessageHandler>> _messageTypeHandlers = {};
 
-  String? _currentServerId;
+  WebSocketClient({required AuthRepository authRepository})
+    : _authRepository = authRepository;
 
   Future<bool> connect(
     String url,
@@ -39,21 +44,12 @@ class WebSocketClient {
       disconnect();
     }
 
+    _currentServerUrl = url;
+    _currentServerId = serverId;
+
     try {
-      final baseUrl = Uri.parse(url);
-      final path = baseUrl.path;
-      final pathless = url.replaceRange(url.indexOf(path), url.length, '');
-
-      var wsUrl = pathless.replaceFirst(RegExp(r'^http'), 'ws');
-      wsUrl += '/socket';
-
+      final wsUrl = _buildWebSocketUrl(url);
       headers = _addAuthHeaders(headers);
-
-      final authHeader = headers['Authorization'];
-      if (authHeader != null) {
-        wsUrl +=
-            '?authorization=${Uri.encodeComponent(authHeader.split(' ').last)}';
-      }
 
       if (kDebugMode) {
         print('Connecting to WebSocket: $wsUrl');
@@ -71,7 +67,7 @@ class WebSocketClient {
       );
 
       _isConnected = true;
-      _currentServerId = serverId;
+      _reconnectAttempts = 0;
       _statusController.add(true);
 
       if (kDebugMode) {
@@ -83,16 +79,33 @@ class WebSocketClient {
       if (kDebugMode) {
         print('WebSocket connection failed: $e');
       }
-
       _isConnected = false;
-      _currentServerId = null;
       _statusController.add(false);
-
       return false;
     }
   }
 
+  String _buildWebSocketUrl(String httpUrl) {
+    final baseUrl = Uri.parse(httpUrl);
+    final path = baseUrl.path;
+    final pathless = httpUrl.replaceRange(
+      httpUrl.indexOf(path),
+      httpUrl.length,
+      '',
+    );
+    var wsUrl = pathless.replaceFirst(RegExp(r'^http'), 'ws');
+    wsUrl += '/socket';
+
+    final token = _authRepository.accessToken;
+    if (token != null) {
+      wsUrl += '?authorization=${Uri.encodeComponent(token)}';
+    }
+
+    return wsUrl;
+  }
+
   void disconnect() {
+    _isReconnecting = false;
     _subscription?.cancel();
     _channel?.sink.close(status.goingAway);
     _handleDisconnection();
@@ -104,6 +117,7 @@ class WebSocketClient {
     _isConnected = false;
     _statusController.add(false);
 
+    // Complete any pending requests with error
     for (final completer in _requestHandlers.values) {
       if (!completer.isCompleted) {
         completer.completeError(Exception('WebSocket disconnected'));
@@ -113,6 +127,44 @@ class WebSocketClient {
 
     if (kDebugMode) {
       print('WebSocket disconnected');
+    }
+
+    // Try to reconnect if not explicitly disconnected
+    if (!_isReconnecting &&
+        _currentServerUrl != null &&
+        _currentServerId != null) {
+      _attemptReconnect();
+    }
+  }
+
+  Future<void> _attemptReconnect() async {
+    if (_isReconnecting || _reconnectAttempts >= _maxReconnectAttempts) return;
+
+    _isReconnecting = true;
+    _reconnectAttempts++;
+
+    if (kDebugMode) {
+      print(
+        'Attempting to reconnect (${_reconnectAttempts}/${_maxReconnectAttempts})...',
+      );
+    }
+
+    // Exponential backoff for reconnect
+    final delay = Duration(milliseconds: 500 * (1 << (_reconnectAttempts - 1)));
+    await Future.delayed(delay);
+
+    try {
+      final success = await connect(_currentServerUrl!, _currentServerId!);
+      _isReconnecting = false;
+
+      if (!success && _reconnectAttempts < _maxReconnectAttempts) {
+        _attemptReconnect();
+      }
+    } catch (e) {
+      _isReconnecting = false;
+      if (_reconnectAttempts < _maxReconnectAttempts) {
+        _attemptReconnect();
+      }
     }
   }
 
@@ -124,7 +176,6 @@ class WebSocketClient {
           final err = error.inner as dynamic;
           print('Websocket inner error: ${err.message.toString()}');
         }
-
         print('Websocket error: ${error.message}');
       }
     }
@@ -245,6 +296,7 @@ class WebSocketClient {
   Stream<Map<String, dynamic>> get messageStream => _messageController.stream;
   bool get isConnected => _isConnected;
   String? get currentServerId => _currentServerId;
+  String? get currentServerUrl => _currentServerUrl;
 
   void dispose() {
     disconnect();

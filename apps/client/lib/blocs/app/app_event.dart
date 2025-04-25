@@ -41,3 +41,35 @@ class AppError extends AppEvent {
 class AppErrorDismissed extends AppEvent {
   const AppErrorDismissed();
 }
+
+class AppInitialized extends AppEvent {
+  final bool hasServers;
+  final bool isAuthenticated;
+  final ServerConfig? activeServer;
+
+  const AppInitialized({
+    required this.hasServers,
+    required this.isAuthenticated,
+    this.activeServer,
+  });
+
+  @override
+  List<Object?> get props => [hasServers, isAuthenticated, activeServer];
+}
+
+class AppRequestedInitialization extends AppEvent {
+  const AppRequestedInitialization();
+}
+
+class AppConnectionRequested extends AppEvent {
+  const AppConnectionRequested();
+}
+
+class AppConnectionStatusChanged extends AppEvent {
+  final bool isConnected;
+
+  const AppConnectionStatusChanged(this.isConnected);
+
+  @override
+  List<Object> get props => [isConnected];
+}

@@ -9,6 +9,9 @@ class ChatRepository {
   final WebSocketRepository _websocketRepository;
   final _messagesController = StreamController<ChatMessage>.broadcast();
   final _typingController = StreamController<Map<String, dynamic>>.broadcast();
+  final _connectionStatusController = StreamController<bool>.broadcast();
+
+  StreamSubscription? _wsConnectionSubscription;
 
   ChatRepository({
     required ChatApi chatApi,
@@ -19,8 +22,14 @@ class ChatRepository {
   }
 
   void _init() {
+    // Subscribe to chat messages and typing indicators
     _websocketRepository.subscribeToChatMessages(_handleChatMessage);
     _websocketRepository.subscribeToTypingIndicators(_handleTypingIndicator);
+
+    // Monitor connection status
+    _wsConnectionSubscription = _websocketRepository.connectionStatus.listen(
+      (isConnected) => _connectionStatusController.add(isConnected),
+    );
   }
 
   void _handleChatMessage(ChatMessage message) {
@@ -42,6 +51,10 @@ class ChatRepository {
         return await _chatApi.getChatHistory(roomId, limit);
       }
     } catch (e) {
+      // Fallback to REST if WebSocket fails
+      if (_websocketRepository.isConnected) {
+        return await _chatApi.getChatHistory(roomId, limit);
+      }
       rethrow;
     }
   }
@@ -54,6 +67,10 @@ class ChatRepository {
         await _chatApi.joinRoom(roomId);
       }
     } catch (e) {
+      // Fallback to REST if WebSocket fails
+      if (_websocketRepository.isConnected) {
+        await _chatApi.joinRoom(roomId);
+      }
       rethrow;
     }
   }
@@ -66,6 +83,10 @@ class ChatRepository {
         await _chatApi.leaveRoom(roomId);
       }
     } catch (e) {
+      // Fallback to REST if WebSocket fails
+      if (_websocketRepository.isConnected) {
+        await _chatApi.leaveRoom(roomId);
+      }
       rethrow;
     }
   }
@@ -78,6 +99,10 @@ class ChatRepository {
         await _chatApi.sendMessage(content, roomId);
       }
     } catch (e) {
+      // Fallback to REST if WebSocket fails
+      if (_websocketRepository.isConnected) {
+        await _chatApi.sendMessage(content, roomId);
+      }
       rethrow;
     }
   }
@@ -107,12 +132,18 @@ class ChatRepository {
         return room.id;
       }
     } catch (e) {
+      // Fallback to REST if WebSocket fails
+      if (_websocketRepository.isConnected) {
+        final room = await _chatApi.createRoom(name, description, type);
+        return room.id;
+      }
       rethrow;
     }
   }
 
   Stream<ChatMessage> get messages => _messagesController.stream;
   Stream<Map<String, dynamic>> get typingStatus => _typingController.stream;
+  Stream<bool> get connectionStatus => _connectionStatusController.stream;
   bool get isUsingWebSocket => _websocketRepository.isConnected;
 
   void dispose() {
@@ -123,7 +154,9 @@ class ChatRepository {
       (dynamic status) =>
           _handleTypingIndicator(status as Map<String, dynamic>),
     );
+    _wsConnectionSubscription?.cancel();
     _messagesController.close();
     _typingController.close();
+    _connectionStatusController.close();
   }
 }

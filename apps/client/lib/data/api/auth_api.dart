@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_status/http_status.dart';
 
@@ -33,8 +34,13 @@ class AuthApi extends BaseApi {
     bool rememberMe = false,
   }) async {
     try {
+      final url = buildUrl('$apiPrefix/login');
+      if (kDebugMode) {
+        print('Login URL: $url');
+      }
+
       final response = await http.post(
-        buildUrl('$apiPrefix/login'),
+        url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -219,6 +225,77 @@ class AuthApi extends BaseApi {
       return response.statusCode == HttpStatusCode.ok;
     } catch (e) {
       throw ApiException(message: 'Password reset failed: ${e.toString()}');
+    }
+  }
+
+  Future<bool> changePassword({
+    required String accessToken,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        buildUrl('$apiPrefix/change-password'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode({
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
+
+      if (response.statusCode == HttpStatusCode.ok) {
+        return true;
+      } else {
+        final data = jsonDecode(response.body);
+        throw ApiException(
+          message: data['message'] ?? 'Failed to change password',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(message: 'Network error: ${e.toString()}');
+    }
+  }
+
+  Future<User?> updateProfile({
+    required String accessToken,
+    required String username,
+    required String email,
+    String? firstName,
+    String? lastName,
+  }) async {
+    try {
+      final response = await http.put(
+        buildUrl('$apiPrefix/profile'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode({
+          'username': username,
+          'email': email,
+          'firstName': firstName,
+          'lastName': lastName,
+        }),
+      );
+
+      if (response.statusCode == HttpStatusCode.ok) {
+        final data = jsonDecode(response.body);
+        return User.fromJson(data);
+      } else {
+        final data = jsonDecode(response.body);
+        throw ApiException(
+          message: data['message'] ?? 'Failed to update profile',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(message: 'Network error: ${e.toString()}');
     }
   }
 }

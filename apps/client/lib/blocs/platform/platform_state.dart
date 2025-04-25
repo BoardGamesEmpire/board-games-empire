@@ -23,7 +23,7 @@ class PlatformState extends Equatable {
 
   factory PlatformState.initial() {
     return const PlatformState(
-      isWeb: false,
+      isWeb: kIsWeb,
       isMobile: false,
       isDesktop: false,
       platformName: 'Unknown',

@@ -1,29 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../di/injection.dart';
+import '../../blocs/game/game_search/game_search_bloc.dart';
 import '../../models/game/game.dart';
-import '../../models/search_result.dart';
-import '../../services/game/game_service.dart';
-import '../../services/websocket/websocket_manager.dart';
+import '../../router/route_constants.dart';
 
-class GameSearchScreen extends StatefulWidget {
-  static const routeName = '/games/search';
+class GameSearchScreenBloc extends StatefulWidget {
+  static const routeName = AppRoutes.gameSearch;
 
-  const GameSearchScreen({super.key});
+  const GameSearchScreenBloc({super.key});
 
   @override
-  _GameSearchScreenState createState() => _GameSearchScreenState();
+  State<GameSearchScreenBloc> createState() => _GameSearchScreenBlocState();
 }
 
-class _GameSearchScreenState extends State<GameSearchScreen> {
-  final GameService _gameService = getIt<GameService>();
-  final WebSocketManager _websocketManager = getIt<WebSocketManager>();
-
+class _GameSearchScreenBlocState extends State<GameSearchScreenBloc> {
   final TextEditingController _searchController = TextEditingController();
-
-  String _selectedExternalSource = 'BoardGameGeek';
-  SearchResult? _searchResult;
-  bool _isLoading = false;
 
   final List<String> _externalSources = [
     'BoardGameGeek',
@@ -35,63 +27,33 @@ class _GameSearchScreenState extends State<GameSearchScreen> {
   @override
   void initState() {
     super.initState();
-
-    _gameService.searchResultsStream.listen((result) {
-      if (mounted) {
-        setState(() {
-          _searchResult = result;
-        });
-      }
-    });
+    _searchController.addListener(_onSearchTextChanged);
   }
 
-  Future<void> _performSearch() async {
-    final query = _searchController.text.trim();
-    if (query.isEmpty) return;
+  void _onSearchTextChanged() {
+    context.read<GameSearchBloc>().add(
+      GameSearchQueryChanged(_searchController.text),
+    );
+  }
 
-    setState(() {
-      _isLoading = true;
-    });
+  void _performSearch() {
+    context.read<GameSearchBloc>().add(const GameSearchRequested());
+  }
 
-    try {
-      final result = await _gameService.searchGames(
-        query,
-        _selectedExternalSource,
-      );
-      if (mounted) {
-        setState(() {
-          _searchResult = result;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Search failed: ${e.toString()}')),
-        );
-      }
+  void _changeExternalSource(String? source) {
+    if (source != null) {
+      context.read<GameSearchBloc>().add(GameSearchSourceChanged(source));
     }
   }
 
-  Future<void> _addGame(Game game) async {
-    try {
-      final addedGame = await _gameService.addGame(game);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${addedGame.title} added to collection')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add game: ${e.toString()}')),
-        );
-      }
-    }
+  void _addGame(Game game) {
+    context.read<GameSearchBloc>().add(GameAddRequested(game));
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -101,11 +63,13 @@ class _GameSearchScreenState extends State<GameSearchScreen> {
         title: const Text('Game Search'),
         actions: [
           // WebSocket status indicator
-          StreamBuilder<bool>(
-            stream: _websocketManager.statusStream,
-            initialData: _websocketManager.isConnected,
-            builder: (context, snapshot) {
-              final isConnected = snapshot.data ?? false;
+          BlocBuilder<GameSearchBloc, GameSearchState>(
+            buildWhen:
+                (previous, current) =>
+                    previous.isWebSocketConnected !=
+                    current.isWebSocketConnected,
+            builder: (context, state) {
+              final isConnected = state.isWebSocketConnected;
               return Tooltip(
                 message:
                     isConnected
@@ -136,13 +100,13 @@ class _GameSearchScreenState extends State<GameSearchScreen> {
                       hintText: 'Search for games...',
                       prefixIcon: const Icon(Icons.search),
                       border: const OutlineInputBorder(),
-
-                      // Show WebSocket status on the search field
-                      suffixIcon: StreamBuilder<bool>(
-                        stream: _websocketManager.statusStream,
-                        initialData: _websocketManager.isConnected,
-                        builder: (context, snapshot) {
-                          final isConnected = snapshot.data ?? false;
+                      suffixIcon: BlocBuilder<GameSearchBloc, GameSearchState>(
+                        buildWhen:
+                            (previous, current) =>
+                                previous.isWebSocketConnected !=
+                                current.isWebSocketConnected,
+                        builder: (context, state) {
+                          final isConnected = state.isWebSocketConnected;
                           return Icon(
                             isConnected ? Icons.bolt : Icons.http,
                             color: isConnected ? Colors.green : Colors.orange,
@@ -154,74 +118,124 @@ class _GameSearchScreenState extends State<GameSearchScreen> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                DropdownButton<String>(
-                  value: _selectedExternalSource,
-                  items:
-                      _externalSources.map((source) {
-                        return DropdownMenuItem(
-                          value: source,
-                          child: Text(source),
-                        );
-                      }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedExternalSource = value;
-                      });
-                    }
+                BlocBuilder<GameSearchBloc, GameSearchState>(
+                  buildWhen:
+                      (previous, current) =>
+                          previous.externalSource != current.externalSource,
+                  builder: (context, state) {
+                    return DropdownButton<String>(
+                      value: state.externalSource,
+                      items:
+                          _externalSources.map((source) {
+                            return DropdownMenuItem(
+                              value: source,
+                              child: Text(source),
+                            );
+                          }).toList(),
+                      onChanged: _changeExternalSource,
+                    );
                   },
                 ),
               ],
             ),
           ),
-          if (_isLoading)
-            const Center(child: CircularProgressIndicator())
-          else if (_searchResult != null)
-            Expanded(
-              child: DefaultTabController(
-                length: 2,
-                child: Column(
-                  children: [
-                    TabBar(
-                      tabs: [
-                        Tab(
-                          text:
-                              'Internal (${_searchResult!.internalResults.length})',
+          BlocBuilder<GameSearchBloc, GameSearchState>(
+            buildWhen:
+                (previous, current) =>
+                    previous.status != current.status ||
+                    previous.searchResult != current.searchResult,
+            builder: (context, state) {
+              if (state.isLoading) {
+                return const Expanded(
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              } else if (state.isSuccess && state.searchResult != null) {
+                return Expanded(
+                  child: DefaultTabController(
+                    length: 2,
+                    child: Column(
+                      children: [
+                        TabBar(
+                          tabs: [
+                            Tab(
+                              text:
+                                  'Internal (${state.internalResults.length})',
+                            ),
+                            Tab(
+                              text:
+                                  'External (${state.externalResults.length})',
+                            ),
+                          ],
+                          labelColor: Theme.of(context).primaryColor,
                         ),
-                        Tab(
-                          text:
-                              'External (${_searchResult!.externalResults.length})',
+                        Expanded(
+                          child: TabBarView(
+                            children: [
+                              // Internal results
+                              _buildResultsList(
+                                state.internalResults,
+                                true,
+                                state.addingGameId,
+                              ),
+
+                              // External results
+                              _buildResultsList(
+                                state.externalResults,
+                                false,
+                                state.addingGameId,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
-                      labelColor: Theme.of(context).primaryColor,
                     ),
-                    Expanded(
-                      child: TabBarView(
-                        children: [
-                          // Internal results
-                          _buildResultsList(
-                            _searchResult!.internalResults,
-                            true,
-                          ),
-
-                          // External results
-                          _buildResultsList(
-                            _searchResult!.externalResults,
-                            false,
-                          ),
-                        ],
-                      ),
+                  ),
+                );
+              } else if (state.isFailure) {
+                return Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        Text('Search error: ${state.error}'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _performSearch,
+                          child: const Text('Try Again'),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
+                );
+              } else if (state.query.isNotEmpty && state.isSuccess) {
+                return const Expanded(
+                  child: Center(child: Text('No results found')),
+                );
+              } else {
+                return const Expanded(
+                  child: Center(
+                    child: Text('Enter a search term to find games'),
+                  ),
+                );
+              }
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildResultsList(List<Game> games, bool isInternal) {
+  Widget _buildResultsList(
+    List<Game> games,
+    bool isInternal,
+    String? addingGameId,
+  ) {
     if (games.isEmpty) {
       return const Center(child: Text('No results found'));
     }
@@ -230,6 +244,7 @@ class _GameSearchScreenState extends State<GameSearchScreen> {
       itemCount: games.length,
       itemBuilder: (context, index) {
         final game = games[index];
+        final isAddingThisGame = game.id == addingGameId;
 
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -260,6 +275,12 @@ class _GameSearchScreenState extends State<GameSearchScreen> {
             trailing:
                 isInternal
                     ? const Icon(Icons.check_circle, color: Colors.green)
+                    : isAddingThisGame
+                    ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                     : ElevatedButton(
                       onPressed: () => _addGame(game),
                       style: ElevatedButton.styleFrom(
@@ -321,22 +342,35 @@ class _GameSearchScreenState extends State<GameSearchScreen> {
                 ),
                 const SizedBox(height: 24),
                 if (game.isFromExternal)
-                  ElevatedButton(
-                    onPressed: () => _addGame(game),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    child: const Text('Add to Collection'),
+                  BlocBuilder<GameSearchBloc, GameSearchState>(
+                    buildWhen:
+                        (previous, current) =>
+                            previous.addingGameId != current.addingGameId,
+                    builder: (context, state) {
+                      final isAddingThisGame = game.id == state.addingGameId;
+
+                      return ElevatedButton(
+                        onPressed:
+                            isAddingThisGame ? null : () => _addGame(game),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 48),
+                        ),
+                        child:
+                            isAddingThisGame
+                                ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : const Text('Add to Collection'),
+                      );
+                    },
                   ),
               ],
             ),
           ),
     );
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 }

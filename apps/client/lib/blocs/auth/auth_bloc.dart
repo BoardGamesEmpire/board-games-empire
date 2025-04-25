@@ -45,6 +45,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+  Future<void> _onAuthServerChanged(
+    AuthServerChanged event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthState.loading());
+
+    await _authRepository.setCurrentServer(event.serverId);
+
+    // Check if we have a user after changing server
+    final user = await _authRepository.getCurrentUser();
+    if (user != null) {
+      final token = _authRepository.accessToken;
+      emit(AuthState.authenticated(user, token));
+    } else {
+      emit(const AuthState.unauthenticated());
+    }
+  }
+
   Future<void> _onAuthLogoutRequested(
     AuthLogoutRequested event,
     Emitter<AuthState> emit,

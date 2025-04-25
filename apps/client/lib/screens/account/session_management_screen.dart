@@ -1,14 +1,12 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/session/session_bloc.dart';
 import '../../models/user.dart';
-import '../../services/auth/auth_service.dart';
-import '../../di/injection.dart';
+import '../../repositories/auth/auth_repository.dart';
 import '../../router/app_router.dart';
 import '../../router/route_constants.dart';
 
@@ -22,18 +20,18 @@ class SessionManagementScreenBloc extends StatefulWidget {
 
 class _SessionManagementScreenBlocState
     extends State<SessionManagementScreenBloc> {
-  late StreamSubscription _logoutSubscription;
-
   @override
   void initState() {
     super.initState();
 
-    final authService = getIt<AuthService>();
-    _logoutSubscription = authService.onLogout.listen((event) {
-      AppRouter.navigateTo(AppRoutes.login);
+    context.read<AuthBloc>().stream.listen((state) {
+      final states = [AuthStatus.unknown, AuthStatus.unauthenticated];
+
+      if (states.contains(state.status)) {
+        AppRouter.navigateTo(AppRoutes.login);
+      }
     });
 
-    // Load sessions when screen opens
     context.read<SessionBloc>().add(const SessionsRequested());
   }
 
@@ -251,12 +249,6 @@ class _SessionManagementScreenBlocState
         );
       },
     );
-  }
-
-  @override
-  void dispose() {
-    _logoutSubscription.cancel();
-    super.dispose();
   }
 }
 

@@ -7,6 +7,7 @@ class CustomTextField extends StatelessWidget {
   final IconData? prefixIcon;
   final Widget? suffixIcon;
   final bool obscureText;
+  final bool enabled;
   final TextInputType keyboardType;
   final TextInputAction textInputAction;
   final String? Function(String?)? validator;
@@ -22,6 +23,7 @@ class CustomTextField extends StatelessWidget {
     this.suffixIcon,
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
+    this.enabled = true,
     this.textInputAction = TextInputAction.next,
     this.validator,
     this.onFieldSubmitted,

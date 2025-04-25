@@ -16,7 +16,6 @@ class PlatformBloc extends Bloc<PlatformEvent, PlatformState> {
   }
 
   void _onInitialized(PlatformInitialized event, Emitter<PlatformState> emit) {
-    // Determine platform type
     final isWeb = kIsWeb;
     final isMobile = _checkIsMobile();
     final isDesktop = _checkIsDesktop();

@@ -7,6 +7,9 @@ import './api_exception.dart';
 class BaseApi {
   String _baseUrl;
 
+  // TODO: temporary for local development
+  final String _serverUrl = 'http://localhost:33333';
+
   BaseApi({required String baseUrl}) : _baseUrl = baseUrl;
 
   void setBaseUrl(String url) {
@@ -15,7 +18,7 @@ class BaseApi {
 
   Uri buildUrl(String endpoint) {
     final path = endpoint.startsWith('/') ? endpoint : '/$endpoint';
-    return Uri.parse('$_baseUrl$path');
+    return Uri.parse('$_serverUrl$_baseUrl$path');
   }
 
   String get baseUrl => _baseUrl;

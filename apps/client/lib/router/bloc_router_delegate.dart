@@ -2,15 +2,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../services/platform_service.dart';
-import '../services/server_config_service.dart';
-
 import './route_constants.dart';
 import '../di/injection.dart';
 
+import '../blocs/websocket/websocket_bloc.dart';
 import '../blocs/auth/auth_bloc.dart';
+import '../blocs/account/account_bloc.dart';
+import '../blocs/auth/password_reset/password_reset_form_bloc.dart';
 import '../blocs/auth/forgot_password/forgot_password_bloc.dart';
 import '../blocs/auth/login/login_bloc.dart';
+import '../blocs/platform/platform_bloc.dart';
 import '../blocs/auth/register/register_bloc.dart';
 import '../blocs/auth/session/session_bloc.dart';
 import '../blocs/chat/chat_bloc.dart';
@@ -23,6 +24,11 @@ import '../blocs/settings/theme/theme_bloc.dart';
 
 import '../repositories/auth/auth_repository.dart';
 
+import '../screens/settings/connection_settings_screen.dart';
+import '../screens/websocket/websocket_settings_screen.dart';
+import '../screens/splash/splash_screen.dart';
+import '../screens/account/account_screen.dart';
+import '../screens/auth/password_reset_screen.dart';
 import '../screens/account/session_management_screen.dart';
 import '../screens/auth/forgot_password_screen.dart';
 import '../screens/auth/login_screen.dart';
@@ -55,11 +61,14 @@ class BlocRouterDelegate {
 
   String? _handleRedirect(BuildContext context, GoRouterState state) {
     final authBloc = context.read<AuthBloc>();
-    final serverConfigService = context.read<ServerConfigService>();
     final isAuthenticated = authBloc.state.status == AuthStatus.authenticated;
+    final platformBloc = context.read<PlatformBloc>();
 
     // Special paths that can be accessed without a server or authentication
-    final noServerRequiredPaths = ['/server-config', '/server-selection'];
+    final noServerRequiredPaths = [
+      AppRoutes.serverConfig,
+      AppRoutes.serverSelection,
+    ];
 
     // Paths that can be accessed without authentication
     final noAuthRequiredPaths = [
@@ -74,14 +83,16 @@ class BlocRouterDelegate {
     );
     final isNoAuthPath = noAuthRequiredPaths.contains(state.matchedLocation);
 
-    if (PlatformService.isWeb) {
+    if (platformBloc.state.isWeb) {
       if (!isAuthenticated && !isNoAuthPath) {
         return AppRoutes.login;
       }
       return null;
     }
 
-    if (!serverConfigService.hasServers && !isNoServerPath) {
+    final servers = [];
+
+    if (servers.isEmpty && !isNoServerPath) {
       return '${AppRoutes.serverConfig}?initial=true';
     }
 
@@ -123,6 +134,8 @@ class BlocRouterDelegate {
 
   List<RouteBase> _buildRoutes() {
     return [
+      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+
       // Auth routes
       GoRoute(
         path: AppRoutes.login,
@@ -144,9 +157,40 @@ class BlocRouterDelegate {
       ),
 
       GoRoute(
+        path: AppRoutes.resetPassword,
+        name: 'passwordReset',
+        builder: (context, state) {
+          final token = state.uri.queryParameters['token'];
+          return BlocProvider(
+            create: (context) => getIt<PasswordResetFormBloc>(),
+            child: PasswordResetScreen(token: token),
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/account',
+        name: 'account',
+        builder: (context, state) {
+          return BlocProvider(
+            create: (context) => getIt<AccountBloc>(),
+            child: const AccountScreen(),
+          );
+        },
+      ),
+
+      GoRoute(
         path: AppRoutes.themeSettings,
         name: 'themeSettings',
         builder: (context, state) => _buildThemeSettingsScreen(),
+      ),
+
+      GoRoute(
+        path: AppRoutes.connectionSettings,
+        name: 'connectionSettings',
+        builder: (context, state) {
+          return const ConnectionSettingsScreen();
+        },
       ),
 
       // Main app routes
@@ -162,7 +206,17 @@ class BlocRouterDelegate {
         builder: (context, state) => _buildSessionManagementScreen(),
       ),
 
-      // Config routes
+      GoRoute(
+        path: AppRoutes.websocketSettings,
+        name: 'websocketSettings',
+        builder: (context, state) {
+          return BlocProvider(
+            create: (context) => getIt<WebSocketBloc>(),
+            child: const WebSocketSettingsScreen(),
+          );
+        },
+      ),
+
       GoRoute(
         path: AppRoutes.serverConfig,
         name: 'serverConfig',
@@ -183,11 +237,13 @@ class BlocRouterDelegate {
         name: 'gameSearch',
         builder: (context, state) => _buildGameSearchScreen(),
       ),
+
       GoRoute(
         path: AppRoutes.chat,
         name: 'chat',
         builder: (context, state) => _buildChatScreen(),
       ),
+
       GoRoute(
         path: AppRoutes.gameDetails,
         name: 'gameDetails',
@@ -259,7 +315,7 @@ class BlocRouterDelegate {
   Widget _buildGameSearchScreen() {
     return BlocProvider(
       create: (context) => getIt<GameSearchBloc>(),
-      child: const GameSearchScreen(),
+      child: const GameSearchScreenBloc(),
     );
   }
 
@@ -271,8 +327,8 @@ class BlocRouterDelegate {
   }
 
   Widget _buildGameDetailsScreen(String gameId) {
-    // We'll implement GameDetailsBloc later
-    return Container(); // Placeholder
+    // TODO: GameDetailsBloc
+    return Container();
   }
 
   Widget _buildErrorPage(BuildContext context, GoRouterState state) {

@@ -3,46 +3,45 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../blocs/server/server_config/server_config_bloc.dart';
-import '../../widgets/ui/custom_text_field.dart';
 import '../../router/app_router.dart';
 import '../../router/route_constants.dart';
+import '../../widgets/ui/custom_text_field.dart';
 
 class ServerConfigScreenBloc extends StatefulWidget {
-  static const routeName = '/server-config';
+  static const routeName = AppRoutes.serverConfig;
   final bool isInitialSetup;
+  final String? serverId;
+  final String? initialName;
+  final String? initialUrl;
 
-  const ServerConfigScreenBloc({super.key, this.isInitialSetup = false});
+  const ServerConfigScreenBloc({
+    super.key,
+    this.isInitialSetup = false,
+    this.serverId,
+    this.initialName,
+    this.initialUrl,
+  });
 
   @override
-  State<ServerConfigScreenBloc> createState() => _ServerConfigScreenBlocState();
+  State<ServerConfigScreenBloc> createState() => _ServerConfigScreenState();
 }
 
-class _ServerConfigScreenBlocState extends State<ServerConfigScreenBloc> {
+class _ServerConfigScreenState extends State<ServerConfigScreenBloc> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _urlController = TextEditingController();
 
+  bool get isEditMode => widget.serverId != null;
+
   @override
   void initState() {
     super.initState();
-    context.read<ServerConfigBloc>().add(
-      ServerConfigInitialized(isInitialSetup: widget.isInitialSetup),
-    );
+    context.read<ServerConfigBloc>().add(const ServerConfigInitialized());
 
-    _nameController.addListener(_onNameChanged);
-    _urlController.addListener(_onUrlChanged);
-  }
-
-  void _onNameChanged() {
-    context.read<ServerConfigBloc>().add(
-      ServerConfigNameChanged(_nameController.text),
-    );
-  }
-
-  void _onUrlChanged() {
-    context.read<ServerConfigBloc>().add(
-      ServerConfigUrlChanged(_urlController.text),
-    );
+    if (isEditMode && widget.initialName != null && widget.initialUrl != null) {
+      _nameController.text = widget.initialName!;
+      _urlController.text = widget.initialUrl!;
+    }
   }
 
   @override
@@ -57,27 +56,29 @@ class _ServerConfigScreenBlocState extends State<ServerConfigScreenBloc> {
     return BlocConsumer<ServerConfigBloc, ServerConfigState>(
       listenWhen:
           (previous, current) =>
-              (previous.isAdded != current.isAdded && current.isAdded) ||
-              (previous.error != current.error && current.error != null),
+              previous.status != current.status ||
+              previous.error != current.error,
       listener: (context, state) {
-        if (state.isAdded && state.addedServer != null) {
+        if (state.error != null) {
+          _showErrorSnackBar(state.error!);
+        } else if (state.status == ServerConfigStatus.serverAdded ||
+            state.status == ServerConfigStatus.serverUpdated) {
+          // On success, navigate back or to login
           if (widget.isInitialSetup) {
             AppRouter.navigateTo(AppRoutes.login);
           } else {
-            context.pop(state.addedServer);
+            context.pop();
           }
-        } else if (state.error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.error!), backgroundColor: Colors.red),
-          );
         }
       },
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
             title: Text(
-              widget.isInitialSetup
-                  ? 'Welcome to Board Game Empire'
+              isEditMode
+                  ? 'Edit Server'
+                  : widget.isInitialSetup
+                  ? 'Welcome to Board Games Empire'
                   : 'Add Server',
             ),
             elevation: 0,
@@ -95,6 +96,9 @@ class _ServerConfigScreenBlocState extends State<ServerConfigScreenBloc> {
   }
 
   Widget _buildForm(ServerConfigState state) {
+    final isSubmitting =
+        state.isAddingServer || state.isUpdatingServer || state.isValidating;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -126,6 +130,7 @@ class _ServerConfigScreenBlocState extends State<ServerConfigScreenBloc> {
                 labelText: 'Server Name (Optional)',
                 hintText: 'My Home Server',
                 prefixIcon: Icons.label_outline,
+                enabled: !isSubmitting,
               ),
               const SizedBox(height: 16),
 
@@ -135,6 +140,7 @@ class _ServerConfigScreenBlocState extends State<ServerConfigScreenBloc> {
                 hintText: 'https://my-server.example.com',
                 prefixIcon: Icons.link,
                 keyboardType: TextInputType.url,
+                enabled: !isSubmitting,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a server URL';
@@ -176,10 +182,7 @@ class _ServerConfigScreenBlocState extends State<ServerConfigScreenBloc> {
               SizedBox(
                 height: 50,
                 child: OutlinedButton(
-                  onPressed:
-                      state.isValidating || state.isAdding
-                          ? null
-                          : _testConnection,
+                  onPressed: isSubmitting ? null : _testConnection,
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -198,7 +201,7 @@ class _ServerConfigScreenBlocState extends State<ServerConfigScreenBloc> {
                               const Icon(Icons.check_circle_outline),
                               const SizedBox(width: 8),
                               const Text('Test Connection'),
-                              if (state.isValidated) ...[
+                              if (state.validationSuccessful) ...[
                                 const SizedBox(width: 8),
                                 const Icon(
                                   Icons.check_circle,
@@ -215,14 +218,16 @@ class _ServerConfigScreenBlocState extends State<ServerConfigScreenBloc> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed:
-                      state.isAdding || state.isValidating ? null : _addServer,
+                      isSubmitting || !state.validationSuccessful
+                          ? null
+                          : _submitServer,
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   child:
-                      state.isAdding
+                      state.isAddingServer || state.isUpdatingServer
                           ? const SizedBox(
                             width: 24,
                             height: 24,
@@ -234,7 +239,9 @@ class _ServerConfigScreenBlocState extends State<ServerConfigScreenBloc> {
                             ),
                           )
                           : Text(
-                            widget.isInitialSetup
+                            isEditMode
+                                ? 'Update Server'
+                                : widget.isInitialSetup
                                 ? 'Connect and Continue'
                                 : 'Add Server',
                           ),
@@ -249,15 +256,33 @@ class _ServerConfigScreenBlocState extends State<ServerConfigScreenBloc> {
 
   void _testConnection() {
     if (_formKey.currentState!.validate()) {
+      final url = _urlController.text.trim();
       context.read<ServerConfigBloc>().add(
-        const ServerConfigValidationRequested(),
+        ServerConfigValidationRequested(url),
       );
     }
   }
 
-  void _addServer() {
+  void _submitServer() {
     if (_formKey.currentState!.validate()) {
-      context.read<ServerConfigBloc>().add(const ServerConfigAddRequested());
+      final name = _nameController.text.trim();
+      final url = _urlController.text.trim();
+
+      if (isEditMode) {
+        context.read<ServerConfigBloc>().add(
+          ServerConfigUpdated(serverId: widget.serverId!, name: name, url: url),
+        );
+      } else {
+        context.read<ServerConfigBloc>().add(
+          ServerConfigAdded(name: name, url: url),
+        );
+      }
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 }

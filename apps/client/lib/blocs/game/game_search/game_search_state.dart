@@ -11,6 +11,7 @@ class GameSearchState extends Equatable {
     this.addedGame,
     this.addingGameId,
     this.error,
+    this.isWebSocketConnected = false,
   });
 
   final GameSearchStatus status;
@@ -20,6 +21,7 @@ class GameSearchState extends Equatable {
   final Game? addedGame;
   final String? addingGameId;
   final String? error;
+  final bool isWebSocketConnected;
 
   bool get isInitial => status == GameSearchStatus.initial;
   bool get isLoading => status == GameSearchStatus.loading;
@@ -45,6 +47,7 @@ class GameSearchState extends Equatable {
     Game? addedGame,
     String? addingGameId,
     String? error,
+    bool? isWebSocketConnected,
   }) {
     return GameSearchState(
       status: status ?? this.status,
@@ -54,6 +57,7 @@ class GameSearchState extends Equatable {
       addedGame: addedGame ?? this.addedGame,
       addingGameId: addingGameId,
       error: error,
+      isWebSocketConnected: isWebSocketConnected ?? this.isWebSocketConnected,
     );
   }
 
@@ -66,5 +70,6 @@ class GameSearchState extends Equatable {
     addedGame,
     addingGameId,
     error,
+    isWebSocketConnected,
   ];
 }

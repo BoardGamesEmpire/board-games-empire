@@ -40,3 +40,12 @@ class HomeLogoutConfirmed extends HomeEvent {
 class HomeLogoutCancelled extends HomeEvent {
   const HomeLogoutCancelled();
 }
+
+class HomeServerConfigChanged extends HomeEvent {
+  final ServerConfig? activeServer;
+
+  const HomeServerConfigChanged(this.activeServer);
+
+  @override
+  List<Object?> get props => [activeServer];
+}

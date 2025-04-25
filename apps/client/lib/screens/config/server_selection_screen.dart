@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../blocs/server/selection/server_selection_bloc.dart';
+import '../../blocs/server/server_config/server_config_bloc.dart';
 import '../../models/config/server_config.dart';
 import '../../router/app_router.dart';
 import '../../router/route_constants.dart';
@@ -22,20 +22,42 @@ class _ServerSelectionScreenBlocState extends State<ServerSelectionScreenBloc> {
   @override
   void initState() {
     super.initState();
-    context.read<ServerSelectionBloc>().add(const ServerSelectionInitialized());
+    context.read<ServerConfigBloc>().add(const ServerConfigInitialized());
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ServerSelectionBloc, ServerSelectionState>(
-      listenWhen: (previous, current) => previous.status != current.status,
+    return BlocConsumer<ServerConfigBloc, ServerConfigState>(
+      listenWhen: (previous, current) {
+        return previous.status != current.status ||
+            previous.error != current.error;
+      },
       listener: (context, state) {
-        if (state.isFailure && state.error != null) {
+        if (state.error != null) {
           _showErrorSnackBar(state.error!);
-        } else if (state.isActiveServerChanged) {
+        } else if (state.status == ServerConfigStatus.activeServerChanged) {
           AppRouter.navigateTo(AppRoutes.login);
-        } else if (state.isNavigatingToAdd) {
-          _navigateToAddServer();
+        } else if (state.status == ServerConfigStatus.serverAdded) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Server added successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else if (state.status == ServerConfigStatus.serverRemoved) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Server removed successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else if (state.status == ServerConfigStatus.serverUpdated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Server updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
         }
       },
       builder: (context, state) {
@@ -56,20 +78,16 @@ class _ServerSelectionScreenBlocState extends State<ServerSelectionScreenBloc> {
     );
   }
 
-  Widget _buildBody(ServerSelectionState state) {
+  Widget _buildBody(ServerConfigState state) {
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (state.isEmpty) {
+    if (!state.hasServers) {
       return _buildEmptyState();
     }
 
-    if (state.confirmingRemoval) {
-      return _buildRemovalConfirmation(state.serverToRemove!);
-    }
-
-    return _buildServerList(state.servers);
+    return _buildServerList(state.servers, state.activeServerId);
   }
 
   Widget _buildEmptyState() {
@@ -90,11 +108,7 @@ class _ServerSelectionScreenBlocState extends State<ServerSelectionScreenBloc> {
           ),
           const SizedBox(height: 32),
           ElevatedButton.icon(
-            onPressed: () {
-              context.read<ServerSelectionBloc>().add(
-                const ServerAddRequested(),
-              );
-            },
+            onPressed: _navigateToAddServer,
             icon: const Icon(Icons.add),
             label: const Text('Add Server'),
             style: ElevatedButton.styleFrom(
@@ -106,7 +120,7 @@ class _ServerSelectionScreenBlocState extends State<ServerSelectionScreenBloc> {
     );
   }
 
-  Widget _buildServerList(List<ServerConfig> servers) {
+  Widget _buildServerList(List<ServerConfig> servers, String? activeServerId) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: servers.length + 1, // +1 for the add button
@@ -116,11 +130,7 @@ class _ServerSelectionScreenBlocState extends State<ServerSelectionScreenBloc> {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: OutlinedButton.icon(
-              onPressed: () {
-                context.read<ServerSelectionBloc>().add(
-                  const ServerAddRequested(),
-                );
-              },
+              onPressed: _navigateToAddServer,
               icon: const Icon(Icons.add),
               label: const Text('Add Another Server'),
               style: OutlinedButton.styleFrom(
@@ -133,6 +143,7 @@ class _ServerSelectionScreenBlocState extends State<ServerSelectionScreenBloc> {
         final server = servers[index];
         return _ServerCard(
           server: server,
+          isActive: server.id == activeServerId,
           onSelect: () => _selectServer(server.id),
           onEdit: () => _editServer(server),
           onRemove: () => _requestRemoveServer(server),
@@ -166,17 +177,13 @@ class _ServerSelectionScreenBlocState extends State<ServerSelectionScreenBloc> {
                 children: [
                   TextButton(
                     onPressed: () {
-                      context.read<ServerSelectionBloc>().add(
-                        const ServerRemovalCancelled(),
-                      );
+                      context.pop(false);
                     },
                     child: const Text('Cancel'),
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<ServerSelectionBloc>().add(
-                        const ServerRemovalConfirmed(),
-                      );
+                      context.pop(true);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
@@ -194,33 +201,39 @@ class _ServerSelectionScreenBlocState extends State<ServerSelectionScreenBloc> {
   }
 
   void _refreshServers() {
-    context.read<ServerSelectionBloc>().add(
-      const ServerSelectionRefreshRequested(),
-    );
+    context.read<ServerConfigBloc>().add(const ServerConfigLoadRequested());
   }
 
   void _selectServer(String serverId) {
-    context.read<ServerSelectionBloc>().add(ServerSelected(serverId));
+    context.read<ServerConfigBloc>().add(ServerConfigActiveChanged(serverId));
   }
 
   Future<void> _navigateToAddServer() async {
-    final result = await context.push<ServerConfig>('/server-config');
-    if (mounted) {
-      context.read<ServerSelectionBloc>().add(
-        ServerAddCompleted(server: result),
-      );
-    }
+    AppRouter.navigateTo(AppRoutes.serverConfig);
   }
 
-  void _editServer(ServerConfig server) {
-    // TODO: Implement edit server dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit server feature coming soon')),
+  Future<void> _editServer(ServerConfig server) async {
+    // Pass server info to edit screen
+    AppRouter.navigateTo(
+      '${AppRoutes.serverConfig}/edit',
+      arguments: {
+        'serverId': server.id,
+        'name': server.name,
+        'url': server.url,
+      },
     );
   }
 
-  void _requestRemoveServer(ServerConfig server) {
-    context.read<ServerSelectionBloc>().add(ServerRemovalRequested(server));
+  Future<void> _requestRemoveServer(ServerConfig server) async {
+    // Show dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => _buildRemovalConfirmation(server),
+    );
+
+    if (confirmed == true && mounted) {
+      context.read<ServerConfigBloc>().add(ServerConfigRemoved(server.id));
+    }
   }
 
   void _showErrorSnackBar(String message) {
@@ -249,6 +262,7 @@ class _ServerSelectionScreenBlocState extends State<ServerSelectionScreenBloc> {
 
 class _ServerCard extends StatelessWidget {
   final ServerConfig server;
+  final bool isActive;
   final VoidCallback onSelect;
   final VoidCallback onEdit;
   final VoidCallback onRemove;
@@ -256,6 +270,7 @@ class _ServerCard extends StatelessWidget {
 
   const _ServerCard({
     required this.server,
+    required this.isActive,
     required this.onSelect,
     required this.onEdit,
     required this.onRemove,
@@ -300,7 +315,7 @@ class _ServerCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (server.isActive)
+                  if (isActive)
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,

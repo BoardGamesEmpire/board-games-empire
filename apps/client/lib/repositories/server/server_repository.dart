@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 
 import '../../models/config/server_config.dart';
 import '../../data/local/user_preferences.dart';
-import '../../services/platform_service.dart';
 import '../../data/api/api_exception.dart';
 
 class ServerRepository {
@@ -19,7 +18,7 @@ class ServerRepository {
     required UserPreferences userPreferences,
     bool? isWebPlatform,
   }) : _userPreferences = userPreferences,
-       _isWebPlatform = isWebPlatform ?? PlatformService.isWeb;
+       _isWebPlatform = isWebPlatform ?? false;
 
   List<ServerConfig> get servers => List.unmodifiable(_serverConfigs);
   ServerConfig? get activeServer => _activeServer;
@@ -40,10 +39,10 @@ class ServerRepository {
   }
 
   Future<void> _initializeForWeb() async {
-    final webBaseUrl = PlatformService.webBaseUrl;
+    final webBaseUrl = _isWebPlatform ? await _getWebBaseUrl() : '';
 
     final webServer = ServerConfig(
-      name: 'Web Server${kDebugMode ? ' (Port: $apiPort)' : ''}',
+      name: 'Web Server${kDebugMode ? ' (Port: 33333)' : ''}',
       url: webBaseUrl,
       isActive: true,
       lastConnectedAt: DateTime.now(),
@@ -58,6 +57,12 @@ class ServerRepository {
     if (kDebugMode) {
       print('Web server initialized with URL: ${webServer.url}');
     }
+  }
+
+  Future<String> _getWebBaseUrl() async {
+    // In a real implementation, this would get the base URL from the web environment
+    // For now, we'll use a placeholder
+    return '/api/v1';
   }
 
   Future<void> _loadConfigs() async {
@@ -83,6 +88,8 @@ class ServerRepository {
 
     if (_activeServer != null) {
       await _userPreferences.setCurrentServerId(_activeServer!.id);
+    } else {
+      await _userPreferences.removeCurrentServerId();
     }
   }
 
@@ -95,14 +102,18 @@ class ServerRepository {
 
     final existingServer = _serverConfigs.firstWhere(
       (s) => s.url == sanitizedUrl,
-      orElse: () => ServerConfig(name: 'Dummy', url: ''),
+      orElse: () => ServerConfig(id: '', name: '', url: ''),
     );
 
     if (existingServer.id.isNotEmpty) {
       throw ApiException(message: 'A server with this URL already exists');
     }
 
-    await validateServer(sanitizedUrl);
+    // Validate before adding
+    final isValid = await validateServer(sanitizedUrl);
+    if (!isValid) {
+      throw ApiException(message: 'Server validation failed');
+    }
 
     final newConfig = ServerConfig(
       name: name.isNotEmpty ? name : _generateNameFromUrl(sanitizedUrl),
@@ -115,7 +126,6 @@ class ServerRepository {
     _activeServer ??= newConfig;
 
     await _saveConfigs();
-
     return newConfig;
   }
 
@@ -129,6 +139,7 @@ class ServerRepository {
       orElse: () => throw ApiException(message: 'Server not found'),
     );
 
+    // Update all servers to inactive, then set the selected one to active
     for (int i = 0; i < _serverConfigs.length; i++) {
       if (_serverConfigs[i].id == serverId) {
         _serverConfigs[i] = _serverConfigs[i].copyWith(
@@ -169,7 +180,7 @@ class ServerRepository {
 
       final conflictingServer = _serverConfigs.firstWhere(
         (s) => s.id != serverId && s.url == sanitizedUrl,
-        orElse: () => ServerConfig(name: 'Dummy', url: ''),
+        orElse: () => ServerConfig(id: '', name: '', url: ''),
       );
 
       if (conflictingServer.id.isNotEmpty) {
@@ -178,7 +189,11 @@ class ServerRepository {
         );
       }
 
-      await validateServer(sanitizedUrl);
+      // Validate the new URL
+      final isValid = await validateServer(sanitizedUrl);
+      if (!isValid) {
+        throw ApiException(message: 'Server validation failed');
+      }
     }
 
     _serverConfigs[index] = _serverConfigs[index].copyWith(
@@ -221,7 +236,7 @@ class ServerRepository {
   Future<bool> validateServer(String url) async {
     try {
       if (_isWebPlatform) {
-        return true;
+        return true; // Always valid in web mode
       }
 
       final response = await http
@@ -242,11 +257,10 @@ class ServerRepository {
               response.body.contains('ok')) {
             return true;
           }
-
-          throw ApiException(message: 'Invalid API response format');
         }
       }
 
+      // Try accessing the base URL if health check fails
       final baseResponse = await http
           .get(
             Uri.parse(url),
@@ -254,35 +268,20 @@ class ServerRepository {
           )
           .timeout(const Duration(seconds: 10));
 
-      if (baseResponse.statusCode >= 200 && baseResponse.statusCode < 300) {
-        return true;
-      }
-
-      throw ApiException(
-        message: 'Invalid server response: ${response.statusCode}',
-        statusCode: response.statusCode,
-      );
+      return baseResponse.statusCode >= 200 && baseResponse.statusCode < 300;
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(
-        message: 'Could not connect to server: ${e.toString()}',
-      );
+      return false;
     }
-  }
-
-  String _generateNameFromUrl(String url) {
-    String name = url.replaceFirst(RegExp(r'https?://'), '');
-
-    name = name.replaceFirst(RegExp(r'^www\.'), '');
-    name = name.split('/').first;
-
-    return name;
   }
 
   Future<List<ServerConfig>> getServers() async {
     return _serverConfigs;
   }
 
-  // TODO: dev only, remove this
-  String get apiPort => '33333';
+  String _generateNameFromUrl(String url) {
+    String name = url.replaceFirst(RegExp(r'https?://'), '');
+    name = name.replaceFirst(RegExp(r'^www\.'), '');
+    name = name.split('/').first;
+    return name;
+  }
 }

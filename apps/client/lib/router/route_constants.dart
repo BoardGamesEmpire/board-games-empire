@@ -4,6 +4,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
+  static const String resetPassword = '/reset-password';
 
   // Main app routes
   static const String home = '/home';
@@ -11,6 +12,15 @@ class AppRoutes {
   // Settings routes
   static const String sessionManagement = '/account/sessions';
   static const String themeSettings = '/settings/theme';
+  static const String languageSettings = '/settings/language';
+  static const String notificationSettings = '/settings/notifications';
+  static const String privacySettings = '/settings/privacy';
+  static const String accountSettings = '/settings/account';
+  static const String websocketSettings = '/settings/websocket';
+  static const String connectionSettings = '/settings/connection';
+
+  // Account routes
+  static const String account = '/account';
 
   // Config routes
   static const String serverConfig = '/server-config';

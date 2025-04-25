@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../blocs/home/home_bloc.dart';
-import '../../blocs/auth/auth_bloc.dart';
 import '../../models/user.dart';
+import '../../blocs/home/home_bloc.dart';
+import '../../blocs/app/app_bloc.dart';
+import '../../blocs/auth/auth_bloc.dart';
+import '../../blocs/websocket/websocket_bloc.dart';
 import '../../router/route_constants.dart';
+import '../../widgets/connectivity/connectivity_status_widget.dart';
+import '../../widgets/connectivity/connectivity_status_bar_widget.dart';
 import '../../widgets/ui/theme_toggle.dart';
 
 class HomeScreenBloc extends StatefulWidget {
-  static const routeName = AppRoutes.home;
-
   const HomeScreenBloc({super.key});
 
   @override
@@ -26,88 +28,20 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<HomeBloc, HomeState>(
-      listenWhen:
-          (previous, current) =>
-              previous.error != current.error && current.error != null,
-      listener: (context, state) {
-        if (state.error != null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.error!)));
-        }
-      },
-      child: Scaffold(
-        appBar: _buildAppBar(),
-        drawer: _buildDrawer(),
-        body: BlocBuilder<HomeBloc, HomeState>(
-          buildWhen:
-              (previous, current) =>
-                  previous.isLoggingOut != current.isLoggingOut ||
-                  previous.showLogoutConfirmation !=
-                      current.showLogoutConfirmation,
-          builder: (context, state) {
-            if (state.isLoggingOut) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (state.showLogoutConfirmation) {
-              return _buildLogoutConfirmation();
-            }
-
-            return _buildMainContent();
-          },
-        ),
+    return Scaffold(
+      appBar: ConnectivityStatusBar(
+        title: const Text('Board Games Empire'),
+        actions: [
+          const ThemeToggle(),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => _showLogoutConfirmation(),
+            tooltip: 'Logout',
+          ),
+        ],
       ),
-    );
-  }
-
-  AppBar _buildAppBar() {
-    return AppBar(
-      title: const Text('Board Games Empire'),
-      actions: [
-        // Theme toggle
-        const ThemeToggle(),
-
-        // WebSocket status indicator
-        BlocBuilder<HomeBloc, HomeState>(
-          buildWhen:
-              (previous, current) =>
-                  previous.connectionStatus != current.connectionStatus,
-          builder: (context, state) {
-            final isConnected = state.isConnected;
-            return Tooltip(
-              message:
-                  isConnected ? 'Using WebSocket Connection' : 'Using REST API',
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Icon(
-                  isConnected ? Icons.wifi : Icons.wifi_off,
-                  color: isConnected ? Colors.green : Colors.orange,
-                ),
-              ),
-            );
-          },
-        ),
-
-        // Reconnect button
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          tooltip: 'Reconnect WebSocket',
-          onPressed: () {
-            context.read<HomeBloc>().add(const HomeWebSocketConnectRequested());
-          },
-        ),
-
-        // Logout button
-        IconButton(
-          icon: const Icon(Icons.logout),
-          onPressed: () {
-            context.read<HomeBloc>().add(const HomeLogoutRequested());
-          },
-          tooltip: 'Logout',
-        ),
-      ],
+      drawer: _buildDrawer(),
+      body: _buildMainContent(),
     );
   }
 
@@ -127,11 +61,44 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
               const Divider(),
 
               ListTile(
+                leading: const Icon(Icons.person),
+                title: const Text('Account'),
+                onTap: () {
+                  context.pop();
+                  context.push(AppRoutes.account);
+                },
+              ),
+
+              ListTile(
                 leading: const Icon(Icons.device_hub),
-                title: const Text('Manage Sessions'),
+                title: const Text('Sessions'),
                 onTap: () {
                   context.pop();
                   context.push(AppRoutes.sessionManagement);
+                },
+              ),
+
+              ListTile(
+                leading: const Icon(Icons.settings_applications),
+                title: const Text('Connection Settings'),
+                subtitle: const ConnectivityStatusWidget(
+                  compact: true,
+                  showDetails: true,
+                ),
+                onTap: () {
+                  context.pop();
+                  context.push(AppRoutes.connectionSettings);
+                },
+              ),
+
+              const Divider(),
+
+              ListTile(
+                leading: const Icon(Icons.games),
+                title: const Text('Game Collection'),
+                onTap: () {
+                  context.pop();
+                  context.push(AppRoutes.gameCollection);
                 },
               ),
 
@@ -153,6 +120,8 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
                 },
               ),
 
+              const Divider(),
+
               ListTile(
                 leading: const Icon(Icons.color_lens),
                 title: const Text('Theme Settings'),
@@ -164,16 +133,12 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
 
               const Divider(),
 
-              _buildConnectionStatus(),
-
-              const Divider(),
-
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('Logout'),
                 onTap: () {
                   context.pop();
-                  context.read<HomeBloc>().add(const HomeLogoutRequested());
+                  _showLogoutConfirmation();
                 },
               ),
             ],
@@ -220,169 +185,155 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
     );
   }
 
-  Widget _buildConnectionStatus() {
-    return ListTile(
-      leading: const Icon(Icons.info),
-      title: const Text('Connection Status'),
-      subtitle: BlocBuilder<HomeBloc, HomeState>(
-        buildWhen:
-            (previous, current) =>
-                previous.connectionStatus != current.connectionStatus,
-        builder: (context, state) {
-          final isConnected = state.isConnected;
-          return Text(
-            isConnected ? 'WebSocket Connected' : 'Using REST API',
-            style: TextStyle(color: isConnected ? Colors.green : Colors.orange),
-          );
-        },
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.refresh),
-        onPressed: () {
-          context.read<HomeBloc>().add(const HomeWebSocketConnectRequested());
-        },
-      ),
+  Widget _buildMainContent() {
+    return Column(
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(16.0),
+          child: ConnectivityStatusWidget(showDetails: true),
+        ),
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                BlocBuilder<AppBloc, AppState>(
+                  buildWhen:
+                      (previous, current) =>
+                          previous.isWebSocketConnected !=
+                          current.isWebSocketConnected,
+                  builder: (context, state) {
+                    final IconData iconData =
+                        state.isWebSocketConnected
+                            ? Icons.check_circle_outline
+                            : Icons.info_outline;
+                    final Color iconColor =
+                        state.isWebSocketConnected
+                            ? Colors.green
+                            : Colors.orange;
+
+                    return Icon(iconData, size: 80, color: iconColor);
+                  },
+                ),
+                const SizedBox(height: 24),
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) {
+                    final user = state.user;
+                    return Text(
+                      'Welcome, ${user?.firstName ?? user?.username ?? 'User'}!',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                      textAlign: TextAlign.center,
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: BlocBuilder<AppBloc, AppState>(
+                    buildWhen:
+                        (previous, current) =>
+                            previous.isWebSocketConnected !=
+                            current.isWebSocketConnected,
+                    builder: (context, state) {
+                      final message =
+                          state.isWebSocketConnected
+                              ? 'You are connected to real-time services and will receive instant updates.'
+                              : 'You are using standard connection. Some features may be limited.';
+
+                      return Text(
+                        message,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color:
+                              state.isWebSocketConnected
+                                  ? Colors.green.shade700
+                                  : Colors.orange.shade700,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 48),
+
+                // WebSocket connection button
+                BlocBuilder<WebSocketBloc, WebSocketState>(
+                  buildWhen:
+                      (previous, current) => previous.status != current.status,
+                  builder: (context, wsState) {
+                    if (wsState.status == WebSocketStatus.connected) {
+                      return ElevatedButton.icon(
+                        icon: const Icon(Icons.close),
+                        label: const Text('Disconnect WebSocket'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade100,
+                          foregroundColor: Colors.red.shade700,
+                        ),
+                        onPressed: () {
+                          context.read<WebSocketBloc>().add(
+                            const WebSocketDisconnectRequested(),
+                          );
+                        },
+                      );
+                    } else if (wsState.status == WebSocketStatus.connecting) {
+                      return ElevatedButton.icon(
+                        icon: const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        label: const Text('Connecting...'),
+                        onPressed: null,
+                      );
+                    } else {
+                      return ElevatedButton.icon(
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Connect to Real-time Services'),
+                        onPressed:
+                            wsState.server != null
+                                ? () {
+                                  context.read<WebSocketBloc>().add(
+                                    WebSocketConnectRequested(wsState.server!),
+                                  );
+                                }
+                                : null,
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildLogoutConfirmation() {
-    return Center(
-      child: Card(
-        margin: const EdgeInsets.all(32),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Logout',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+  void _showLogoutConfirmation() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Logout'),
+            content: const Text('Are you sure you want to logout?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
               ),
-              const SizedBox(height: 16),
-              const Text('Are you sure you want to logout?'),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      context.read<HomeBloc>().add(const HomeLogoutCancelled());
-                    },
-                    child: const Text('Cancel'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<HomeBloc>().add(const HomeLogoutConfirmed());
-                    },
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                    ),
-                    child: const Text('Logout'),
-                  ),
-                ],
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  context.read<AuthBloc>().add(const AuthLogoutRequested());
+                },
+                child: const Text('Logout'),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMainContent() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.check_circle_outline, size: 80, color: Colors.green),
-          const SizedBox(height: 24),
-          BlocBuilder<AuthBloc, AuthState>(
-            builder: (context, state) {
-              final user = state.user;
-              return Text(
-                'Welcome, ${user?.firstName ?? user?.username ?? 'User'}!',
-                style: Theme.of(context).textTheme.headlineMedium,
-                textAlign: TextAlign.center,
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'You are successfully logged in.',
-            style: TextStyle(fontSize: 18),
-          ),
-          const SizedBox(height: 32),
-
-          // WebSocket status card
-          Card(
-            margin: const EdgeInsets.all(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Text(
-                    'Connection Status',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  BlocBuilder<HomeBloc, HomeState>(
-                    buildWhen:
-                        (previous, current) =>
-                            previous.connectionStatus !=
-                            current.connectionStatus,
-                    builder: (context, state) {
-                      final isConnected = state.isConnected;
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            isConnected ? Icons.check_circle : Icons.error,
-                            color: isConnected ? Colors.green : Colors.orange,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            isConnected
-                                ? 'WebSocket Connected'
-                                : 'Using REST Fallback',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isConnected ? Colors.green : Colors.orange,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      context.read<HomeBloc>().add(
-                        const HomeWebSocketConnectRequested(),
-                      );
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Reconnect WebSocket'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Connected server info would go here',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
