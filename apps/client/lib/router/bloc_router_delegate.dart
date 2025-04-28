@@ -259,7 +259,7 @@ class BlocRouterDelegate {
   Widget _buildLoginScreen(String? redirectPath) {
     return BlocProvider(
       create: (context) => getIt<LoginBloc>(),
-      child: LoginScreenBloc(redirectPath: redirectPath),
+      child: LoginScreen(redirectPath: redirectPath),
     );
   }
 

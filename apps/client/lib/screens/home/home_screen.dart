@@ -8,8 +8,8 @@ import '../../blocs/app/app_bloc.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/websocket/websocket_bloc.dart';
 import '../../router/route_constants.dart';
-import '../../widgets/connectivity/connectivity_status_widget.dart';
-import '../../widgets/connectivity/connectivity_status_bar_widget.dart';
+import '../../widgets/connectivity/connectivity_status.dart';
+import '../../widgets/connectivity/connectivity_status_bar.dart';
 import '../../widgets/ui/theme_toggle.dart';
 
 class HomeScreenBloc extends StatefulWidget {
