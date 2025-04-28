@@ -3,21 +3,27 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:formz/formz.dart';
 
 import '../../blocs/auth/login/login_bloc.dart';
-import '../../widgets/auth/social_login_buttons.dart';
 import '../../router/app_router.dart';
 import '../../router/route_constants.dart';
 import '../../models/auth/form_inputs.dart';
 
-class LoginScreenBloc extends StatefulWidget {
+import '../../widgets/ui/form/form_button.dart';
+import '../../widgets/ui/form/form_container.dart';
+import '../../widgets/ui/form/fields/password_field.dart';
+import '../../widgets/ui/loading_overlay.dart';
+import '../../widgets/auth/social_login_buttons.dart';
+import '../../widgets/connectivity/connectivity_status_bar.dart';
+
+class LoginScreen extends StatefulWidget {
   final String? redirectPath;
 
-  const LoginScreenBloc({super.key, this.redirectPath});
+  const LoginScreen({super.key, this.redirectPath});
 
   @override
-  State<LoginScreenBloc> createState() => _LoginScreenBlocState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenBlocState extends State<LoginScreenBloc> {
+class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -56,16 +62,6 @@ class _LoginScreenBlocState extends State<LoginScreenBloc> {
     context.read<LoginBloc>().add(const LoginSubmitted());
   }
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
   void _navigateToRegister() {
     AppRouter.navigateTo(AppRoutes.register);
   }
@@ -77,238 +73,192 @@ class _LoginScreenBlocState extends State<LoginScreenBloc> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: BlocListener<LoginBloc, LoginState>(
-          listener: (context, state) {
-            if (state.status.isFailure && state.errorMessage != null) {
-              _showErrorSnackBar(state.errorMessage!);
-            } else if (state.status.isSuccess) {
-              final redirectPath = widget.redirectPath ?? AppRoutes.home;
-              AppRouter.replaceTo(redirectPath);
-            }
-          },
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Logo or App name
-                  const SizedBox(height: 16),
-                  Image.asset('images/logo.png', height: 100),
-                  const SizedBox(height: 32),
-
-                  Text(
-                    'Welcome Back!',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Sign in to continue to Board Games Empire',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-
-                  BlocBuilder<LoginBloc, LoginState>(
-                    buildWhen:
-                        (previous, current) =>
-                            previous.status != current.status,
-                    builder: (context, state) {
-                      return Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            // Email field
-                            TextFormField(
-                              controller: _emailController,
-                              onChanged: (_) => _onEmailChanged(),
-                              decoration: InputDecoration(
-                                labelText: 'Email',
-                                hintText: 'Enter your email',
-                                prefixIcon: const Icon(Icons.email_outlined),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                errorText:
-                                    state.email.isPure
-                                        ? null
-                                        : _getEmailError(state),
-                              ),
-                              keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.next,
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Password field
-                            TextFormField(
-                              controller: _passwordController,
-                              onChanged: (_) => _onPasswordChanged(),
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                hintText: 'Enter your password',
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                errorText:
-                                    state.password.isPure
-                                        ? null
-                                        : _getPasswordError(state),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    state.password.obscureText
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                    color: Colors.grey,
-                                  ),
-                                  onPressed: () {
-                                    context.read<LoginBloc>().add(
-                                      const LoginTogglePasswordVisibility(),
-                                    );
-                                  },
-                                ),
-                              ),
-                              obscureText: state.password.obscureText,
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _onSubmit(),
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Remember me & Forgot password
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // Remember me checkbox
-                                Row(
-                                  children: [
-                                    SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: Checkbox(
-                                        value: _rememberMe,
-                                        onChanged: _onRememberMeChanged,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Remember me',
-                                      style:
-                                          Theme.of(context).textTheme.bodySmall,
-                                    ),
-                                  ],
-                                ),
-
-                                // Forgot password link
-                                TextButton(
-                                  onPressed: _navigateToForgotPassword,
-                                  child: Text(
-                                    'Forgot Password?',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Login button
-                            SizedBox(
-                              width: double.infinity,
-                              height: 50,
-                              child: ElevatedButton(
-                                onPressed:
-                                    state.status.isInProgress
-                                        ? null
-                                        : _onSubmit,
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child:
-                                    state.status.isInProgress
-                                        ? const SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                                  Colors.white,
-                                                ),
-                                          ),
-                                        )
-                                        : const Text(
-                                          'Login',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+      appBar: const ConnectivityStatusBar(
+        title: Text(''),
+        actions: [],
+        showInternetBanner: true,
+      ),
+      body: BlocConsumer<LoginBloc, LoginState>(
+        listenWhen:
+            (previous, current) =>
+                previous.status != current.status ||
+                previous.errorMessage != current.errorMessage,
+        listener: (context, state) {
+          if (state.status.isFailure && state.errorMessage != null) {
+            _showErrorSnackBar(state.errorMessage!);
+          } else if (state.status.isSuccess) {
+            final redirectPath = widget.redirectPath ?? AppRoutes.home;
+            AppRouter.replaceTo(redirectPath);
+          }
+        },
+        builder: (context, state) {
+          return LoadingOverlay(
+            isLoading: state.status.isInProgress,
+            loadingText: 'Logging in...',
+            child: FormContainer(
+              title: 'Welcome Back!',
+              subtitle: 'Sign in to continue to Board Games Empire',
+              headerIcon: Image.asset('images/logo.png', height: 100),
+              children: [
+                if (state.errorMessage != null && state.status.isFailure)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade300),
+                    ),
+                    child: Text(
+                      state.errorMessage!,
+                      style: TextStyle(color: Colors.red.shade700),
+                    ),
                   ),
 
-                  const SizedBox(height: 24),
-
-                  Row(
+                Form(
+                  key: _formKey,
+                  child: Column(
                     children: [
-                      const Expanded(child: Divider()),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'OR',
-                          style: Theme.of(context).textTheme.bodySmall,
+                      // Email field
+                      TextFormField(
+                        controller: _emailController,
+                        onChanged: (_) => _onEmailChanged(),
+                        decoration: InputDecoration(
+                          labelText: 'Email',
+                          hintText: 'Enter your email',
+                          prefixIcon: const Icon(Icons.email_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          errorText:
+                              state.email.isPure ? null : _getEmailError(state),
                         ),
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
                       ),
-                      const Expanded(child: Divider()),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
 
-                  // TODO: retrieve social login options from server
-                  SocialLoginButtons(
-                    onGoogleLogin: () {
-                      // TODO: Implement social login
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Google login not implemented yet'),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 32),
+                      const SizedBox(height: 16),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Don't have an account?",
-                        style: Theme.of(context).textTheme.bodyMedium,
+                      // Password field
+                      PasswordField(
+                        controller: _passwordController,
+                        labelText: 'Password',
+                        hintText: 'Enter your password',
+                        onChanged: (_) => _onPasswordChanged(),
+                        initiallyObscured: state.password.obscureText,
+                        onFieldSubmitted: (_) => _onSubmit(),
+                        textInputAction: TextInputAction.done,
+                        validator:
+                            (_) =>
+                                state.password.isPure
+                                    ? null
+                                    : _getPasswordError(state),
                       ),
-                      TextButton(
-                        onPressed: _navigateToRegister,
-                        child: const Text(
-                          'Sign Up',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+
+                      const SizedBox(height: 16),
+
+                      // Remember me & Forgot password
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Remember me checkbox
+                          Row(
+                            children: [
+                              SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: Checkbox(
+                                  value: _rememberMe,
+                                  onChanged: _onRememberMeChanged,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Remember me',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+
+                          // Forgot password link
+                          TextButton(
+                            onPressed: _navigateToForgotPassword,
+                            child: Text(
+                              'Forgot Password?',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+
+                // Login button
+                FormButton(
+                  text: 'Login',
+                  isLoading: state.status.isInProgress,
+                  onPressed: _onSubmit,
+                ),
+
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+
+                // Social login buttons
+                SocialLoginButtons(
+                  onGoogleLogin: () {
+                    // TODO: Implement social login
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Google login not implemented yet'),
+                      ),
+                    );
+                  },
+                ),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Don't have an account?",
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    TextButton(
+                      onPressed: _navigateToRegister,
+                      child: const Text(
+                        'Sign Up',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-        ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
       ),
     );
   }

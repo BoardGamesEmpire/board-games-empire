@@ -33,7 +33,6 @@ class _ErrorHandlerState extends State<ErrorHandler> {
   void _showErrorSnackBar(BuildContext context, ErrorState state) {
     final theme = Theme.of(context);
 
-    // Customize snack bar based on error type
     Color backgroundColor;
     IconData iconData;
 
@@ -89,7 +88,6 @@ class _ErrorHandlerState extends State<ErrorHandler> {
   }
 
   void _showErrorDialog(BuildContext context, ErrorState state) {
-    // Customize dialog based on error type
     String title;
     IconData iconData;
 
