@@ -1,7 +1,12 @@
 model GameImplementation {
-  id     String @id @default(cuid(2))
+  id String @id @default(cuid(2))
+
   game   Game   @relation(fields: [gameId], references: [id])
   gameId String @map("game_id")
+
+  source                   ExternalSourceRegistry? @relation(fields: [sourceId], references: [id])
+  sourceId                 String?                 @map("source_id")
+  externalSourceIdentifier String?                 @map("external_source_identifier")
 
   platform GamePlatform
   title    String?
@@ -28,10 +33,7 @@ model GameImplementation {
 
   userRatings ImplementationRating[]
 
-  appStoreId       String? @map("app_store_id")
-  googlePlayId     String? @map("google_play_id")
-  steamAppId       String? @map("steam_app_id")
-  boardGameArenaId String? @map("board_game_arena_id")
+  storeIdentifiers Json? @map("store_identifiers")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
