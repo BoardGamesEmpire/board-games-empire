@@ -34,7 +34,8 @@ model Game {
 
   ownedByCount Int @default(0) @map("owned_by_count")
 
-  gameMedia GameMedia[]
+  gameMedia          GameMedia[]
+  externalReferences GameExternalReference[]
 
   eventGames   EventGame[]
   campaigns    Campaign[]
@@ -46,11 +47,9 @@ model Game {
   expansions           GameExpansion[]          @relation("BaseGame")
   compatibleExpansions ExpansionCompatibility[]
 
-  visibility     Visibility @default(Public)
-  createdBy      User?      @relation("GamesCreated", fields: [createdById], references: [id])
-  createdById    String?    @map("created_by_id")
-  isFromExternal Boolean    @default(false) @map("is_from_external")
-  externalId     String?    @map("external_id")
+  visibility  Visibility @default(Public)
+  createdBy   User?      @relation("GamesCreated", fields: [createdById], references: [id])
+  createdById String?    @map("created_by_id")
 
   gameChat ChatRoom?
 

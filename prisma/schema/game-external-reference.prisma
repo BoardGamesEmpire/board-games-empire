@@ -1,0 +1,61 @@
+model GameExternalReference {
+  id     String @id @default(cuid(2))
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String @map("game_id")
+
+  source     ExternalSourceRegistry @relation(fields: [sourceId], references: [id])
+  sourceId   String                 @map("source_id")
+  externalId String                 @map("external_id")
+  sourceUrl  String?                @map("source_url")
+
+  // For storing additional source-specific data
+  metadata   Json?
+  lastSynced DateTime? @map("last_synced") @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([gameId, sourceId])
+  @@map("game_external_references")
+}
+
+model ExternalSourceRegistry {
+  id          String  @id @default(cuid(2))
+  name        String  @unique
+  description String?
+
+  messageContext String? @map("message_context")
+  iconUrl        String? @map("icon_url")
+  logoUrl        String? @map("logo_url")
+  websiteUrl     String? @map("website_url")
+
+  baseUrl          String? @map("base_url")
+  apiDocumentation String? @map("api_documentation")
+  apiVersion       String? @map("api_version")
+
+  // Integration settings
+  enabled        Boolean   @default(true) @map("enabled")
+  authType       AuthType? @map("auth_type")
+  authParameters Json?     @map("auth_parameters")
+
+  usageCount Int       @default(0) @map("usage_count")
+  lastUsed   DateTime? @map("last_used") @db.Timestamptz(3)
+
+  // Relationships
+  gameReferences      GameExternalReference[]
+  gameImplementations GameImplementation[]
+
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("external_source_registry")
+}
+
+enum AuthType {
+  OAuth
+  ApiKey
+  BasicAuth
+  None
+}

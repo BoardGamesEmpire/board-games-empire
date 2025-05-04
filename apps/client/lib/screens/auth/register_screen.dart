@@ -125,6 +125,7 @@ class _RegisterScreenBlocState extends State<RegisterScreenBloc> {
       body: BlocListener<RegisterBloc, RegisterState>(
         listener: (context, state) {
           if (state.status.isSuccess) {
+            // TODO: enable button - this is preemptive
             _showSuccessDialog();
           } else if (state.status.isFailure && state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
