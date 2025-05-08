@@ -4,6 +4,12 @@
   "include": [],
   "references": [
     {
+      "path": "../../libs/microservices/queue"
+    },
+    {
+      "path": "../../libs/common/server/config"
+    },
+    {
       "path": "../../libs/api/websocket"
     },
     {

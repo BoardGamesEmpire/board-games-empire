@@ -20,6 +20,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogoutRequested>(_onAuthLogoutRequested);
     on<AuthLoginRequested>(_onAuthLoginRequested);
     on<AuthSessionUpdated>(_onAuthSessionUpdated);
+    on<AuthServerChanged>(_onAuthServerChanged);
 
     _authStatusSubscription = _authRepository.status.listen(
       (status) => add(AuthStatusChanged(status)),

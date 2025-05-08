@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+import Joi from 'joi';
 import * as path from 'node:path';
 import process from 'node:process';
 import { env } from './env';
@@ -38,3 +39,10 @@ export default registerAs('graphql', () =>
     },
   ]),
 );
+
+export const graphqlConfigValidationSchema = {
+  GRAPHQL_DEBUG: Joi.boolean().default(env.isDevelopment),
+  GRAPHQL_PLAYGROUND: Joi.boolean().default(env.isDevelopment),
+  GRAPHQL_SORT: Joi.boolean().default(false),
+  GRAPHQL_SCHEMA: Joi.string().default(''),
+};

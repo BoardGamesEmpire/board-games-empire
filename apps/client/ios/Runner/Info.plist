@@ -45,5 +45,18 @@
     <true />
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true />
+
+    <key>NSAppTransportSecurity</key>
+    <dict>
+      <key>NSAllowsArbitraryLoads</key>
+      <true />
+    </dict>
+
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Board Games Empire needs local network for debugging</string>
+    <key>NSBonjourServices</key>
+    <array>
+      <string>_dartVmService._tcp</string>
+    </array>
   </dict>
 </plist>

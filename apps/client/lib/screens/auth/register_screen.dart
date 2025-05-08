@@ -6,7 +6,14 @@ import 'package:go_router/go_router.dart';
 import '../../blocs/auth/register/register_bloc.dart';
 import '../../router/app_router.dart';
 import '../../router/route_constants.dart';
+import '../../widgets/ui/form/form_button.dart';
+import '../../widgets/ui/form/form_container.dart';
+import '../../widgets/ui/form/fields/password_field.dart';
+import '../../widgets/ui/form/fields/password_confirmation_field.dart';
 import '../../widgets/ui/custom_text_field.dart';
+import '../../widgets/connectivity/connectivity_status_bar.dart';
+import '../../widgets/ui/loading_overlay.dart';
+import '../../widgets/auth/social_login_buttons.dart';
 
 class RegisterScreenBloc extends StatefulWidget {
   const RegisterScreenBloc({super.key});
@@ -23,9 +30,6 @@ class _RegisterScreenBlocState extends State<RegisterScreenBloc> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
 
   @override
   void initState() {
@@ -79,8 +83,11 @@ class _RegisterScreenBlocState extends State<RegisterScreenBloc> {
   }
 
   void _onSubmit() {
+    // First validate the form using Flutter's validation
     if (_formKey.currentState!.validate()) {
+      // Only if form validation passes, submit the registration request
       context.read<RegisterBloc>().add(const RegisterSubmitted());
+      // Don't show the success dialog here - it will be shown when the bloc emits success state
     }
   }
 
@@ -121,13 +128,22 @@ class _RegisterScreenBlocState extends State<RegisterScreenBloc> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Account'), elevation: 0),
-      body: BlocListener<RegisterBloc, RegisterState>(
+      appBar: const ConnectivityStatusBar(
+        title: Text('Create Account'),
+        elevation: 0,
+      ),
+      body: BlocConsumer<RegisterBloc, RegisterState>(
+        listenWhen:
+            (previous, current) =>
+                previous.status != current.status ||
+                previous.errorMessage != current.errorMessage,
         listener: (context, state) {
-          if (state.status.isSuccess) {
-            // TODO: enable button - this is preemptive
+          // Only show success dialog when registration is ACTUALLY successful from the server
+          // FormzSubmissionStatus.success is returned from the repository after successful API response
+          if (state.status == FormzSubmissionStatus.success) {
             _showSuccessDialog();
-          } else if (state.status.isFailure && state.errorMessage != null) {
+          } else if (state.status == FormzSubmissionStatus.failure &&
+              state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.errorMessage!),
@@ -136,20 +152,35 @@ class _RegisterScreenBlocState extends State<RegisterScreenBloc> {
             );
           }
         },
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  BlocBuilder<RegisterBloc, RegisterState>(
-                    buildWhen:
-                        (previous, current) =>
-                            previous.username != current.username,
-                    builder: (context, state) {
-                      return CustomTextField(
+        builder: (context, state) {
+          return LoadingOverlay(
+            isLoading: state.status.isInProgress,
+            loadingText: 'Creating account...',
+            child: FormContainer(
+              title: 'Create Your Account',
+              subtitle:
+                  'Join Board Games Empire to connect with other board game enthusiasts',
+              children: [
+                if (state.errorMessage != null && state.status.isFailure)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade300),
+                    ),
+                    child: Text(
+                      state.errorMessage!,
+                      style: TextStyle(color: Colors.red.shade700),
+                    ),
+                  ),
+
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      // Username field
+                      CustomTextField(
                         controller: _usernameController,
                         labelText: 'Username',
                         hintText: 'Choose a username',
@@ -163,16 +194,12 @@ class _RegisterScreenBlocState extends State<RegisterScreenBloc> {
                           }
                           return null;
                         },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                      ),
 
-                  BlocBuilder<RegisterBloc, RegisterState>(
-                    buildWhen:
-                        (previous, current) => previous.email != current.email,
-                    builder: (context, state) {
-                      return CustomTextField(
+                      const SizedBox(height: 16),
+
+                      // Email field
+                      CustomTextField(
                         controller: _emailController,
                         labelText: 'Email',
                         hintText: 'Enter your email',
@@ -189,65 +216,36 @@ class _RegisterScreenBlocState extends State<RegisterScreenBloc> {
                           }
                           return null;
                         },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                      ),
 
-                  BlocBuilder<RegisterBloc, RegisterState>(
-                    buildWhen:
-                        (previous, current) =>
-                            previous.firstName != current.firstName,
-                    builder: (context, state) {
-                      return CustomTextField(
+                      const SizedBox(height: 16),
+
+                      // First Name field
+                      CustomTextField(
                         controller: _firstNameController,
                         labelText: 'First Name (Optional)',
                         hintText: 'Enter your first name',
                         prefixIcon: Icons.person_outline,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                      ),
 
-                  BlocBuilder<RegisterBloc, RegisterState>(
-                    buildWhen:
-                        (previous, current) =>
-                            previous.lastName != current.lastName,
-                    builder: (context, state) {
-                      return CustomTextField(
+                      const SizedBox(height: 16),
+
+                      // Last Name field
+                      CustomTextField(
                         controller: _lastNameController,
                         labelText: 'Last Name (Optional)',
                         hintText: 'Enter your last name',
                         prefixIcon: Icons.person_outline,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                      ),
 
-                  BlocBuilder<RegisterBloc, RegisterState>(
-                    buildWhen:
-                        (previous, current) =>
-                            previous.password != current.password,
-                    builder: (context, state) {
-                      return CustomTextField(
+                      const SizedBox(height: 16),
+
+                      // Password field
+                      PasswordField(
                         controller: _passwordController,
                         labelText: 'Password',
                         hintText: 'Create a password',
-                        prefixIcon: Icons.lock_outline,
-                        obscureText: _obscurePassword,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
+                        onChanged: (_) => _onPasswordChanged(),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter a password';
@@ -267,122 +265,90 @@ class _RegisterScreenBlocState extends State<RegisterScreenBloc> {
                           }
                           return null;
                         },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  BlocBuilder<RegisterBloc, RegisterState>(
-                    buildWhen:
-                        (previous, current) =>
-                            previous.confirmPassword !=
-                                current.confirmPassword ||
-                            previous.password != current.password,
-                    builder: (context, state) {
-                      return CustomTextField(
-                        controller: _confirmPasswordController,
-                        labelText: 'Confirm Password',
-                        hintText: 'Confirm your password',
-                        prefixIcon: Icons.lock_outline,
-                        obscureText: _obscureConfirmPassword,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword =
-                                  !_obscureConfirmPassword;
-                            });
-                          },
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please confirm your password';
-                          }
-                          if (value != _passwordController.text) {
-                            return 'Passwords do not match';
-                          }
-                          return null;
-                        },
-                        textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _onSubmit(),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 32),
-
-                  BlocBuilder<RegisterBloc, RegisterState>(
-                    buildWhen:
-                        (previous, current) =>
-                            previous.status != current.status,
-                    builder: (context, state) {
-                      return SizedBox(
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed:
-                              state.status.isInProgress ? null : _onSubmit,
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child:
-                              state.status.isInProgress
-                                  ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  )
-                                  : const Text(
-                                    'Create Account',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  Text(
-                    'By clicking Create Account, you agree to our Terms of Service and Privacy Policy.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Already have an account?',
-                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                      TextButton(
-                        onPressed: () => AppRouter.navigateTo(AppRoutes.login),
-                        child: const Text(
-                          'Sign In',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+
+                      const SizedBox(height: 16),
+
+                      // Confirm Password field
+                      ConfirmPasswordField(
+                        controller: _confirmPasswordController,
+                        passwordController: _passwordController,
+                        onChanged: (_) => _onConfirmPasswordChanged(),
+                        onFieldSubmitted: (_) => _onSubmit(),
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Create Account button
+                FormButton(
+                  text: 'Create Account',
+                  isLoading: state.status.isInProgress,
+                  onPressed: _onSubmit,
+                ),
+
+                const SizedBox(height: 16),
+
+                Text(
+                  'By creating an account, you agree to our Terms of Service and Privacy Policy.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Social login buttons
+                SocialLoginButtons(
+                  onGoogleLogin: () {
+                    // TODO: Implement social login
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Google login not implemented yet'),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Already have an account?',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    TextButton(
+                      onPressed: () => AppRouter.navigateTo(AppRoutes.login),
+                      child: const Text(
+                        'Sign In',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

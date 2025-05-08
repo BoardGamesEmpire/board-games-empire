@@ -106,7 +106,7 @@ static void board_games_empire_dispose(GObject* object) {
   G_OBJECT_CLASS(board_games_empire_parent_class)->dispose(object);
 }
 
-static void board_games_empire_class_init(MyApplicationClass* klass) {
+static void board_games_empire_class_init(BoardGamesEmpireClass* klass) {
   G_APPLICATION_CLASS(klass)->activate = board_games_empire_activate;
   G_APPLICATION_CLASS(klass)->local_command_line = board_games_empire_local_command_line;
   G_APPLICATION_CLASS(klass)->startup = board_games_empire_startup;

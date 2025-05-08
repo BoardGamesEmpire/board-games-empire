@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+import Joi from 'joi';
 import { env } from './env';
 import { isTrue } from './helpers/helpers';
 
@@ -31,7 +32,14 @@ export default registerAs('swagger', () =>
     {
       key: 'SWAGGER_VERSION',
       keyTo: 'version',
-      defaultValue: '1.0',
+      defaultValue: '1.0.0',
     },
   ]),
 );
+
+export const swaggerConfigValidationSchema = {
+  SWAGGER_ENABLED: Joi.boolean().default(env.isDevelopment),
+  SWAGGER_TITLE: Joi.string().default('Board Games Empire API'),
+  SWAGGER_DESCRIPTION: Joi.string().default('RESTful API for Board Games Empire'),
+  SWAGGER_VERSION: Joi.string().default('1.0'),
+};

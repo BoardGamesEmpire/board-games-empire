@@ -25,6 +25,12 @@
   ],
   "references": [
     {
+      "path": "../../libs/microservices/queue/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/common/server/config/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/api/websocket/tsconfig.lib.json"
     },
     {

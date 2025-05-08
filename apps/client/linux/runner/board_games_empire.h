@@ -3,8 +3,7 @@
 
 #include <gtk/gtk.h>
 
-G_DECLARE_FINAL_TYPE(BoardGamesEmpire, my_application, MY, APPLICATION,
-                     GtkApplication)
+G_DECLARE_FINAL_TYPE(BoardGamesEmpire, board_games_empire, MY, APPLICATION, GtkApplication)
 
 /**
  * board_games_empire_new:
