@@ -80,8 +80,14 @@ class AuthApi extends BaseApi {
     String? lastName,
   }) async {
     try {
+      final url = buildUrl('$apiPrefix/register');
+
+      if (kDebugMode) {
+        print('Register URL: $url');
+      }
+
       final response = await http.post(
-        buildUrl('$apiPrefix/register'),
+        url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': username,

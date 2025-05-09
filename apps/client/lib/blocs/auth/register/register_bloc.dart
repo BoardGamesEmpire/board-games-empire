@@ -40,7 +40,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
                   state.firstName,
                   state.lastName,
                 ])
-                ? FormzSubmissionStatus.success
+                ? FormzSubmissionStatus.initial
                 : FormzSubmissionStatus.failure,
       ),
     );
@@ -63,7 +63,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
                   state.firstName,
                   state.lastName,
                 ])
-                ? FormzSubmissionStatus.success
+                ? FormzSubmissionStatus.initial
                 : FormzSubmissionStatus.failure,
       ),
     );
@@ -91,7 +91,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
                   state.firstName,
                   state.lastName,
                 ])
-                ? FormzSubmissionStatus.success
+                ? FormzSubmissionStatus.initial
                 : FormzSubmissionStatus.failure,
       ),
     );
@@ -117,7 +117,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
                   state.firstName,
                   state.lastName,
                 ])
-                ? FormzSubmissionStatus.success
+                ? FormzSubmissionStatus.initial
                 : FormzSubmissionStatus.failure,
       ),
     );
@@ -140,7 +140,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
                   firstName,
                   state.lastName,
                 ])
-                ? FormzSubmissionStatus.success
+                ? FormzSubmissionStatus.initial
                 : FormzSubmissionStatus.failure,
       ),
     );
@@ -163,7 +163,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
                   state.firstName,
                   lastName,
                 ])
-                ? FormzSubmissionStatus.success
+                ? FormzSubmissionStatus.initial
                 : FormzSubmissionStatus.failure,
       ),
     );
@@ -173,7 +173,14 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
     RegisterSubmitted event,
     Emitter<RegisterState> emit,
   ) async {
-    if (state.status.isSuccess) {
+    if (Formz.validate([
+      state.username,
+      state.email,
+      state.password,
+      state.confirmPassword,
+      state.firstName,
+      state.lastName,
+    ])) {
       emit(state.copyWith(status: FormzSubmissionStatus.inProgress));
       try {
         final success = await _authRepository.register(
@@ -204,6 +211,13 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
           ),
         );
       }
+    } else {
+      emit(
+        state.copyWith(
+          status: FormzSubmissionStatus.failure,
+          errorMessage: 'Please correct the errors in the form',
+        ),
+      );
     }
   }
 }

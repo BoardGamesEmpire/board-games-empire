@@ -1,6 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import { JwtModuleOptions } from '@nestjs/jwt';
 import type { EnvManyResult } from '@status/envirator';
+import Joi from 'joi';
 import { env } from './env';
 import { removeUndefinedFields, splitTrimFilter } from './helpers/helpers';
 
@@ -52,3 +53,11 @@ export default registerAs('jwt', () =>
     shape,
   ),
 );
+
+export const jwtConfigValidationSchema = {
+  JWT_SECRET: Joi.string().required(),
+  JWT_EXPIRATION: Joi.string().default('1d'),
+  JWT_ALGORITHM: Joi.string().default('HS256'),
+  JWT_AUDIENCE: Joi.array().items(Joi.string()).default([]),
+  JWT_ISSUER: Joi.string().optional(),
+};

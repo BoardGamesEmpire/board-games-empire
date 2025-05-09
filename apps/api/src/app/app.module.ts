@@ -1,26 +1,20 @@
 import { AuthModule, JwtAuthGuard } from '@bg-empire/api-auth';
 import { PrismaModule } from '@bg-empire/api-prisma';
 import { UsersModule } from '@bg-empire/api-users';
+import { WebSocketModule } from '@bg-empire/api-websocket';
+import { NestConfigModule } from '@bge/config';
+import { QueueModule } from '@bge/microservices-queue';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
-
-import { WebSocketModule } from '@bg-empire/api-websocket';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { configuration } from './config/configuration';
-import { validationSchema } from './config/validation-schema';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      cache: true,
-      load: configuration,
-      validationSchema,
-    }),
+    NestConfigModule,
 
     // Rate limiting
     ThrottlerModule.forRootAsync({
@@ -50,10 +44,12 @@ import { validationSchema } from './config/validation-schema';
     AuthModule,
     UsersModule,
     WebSocketModule,
+    QueueModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+
     // Global guards
     {
       provide: APP_GUARD,

@@ -21,6 +21,8 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
+  app.enable('trust proxy').set('etag', 'strong').set('x-powered-by', false);
+
   app
     .useGlobalPipes(
       new ValidationPipe({
@@ -51,9 +53,11 @@ async function bootstrap() {
       defaultVersion: '1',
       type: VersioningType.URI,
     })
+    .enableShutdownHooks()
     .enableCors({
       origin: configService.get('security.cors.origin'),
       credentials: configService.get('security.cors.credentials'),
+      maxAge: 3600,
     });
 
   if (configService.get('swagger.enabled')) {

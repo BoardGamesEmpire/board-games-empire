@@ -10,6 +10,7 @@
     "*.sql"
   ],
   "words": [
+    "boardgamesempire",
     "Buildable",
     "cuid",
     "cupertino",
@@ -17,6 +18,7 @@
     "Envirator",
     "formz",
     "getify",
+    "golevelup",
     "IGDB",
     "linebreak",
     "luxon",
@@ -26,6 +28,7 @@
     "Parens",
     "prefs",
     "prerender",
+    "rabbitmq",
     "rulebook",
     "rxdart",
     "Timestamptz",

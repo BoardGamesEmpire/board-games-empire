@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.boardgamesempire.www" "\0"
-            VALUE "FileDescription", "client" "\0"
+            VALUE "FileDescription", "Open Source Board Games Management System" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "client" "\0"
+            VALUE "InternalName", "Board Games Empire" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 com.boardgamesempire.client. All rights reserved." "\0"
-            VALUE "OriginalFilename", "client.exe" "\0"
-            VALUE "ProductName", "client" "\0"
+            VALUE "OriginalFilename", "board_games_empire.exe" "\0"
+            VALUE "ProductName", "Board Games Empire" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

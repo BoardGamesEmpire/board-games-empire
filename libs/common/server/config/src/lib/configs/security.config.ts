@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+import Joi from 'joi';
 import { env } from './env';
 import { isTrue } from './helpers/helpers';
 
@@ -41,3 +42,9 @@ export default registerAs('security', () =>
       },
   ),
 );
+
+export const securityConfigValidationSchema = {
+  BCRYPT_SALT_ROUNDS: Joi.number().default(12),
+  CORS_CREDENTIALS: Joi.boolean().default(false),
+  CORS_ORIGIN: Joi.string().default('*'),
+};

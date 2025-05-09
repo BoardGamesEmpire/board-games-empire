@@ -1,10 +1,5 @@
 {
-  "installation": {
-    "version": "20.7.2",
-    "plugins": {
-      "@nxrocks/nx-flutter": "10.0.1"
-    }
-  },
+  "installation": { "version": "20.7.2", "plugins": { "@nxrocks/nx-flutter": "10.0.1" } },
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
@@ -26,9 +21,7 @@
     {
       "plugin": "@nx/js/typescript",
       "options": {
-        "typecheck": {
-          "targetName": "typecheck"
-        },
+        "typecheck": { "targetName": "typecheck" },
         "build": {
           "targetName": "build",
           "configName": "tsconfig.lib.json",
@@ -36,7 +29,14 @@
           "watchDepsName": "watch-deps"
         }
       },
-      "exclude": ["libs/api/auth/*", "libs/api/prisma/*", "libs/api/users/*", "libs/api/websocket/*"]
+      "exclude": [
+        "libs/api/auth/*",
+        "libs/api/prisma/*",
+        "libs/api/users/*",
+        "libs/api/websocket/*",
+        "libs/microservices/queue/*",
+        "libs/common/server/config/*"
+      ]
     },
     {
       "plugin": "@nx/webpack/plugin",
@@ -48,27 +48,20 @@
         "watchDepsTargetName": "watch-deps"
       }
     },
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "lint"
-      }
-    },
-    {
-      "plugin": "@nx/jest/plugin",
-      "options": {
-        "targetName": "test"
-      },
-      "exclude": ["apps/api-e2e/**/*"]
-    },
+    { "plugin": "@nx/eslint/plugin", "options": { "targetName": "lint" } },
+    { "plugin": "@nx/jest/plugin", "options": { "targetName": "test" }, "exclude": ["apps/api-e2e/**/*"] },
     {
       "plugin": "@nx/js/typescript",
-      "include": ["libs/api/auth/*", "libs/api/prisma/*", "libs/api/users/*", "libs/api/websocket/*"],
-      "options": {
-        "typecheck": {
-          "targetName": "typecheck"
-        }
-      }
+      "include": [
+        "libs/api/auth/*",
+        "libs/api/prisma/*",
+        "libs/api/users/*",
+        "libs/api/websocket/*",
+        "libs/microservices/queue/*",
+        "libs/common/server/*",
+        "libs/common/server/config/*"
+      ],
+      "options": { "typecheck": { "targetName": "typecheck" } }
     },
     {
       "plugin": "@nxrocks/nx-flutter",
@@ -103,9 +96,5 @@
       }
     }
   ],
-  "targetDefaults": {
-    "test": {
-      "dependsOn": ["^build"]
-    }
-  }
+  "targetDefaults": { "test": { "dependsOn": ["^build"] } }
 }

@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+import Joi from 'joi';
 import { env } from './env';
 
 export default registerAs('throttle', () =>
@@ -17,3 +18,8 @@ export default registerAs('throttle', () =>
     },
   ]),
 );
+
+export const throttleConfigValidationSchema = {
+  THROTTLE_TTL: Joi.number().default(60),
+  THROTTLE_LIMIT: Joi.number().default(20),
+};

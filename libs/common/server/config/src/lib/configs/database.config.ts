@@ -1,4 +1,5 @@
 import { registerAs } from '@nestjs/config';
+import Joi from 'joi';
 import { env } from './env';
 
 export interface DatabaseConfig {
@@ -59,3 +60,14 @@ export default registerAs('database', () =>
     },
   ]),
 );
+
+export const databaseConfigValidationSchema = {
+  DATABASE_URL: Joi.string().required(),
+  DATABASE_ADAPTER: Joi.string().default('postgresql'),
+  DATABASE_PORT: Joi.number().default(5432),
+  DATABASE_HOST: Joi.string().default('localhost'),
+  DATABASE_NAME: Joi.string().default('board_games_empire'),
+  DATABASE_SCHEMA: Joi.string().default('public'),
+  DATABASE_USER: Joi.string().default('postgres'),
+  DATABASE_PASSWORD: Joi.string().default('postgres'),
+};
