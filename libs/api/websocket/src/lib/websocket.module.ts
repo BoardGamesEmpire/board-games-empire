@@ -3,7 +3,7 @@ import { INestApplication, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 
-import { WebSocketAdapter } from './adapters/websocket.adapter';
+import { WsAuthAdapter } from './adapters/ws-auth.adapter';
 import { WSGateway } from './gateways/websocket.gateway';
 import { ChatMessageHandler } from './handlers/chat-message.handler';
 import { GameSearchHandler } from './handlers/game-search.handler';
@@ -31,6 +31,6 @@ import { WebSocketService } from './services/websocket.service';
 })
 export class WebSocketModule {
   static getAdapter(app: INestApplication) {
-    return new WebSocketAdapter(app);
+    return new WsAuthAdapter(app);
   }
 }

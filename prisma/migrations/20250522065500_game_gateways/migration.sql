@@ -16,7 +16,7 @@ CREATE TYPE "chat_room_types" AS ENUM ('Public', 'Private', 'Direct', 'Household
 CREATE TYPE "chat_room_roles" AS ENUM ('Owner', 'Admin', 'Moderator', 'Member', 'Guest');
 
 -- CreateEnum
-CREATE TYPE "AuthType" AS ENUM ('OAuth', 'ApiKey', 'BasicAuth', 'None');
+CREATE TYPE "AuthType" AS ENUM ('ApiKey', 'Basic', 'Certificate', 'HMAC', 'JWT', 'None', 'OAuth', 'PSK');
 
 -- AlterTable
 ALTER TABLE "game_implementations" DROP COLUMN "app_store_id",
@@ -24,7 +24,7 @@ DROP COLUMN "board_game_arena_id",
 DROP COLUMN "google_play_id",
 DROP COLUMN "steam_app_id",
 ADD COLUMN     "external_source_identifier" TEXT,
-ADD COLUMN     "source_id" TEXT,
+ADD COLUMN     "game_gateway_id" TEXT,
 ADD COLUMN     "store_identifiers" JSONB;
 
 -- AlterTable
@@ -90,7 +90,7 @@ CREATE TABLE "chat_message_reactions" (
 CREATE TABLE "game_external_references" (
     "id" TEXT NOT NULL,
     "game_id" TEXT NOT NULL,
-    "source_id" TEXT NOT NULL,
+    "game_gateway_id" TEXT NOT NULL,
     "external_id" TEXT NOT NULL,
     "source_url" TEXT,
     "metadata" JSONB,
@@ -102,7 +102,7 @@ CREATE TABLE "game_external_references" (
 );
 
 -- CreateTable
-CREATE TABLE "external_source_registry" (
+CREATE TABLE "game_gateways" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -114,7 +114,7 @@ CREATE TABLE "external_source_registry" (
     "api_documentation" TEXT,
     "api_version" TEXT,
     "enabled" BOOLEAN NOT NULL DEFAULT true,
-    "auth_type" "AuthType",
+    "auth_type" "AuthType" NOT NULL,
     "auth_parameters" JSONB,
     "usage_count" INTEGER NOT NULL DEFAULT 0,
     "last_used" TIMESTAMPTZ(3),
@@ -122,7 +122,7 @@ CREATE TABLE "external_source_registry" (
     "created_at" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(3) NOT NULL,
 
-    CONSTRAINT "external_source_registry_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "game_gateways_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -144,10 +144,10 @@ CREATE INDEX "chat_messages_room_id_created_at_idx" ON "chat_messages"("room_id"
 CREATE UNIQUE INDEX "chat_message_reactions_message_id_user_id_emoji_key" ON "chat_message_reactions"("message_id", "user_id", "emoji");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "game_external_references_game_id_source_id_key" ON "game_external_references"("game_id", "source_id");
+CREATE UNIQUE INDEX "game_external_references_game_id_game_gateway_id_key" ON "game_external_references"("game_id", "game_gateway_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "external_source_registry_name_key" ON "external_source_registry"("name");
+CREATE UNIQUE INDEX "game_gateways_name_key" ON "game_gateways"("name");
 
 -- AddForeignKey
 ALTER TABLE "chat_rooms" ADD CONSTRAINT "chat_rooms_household_id_fkey" FOREIGN KEY ("household_id") REFERENCES "households"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -183,10 +183,10 @@ ALTER TABLE "chat_message_reactions" ADD CONSTRAINT "chat_message_reactions_user
 ALTER TABLE "game_external_references" ADD CONSTRAINT "game_external_references_game_id_fkey" FOREIGN KEY ("game_id") REFERENCES "games"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "game_external_references" ADD CONSTRAINT "game_external_references_source_id_fkey" FOREIGN KEY ("source_id") REFERENCES "external_source_registry"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "game_external_references" ADD CONSTRAINT "game_external_references_game_gateway_id_fkey" FOREIGN KEY ("game_gateway_id") REFERENCES "game_gateways"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "external_source_registry" ADD CONSTRAINT "external_source_registry_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "game_gateways" ADD CONSTRAINT "game_gateways_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "game_implementations" ADD CONSTRAINT "game_implementations_source_id_fkey" FOREIGN KEY ("source_id") REFERENCES "external_source_registry"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "game_implementations" ADD CONSTRAINT "game_implementations_game_gateway_id_fkey" FOREIGN KEY ("game_gateway_id") REFERENCES "game_gateways"("id") ON DELETE SET NULL ON UPDATE CASCADE;

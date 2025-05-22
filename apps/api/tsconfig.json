@@ -10,6 +10,9 @@
       "path": "../../libs/common/server/config"
     },
     {
+      "path": "../../libs/api/game-gateway"
+    },
+    {
       "path": "../../libs/api/websocket"
     },
     {

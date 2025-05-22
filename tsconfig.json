@@ -26,6 +26,15 @@
     },
     {
       "path": "./libs/common/server/config"
+    },
+    {
+      "path": "./apps/boardgame-geek-gateway-e2e"
+    },
+    {
+      "path": "./apps/boardgame-geek-gateway"
+    },
+    {
+      "path": "./libs/api/game-gateway"
     }
   ]
 }

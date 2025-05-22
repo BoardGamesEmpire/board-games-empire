@@ -23,7 +23,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthServerChanged>(_onAuthServerChanged);
 
     _authStatusSubscription = _authRepository.status.listen(
-      (status) => add(AuthStatusChanged(status)),
+      (status) => add(AuthStatusChanged(status, _authRepository.accessToken)),
     );
   }
 

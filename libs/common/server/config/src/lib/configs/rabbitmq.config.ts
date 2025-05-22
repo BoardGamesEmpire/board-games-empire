@@ -1,6 +1,7 @@
 import { registerAs } from '@nestjs/config';
 import Joi from 'joi';
 import { env } from './env';
+import { isTrue } from './helpers/helpers';
 
 export interface RabbitMQConfig {
   uri: string;
@@ -8,6 +9,7 @@ export interface RabbitMQConfig {
   exchange: string;
   routingKey: string;
   prefetchCount: number;
+  wait: boolean;
   queueOptions: {
     durable: boolean;
     autoDelete: boolean;
@@ -30,7 +32,7 @@ export default registerAs('rabbitmq', () =>
       {
         keyTo: 'queue',
         key: 'RABBITMQ_EXTERNAL_QUEUE',
-        defaultValue: 'bge-external-game-sources',
+        defaultValue: 'bge-external-game-gateways',
       },
       {
         keyTo: 'exchange',
@@ -48,10 +50,17 @@ export default registerAs('rabbitmq', () =>
         defaultValue: 10,
         mutators: parseInt,
       },
+      {
+        keyTo: 'wait',
+        key: 'RABBITMQ_CONNECTION_INIT_WAIT',
+        defaultValue: false,
+        mutators: isTrue,
+      },
     ],
     (record) =>
       <RabbitMQConfig>{
         uri: record.uri,
+        wait: record.wait,
         queue: record.queue,
         exchange: record.exchange,
         routingKey: record.routingKey,
@@ -69,7 +78,7 @@ export default registerAs('rabbitmq', () =>
 
 export const rabbitmqConfigValidationSchema = {
   RABBITMQ_URL: Joi.string().required().default('amqp://localhost:5672'),
-  RABBITMQ_EXTERNAL_QUEUE: Joi.string().default('bge-external-game-sources'),
+  RABBITMQ_EXTERNAL_QUEUE: Joi.string().default('bge-external-game-gateways'),
   RABBITMQ_EXCHANGE: Joi.string().default('board-games-empire'),
   RABBITMQ_ROUTING_KEY: Joi.string().default('#'),
   RABBITMQ_PREFETCH_COUNT: Joi.number().default(10),

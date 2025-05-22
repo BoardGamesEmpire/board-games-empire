@@ -2,6 +2,7 @@ import { AuthModule, JwtAuthGuard } from '@bg-empire/api-auth';
 import { PrismaModule } from '@bg-empire/api-prisma';
 import { UsersModule } from '@bg-empire/api-users';
 import { WebSocketModule } from '@bg-empire/api-websocket';
+import { GameGatewayModule } from '@bge/api-game-gateway';
 import { NestConfigModule } from '@bge/config';
 import { QueueModule } from '@bge/microservices-queue';
 import { Module } from '@nestjs/common';
@@ -42,6 +43,7 @@ import { AppService } from './app.service';
 
     // Feature modules
     AuthModule,
+    GameGatewayModule,
     UsersModule,
     WebSocketModule,
     QueueModule,

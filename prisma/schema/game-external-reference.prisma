@@ -3,8 +3,8 @@ model GameExternalReference {
   game   Game   @relation(fields: [gameId], references: [id])
   gameId String @map("game_id")
 
-  source     ExternalSourceRegistry @relation(fields: [sourceId], references: [id])
-  sourceId   String                 @map("source_id")
+  gameGateway     GameGateway @relation(fields: [gameGatewayId], references: [id])
+  gameGatewayId   String                 @map("game_gateway_id")
   externalId String                 @map("external_id")
   sourceUrl  String?                @map("source_url")
 
@@ -15,11 +15,11 @@ model GameExternalReference {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  @@unique([gameId, sourceId])
+  @@unique([gameId, gameGatewayId])
   @@map("game_external_references")
 }
 
-model ExternalSourceRegistry {
+model GameGateway {
   id          String  @id @default(cuid(2))
   name        String  @unique
   description String?
@@ -35,7 +35,7 @@ model ExternalSourceRegistry {
 
   // Integration settings
   enabled        Boolean   @default(true) @map("enabled")
-  authType       AuthType? @map("auth_type")
+  authType       AuthType  @map("auth_type")
   authParameters Json?     @map("auth_parameters")
 
   usageCount Int       @default(0) @map("usage_count")
@@ -50,12 +50,16 @@ model ExternalSourceRegistry {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  @@map("external_source_registry")
+  @@map("game_gateways")
 }
 
 enum AuthType {
-  OAuth
   ApiKey
-  BasicAuth
+  Basic
+  Certificate
+  HMAC
+  JWT
   None
+  OAuth
+  PSK
 }

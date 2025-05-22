@@ -27,9 +27,11 @@ class AppRoutes {
   static const String serverSelection = '/server-selection';
 
   // Feature routes
+  static const String gameGateways = '/games/gateways';
   static const String gameCollection = '/games/collection';
   static const String gameSearch = '/games/search';
   static const String gameDetails = '/games/:id';
+
   static const String chat = '/chat';
 
   static String buildGameDetailsPath(String gameId) => '/games/$gameId';

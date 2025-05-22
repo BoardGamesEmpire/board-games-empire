@@ -12,7 +12,10 @@ part 'websocket_state.dart';
 class WebSocketBloc extends Bloc<WebSocketEvent, WebSocketState> {
   final WebSocketRepository _websocketRepository;
   final ErrorBloc _errorBloc;
+
+  StreamSubscription? _serverChangesSubscription;
   StreamSubscription? _connectionStatusSubscription;
+
   Timer? _reconnectTimer;
   int _reconnectAttempt = 0;
   static const int maxReconnectAttempts = 5;
@@ -31,7 +34,10 @@ class WebSocketBloc extends Bloc<WebSocketEvent, WebSocketState> {
     on<WebSocketServerChanged>(_onServerChanged);
     on<WebSocketAutoReconnectChanged>(_onAutoReconnectChanged);
 
-    // Subscribe to WebSocket status changes
+    _serverChangesSubscription = _websocketRepository.serverChanges.listen(
+      (server) => add(WebSocketServerChanged(server)),
+    );
+
     _connectionStatusSubscription = _websocketRepository.connectionStatus
         .listen((isConnected) => add(WebSocketStatusChanged(isConnected)));
   }

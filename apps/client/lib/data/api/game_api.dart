@@ -4,7 +4,7 @@ import './api_exception.dart';
 import './base_api.dart';
 
 class GameApi extends BaseApi {
-  GameApi({required super.baseUrl});
+  GameApi({required super.baseUrl, required super.authRepo});
 
   final apiPrefix = '/games';
 

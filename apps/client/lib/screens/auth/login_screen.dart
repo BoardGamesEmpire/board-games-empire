@@ -186,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               'Forgot Password?',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Theme.of(context).primaryColor,
+                                color: Theme.of(context).secondaryHeaderColor,
                               ),
                             ),
                           ),

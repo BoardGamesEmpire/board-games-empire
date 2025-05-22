@@ -15,7 +15,7 @@
   "nx": {
     "tags": [
       "libs",
-      "microservices",
+      "microservice",
       "queue"
     ]
   },
