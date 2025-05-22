@@ -72,6 +72,23 @@ export class AuthService {
       select: {
         email: true,
         id: true,
+
+        user: {
+          select: {
+            id: true,
+            roles: {
+              select: {
+                roleId: true,
+                role: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -84,6 +101,10 @@ export class AuthService {
       sub: user.id,
       username: user.username,
       email: auth.email,
+      roles: auth.user.roles.map((role) => ({
+        id: role.role.id,
+        name: role.role.name,
+      })),
       sid: sessionId,
     };
 
@@ -343,12 +364,21 @@ export class AuthService {
           select: {
             userId: true,
             email: true,
-          },
-          include: {
             user: {
               select: {
                 id: true,
                 username: true,
+                roles: {
+                  select: {
+                    roleId: true,
+                    role: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -389,6 +419,10 @@ export class AuthService {
       username: tokenRecord.authentication.user.username,
       email: tokenRecord.authentication.email,
       sid: sessionId,
+      roles: tokenRecord.authentication.user.roles.map((role) => ({
+        id: role.role.id,
+        name: role.role.name,
+      })),
     };
 
     const accessToken = this.jwtService.sign(payload);

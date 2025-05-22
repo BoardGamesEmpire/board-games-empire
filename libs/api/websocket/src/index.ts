@@ -1,4 +1,5 @@
 export * from './lib/adapters/websocket.adapter';
+export * from './lib/adapters/ws-auth.adapter';
 export * from './lib/guards/ws-jwt.guard';
 export * from './lib/handlers/chat-message.handler';
 export * from './lib/handlers/game-search.handler';

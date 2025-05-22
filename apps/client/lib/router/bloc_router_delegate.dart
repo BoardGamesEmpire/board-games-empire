@@ -1,3 +1,4 @@
+import 'package:board_games_empire/router/auth_router_notifier.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import './route_constants.dart';
 import '../di/injection.dart';
 
+import 'package:board_games_empire/blocs/game/game_gateway/game_gateway_bloc.dart';
 import '../blocs/websocket/websocket_bloc.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/account/account_bloc.dart';
@@ -24,6 +26,7 @@ import '../blocs/settings/theme/theme_bloc.dart';
 
 import '../repositories/auth/auth_repository.dart';
 
+import 'package:board_games_empire/screens/game/game_gateway/game_gateway_screen.dart';
 import '../screens/settings/connection_settings_screen.dart';
 import '../screens/websocket/websocket_settings_screen.dart';
 import '../screens/splash/splash_screen.dart';
@@ -41,12 +44,15 @@ import '../screens/home/home_screen.dart';
 import '../screens/theme/theme_settings_screen.dart';
 
 class BlocRouterDelegate {
+  late final AuthRouterNotifier _authRouterNotifier;
   final routerNotifier = ValueNotifier<String>('/');
   late final GoRouter router;
 
   BlocRouterDelegate() {
+    _authRouterNotifier = AuthRouterNotifier(authBloc: getIt<AuthBloc>());
+
     router = GoRouter(
-      refreshListenable: routerNotifier,
+      refreshListenable: _authRouterNotifier,
       initialLocation: '/',
       redirect: _handleRedirect,
       routes: _buildRoutes(),
@@ -239,6 +245,12 @@ class BlocRouterDelegate {
       ),
 
       GoRoute(
+        path: AppRoutes.gameGateways,
+        name: 'gameGateways',
+        builder: (context, state) => _buildGameGatewayScreen(),
+      ),
+
+      GoRoute(
         path: AppRoutes.chat,
         name: 'chat',
         builder: (context, state) => _buildChatScreen(),
@@ -331,6 +343,13 @@ class BlocRouterDelegate {
     return Container();
   }
 
+  Widget _buildGameGatewayScreen() {
+    return BlocProvider(
+      create: (context) => getIt<GameGatewayBloc>(),
+      child: const GameGatewayScreen(),
+    );
+  }
+
   Widget _buildErrorPage(BuildContext context, GoRouterState state) {
     return Scaffold(
       appBar: AppBar(title: const Text('Page Not Found')),
@@ -350,5 +369,9 @@ class BlocRouterDelegate {
         ),
       ),
     );
+  }
+
+  void dispose() {
+    _authRouterNotifier.dispose();
   }
 }

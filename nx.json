@@ -1,5 +1,13 @@
 {
-  "installation": { "version": "20.7.2", "plugins": { "@nxrocks/nx-flutter": "10.0.1" } },
+  "installation": {
+    "version": "21.0.3",
+    "plugins": {
+      "@nxrocks/nx-flutter": "10.0.1"
+    }
+  },
+  "sync": {
+    "applyChanges": true
+  },
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
@@ -21,7 +29,9 @@
     {
       "plugin": "@nx/js/typescript",
       "options": {
-        "typecheck": { "targetName": "typecheck" },
+        "typecheck": {
+          "targetName": "typecheck"
+        },
         "build": {
           "targetName": "build",
           "configName": "tsconfig.lib.json",
@@ -35,7 +45,8 @@
         "libs/api/users/*",
         "libs/api/websocket/*",
         "libs/microservices/queue/*",
-        "libs/common/server/config/*"
+        "libs/common/server/config/*",
+        "libs/api/game-gateway/*"
       ]
     },
     {
@@ -48,8 +59,19 @@
         "watchDepsTargetName": "watch-deps"
       }
     },
-    { "plugin": "@nx/eslint/plugin", "options": { "targetName": "lint" } },
-    { "plugin": "@nx/jest/plugin", "options": { "targetName": "test" }, "exclude": ["apps/api-e2e/**/*"] },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      }
+    },
+    {
+      "plugin": "@nx/jest/plugin",
+      "options": {
+        "targetName": "test"
+      },
+      "exclude": ["apps/api-e2e/**/*", "apps/boardgame-geek-gateway-e2e/**/*"]
+    },
     {
       "plugin": "@nx/js/typescript",
       "include": [
@@ -59,9 +81,14 @@
         "libs/api/websocket/*",
         "libs/microservices/queue/*",
         "libs/common/server/*",
-        "libs/common/server/config/*"
+        "libs/common/server/config/*",
+        "libs/api/game-gateway/*"
       ],
-      "options": { "typecheck": { "targetName": "typecheck" } }
+      "options": {
+        "typecheck": {
+          "targetName": "typecheck"
+        }
+      }
     },
     {
       "plugin": "@nxrocks/nx-flutter",
@@ -96,5 +123,9 @@
       }
     }
   ],
-  "targetDefaults": { "test": { "dependsOn": ["^build"] } }
+  "targetDefaults": {
+    "test": {
+      "dependsOn": ["^build"]
+    }
+  }
 }

@@ -46,8 +46,6 @@ export class GameSearchHandler {
           minPlayers: true,
           maxPlayers: true,
           playingTime: true,
-          isFromExternal: true,
-          externalId: true,
           createdAt: true,
         },
         take: 20,

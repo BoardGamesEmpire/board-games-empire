@@ -302,8 +302,10 @@ class _SessionCard extends StatelessWidget {
                   color: Theme.of(context).primaryColor,
                 ),
                 const SizedBox(width: 12),
-                Expanded(
+                Flexible(
+                  fit: FlexFit.loose,
                   child: Column(
+                    mainAxisSize: MainAxisSize.max,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(

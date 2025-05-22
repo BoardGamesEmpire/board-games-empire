@@ -42,6 +42,7 @@ class ServerRepository {
     final webBaseUrl = _isWebPlatform ? await _getWebBaseUrl() : '';
 
     final webServer = ServerConfig(
+      id: 'board_games_empire_web_server',
       name: 'Web Server${kDebugMode ? ' (Port: 33333)' : ''}',
       url: webBaseUrl,
       isActive: true,

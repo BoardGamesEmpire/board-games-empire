@@ -1,0 +1,27 @@
+{
+  "name": "@board-games-empire/BoardgameGeekGateway-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "name": "BoardgameGeekGateway-e2e",
+    "implicitDependencies": [
+      "BoardgameGeekGateway"
+    ],
+    "targets": {
+      "e2e": {
+        "executor": "@nx/jest:jest",
+        "outputs": [
+          "{projectRoot}/test-output/jest/coverage"
+        ],
+        "options": {
+          "jestConfig": "apps/boardgame-geek-gateway-e2e/jest.config.ts",
+          "passWithNoTests": true
+        },
+        "dependsOn": [
+          "BoardgameGeekGateway:build",
+          "BoardgameGeekGateway:serve"
+        ]
+      }
+    }
+  }
+}

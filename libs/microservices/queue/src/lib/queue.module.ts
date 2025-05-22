@@ -24,14 +24,14 @@ const logger = new Logger('RabbitMQ');
         uri: configService.get('rabbitmq.uri'),
         queues: [
           {
-            name: 'bge-external-game-sources',
+            name: 'bge-external-game-gateways',
             options: {
               durable: true,
             },
           },
         ],
         connectionInitOptions: {
-          wait: false,
+          wait: configService.get('rabbitmq.wait'),
           reject: true,
           timeout: 9000,
         },

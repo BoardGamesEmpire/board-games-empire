@@ -93,22 +93,40 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
 
               const Divider(),
 
-              ListTile(
+              ExpansionTile(
+                title: const Text('Game Management'),
                 leading: const Icon(Icons.games),
-                title: const Text('Game Collection'),
-                onTap: () {
-                  context.pop();
-                  context.push(AppRoutes.gameCollection);
-                },
-              ),
-
-              ListTile(
-                leading: const Icon(Icons.search),
-                title: const Text('Search Games'),
-                onTap: () {
-                  context.pop();
-                  context.push(AppRoutes.gameSearch);
-                },
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.collections_bookmark),
+                    title: const Text('Game Collection'),
+                    onTap: () {
+                      context.pop();
+                      context.push(AppRoutes.gameCollection);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.search),
+                    title: const Text('Search Games'),
+                    onTap: () {
+                      context.pop();
+                      context.push(AppRoutes.gameSearch);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.source),
+                    title: const Text('Game Gateways'),
+                    subtitle: const Text(
+                      'Manage game gateways',
+                      style: TextStyle(fontSize: 12),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onTap: () {
+                      context.pop();
+                      context.push(AppRoutes.gameGateways);
+                    },
+                  ),
+                ],
               ),
 
               ListTile(
@@ -192,9 +210,11 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
           padding: EdgeInsets.all(16.0),
           child: ConnectivityStatusWidget(showDetails: true),
         ),
-        Expanded(
+        Flexible(
+          fit: FlexFit.tight,
           child: Center(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 BlocBuilder<AppBloc, AppState>(

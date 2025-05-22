@@ -1,16 +1,22 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:board_games_empire/repositories/auth/auth_repository.dart';
 
-import './api_exception.dart';
+import 'api_exception.dart';
 
 class BaseApi {
+  final AuthRepository? _authRepository;
+
   String _baseUrl;
 
   // TODO: temporary for local development
   final String _serverUrl = 'http://localhost:33333';
 
-  BaseApi({required String baseUrl}) : _baseUrl = baseUrl;
+  BaseApi({required String baseUrl, AuthRepository? authRepo})
+    : _baseUrl = baseUrl,
+      _authRepository = authRepo;
 
   void setBaseUrl(String url) {
     _baseUrl = url;
@@ -29,11 +35,16 @@ class BaseApi {
     String? token,
   }) async {
     final url = buildUrl(endpoint);
+    final accessToken = _getAccessToken(token);
+
+    if (kDebugMode) {
+      print('Get URL: $url');
+    }
 
     try {
       final response = await http.get(
         url,
-        headers: _buildHeaders(headers, token),
+        headers: _buildHeaders(headers, accessToken),
       );
 
       return _processResponse(response);
@@ -49,11 +60,16 @@ class BaseApi {
     String? token,
   }) async {
     final url = buildUrl(endpoint);
+    final accessToken = _getAccessToken(token);
+
+    if (kDebugMode) {
+      print('Post URL: $url');
+    }
 
     try {
       final response = await http.post(
         url,
-        headers: _buildHeaders(headers, token),
+        headers: _buildHeaders(headers, accessToken),
         body: body is String ? body : jsonEncode(body),
       );
 
@@ -70,11 +86,42 @@ class BaseApi {
     String? token,
   }) async {
     final url = buildUrl(endpoint);
+    final accessToken = _getAccessToken(token);
+
+    if (kDebugMode) {
+      print('Put URL: $url');
+    }
 
     try {
       final response = await http.put(
         url,
-        headers: _buildHeaders(headers, token),
+        headers: _buildHeaders(headers, accessToken),
+        body: body is String ? body : jsonEncode(body),
+      );
+
+      return _processResponse(response);
+    } catch (e) {
+      throw ApiException(message: 'Network error: ${e.toString()}');
+    }
+  }
+
+  Future<dynamic> patch(
+    String endpoint, {
+    required dynamic body,
+    Map<String, String>? headers,
+    String? token,
+  }) async {
+    final url = buildUrl(endpoint);
+    final accessToken = _getAccessToken(token);
+
+    if (kDebugMode) {
+      print('Patch URL: $url');
+    }
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: _buildHeaders(headers, accessToken),
         body: body is String ? body : jsonEncode(body),
       );
 
@@ -91,11 +138,16 @@ class BaseApi {
     dynamic body,
   }) async {
     final url = buildUrl(endpoint);
+    final accessToken = _getAccessToken(token);
+
+    if (kDebugMode) {
+      print('Delete URL: $url');
+    }
 
     try {
       final response = await http.delete(
         url,
-        headers: _buildHeaders(headers, token),
+        headers: _buildHeaders(headers, accessToken),
         body: body != null ? (body is String ? body : jsonEncode(body)) : null,
       );
 
@@ -103,6 +155,10 @@ class BaseApi {
     } catch (e) {
       throw ApiException(message: 'Network error: ${e.toString()}');
     }
+  }
+
+  String? _getAccessToken(String? token) {
+    return token ?? _authRepository?.accessToken;
   }
 
   Map<String, String> _buildHeaders(

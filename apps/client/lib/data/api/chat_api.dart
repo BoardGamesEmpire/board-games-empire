@@ -29,7 +29,7 @@ class ChatRoom {
 }
 
 class ChatApi extends BaseApi {
-  ChatApi({required super.baseUrl});
+  ChatApi({required super.baseUrl, required super.authRepo});
 
   final apiPrefix = '/chat';
 

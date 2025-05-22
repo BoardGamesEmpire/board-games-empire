@@ -1,3 +1,5 @@
+import 'package:board_games_empire/data/datasources/game_gateway/game_gateway_rest.dart';
+import 'package:board_games_empire/data/datasources/game_gateway/game_gateway_websocket.dart';
 import 'package:get_it/get_it.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -12,6 +14,7 @@ import '../handlers/network_error_handler.dart';
 import '../di/coordinator.dart';
 
 // Repositories
+import 'package:board_games_empire/repositories/game/game_gateway_repository.dart';
 import '../repositories/auth/auth_repository.dart';
 import '../repositories/chat/chat_repository.dart';
 import '../repositories/game/game_repository.dart';
@@ -20,6 +23,7 @@ import '../repositories/websocket/websocket_repository.dart';
 import '../repositories/auth/auth_user_context_provider.dart';
 
 // Data sources
+import 'package:board_games_empire/data/api/game_gateway_api.dart';
 import '../data/api/auth_api.dart';
 import '../data/api/chat_api.dart';
 import '../data/api/game_api.dart';
@@ -30,6 +34,7 @@ import '../data/local/user_preferences.dart';
 import '../data/websocket/websocket_client.dart';
 
 // Blocs
+import 'package:board_games_empire/blocs/game/game_gateway/game_gateway_bloc.dart';
 import '../blocs/app/app_bloc.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/websocket/websocket_bloc.dart';
@@ -132,8 +137,29 @@ Future<void> _registerRepositories() async {
 
   // API clients
   getIt.registerLazySingleton<AuthApi>(() => AuthApi(baseUrl: baseUrl));
-  getIt.registerLazySingleton<ChatApi>(() => ChatApi(baseUrl: baseUrl));
-  getIt.registerLazySingleton<GameApi>(() => GameApi(baseUrl: baseUrl));
+  getIt.registerLazySingleton<ChatApi>(
+    () => ChatApi(baseUrl: baseUrl, authRepo: getIt<AuthRepository>()),
+  );
+  getIt.registerLazySingleton<GameApi>(
+    () => GameApi(baseUrl: baseUrl, authRepo: getIt<AuthRepository>()),
+  );
+  getIt.registerLazySingleton<GameGatewayApi>(
+    () => GameGatewayApi(baseUrl: baseUrl, authRepo: getIt<AuthRepository>()),
+  );
+
+  getIt.registerLazySingleton<GameGatewayWebSocket>(
+    () => GameGatewayWebSocket(webSocketClient: getIt<WebSocketClient>()),
+  );
+  getIt.registerLazySingleton<GameGatewayRest>(
+    () => GameGatewayRest(api: getIt<GameGatewayApi>()),
+  );
+  getIt.registerLazySingleton<GameGatewayRepository>(
+    () => GameGatewayRepository(
+      gameGatewayRest: getIt<GameGatewayRest>(),
+      gameGatewayWebSocket: getIt<GameGatewayWebSocket>(),
+      errorBloc: getIt<ErrorBloc>(),
+    ),
+  );
 
   getIt.registerLazySingleton<GameRestDataSource>(
     () => GameRestDataSource(gameApi: getIt<GameApi>()),
@@ -250,6 +276,10 @@ Future<void> _registerBlocs() async {
 
   getIt.registerFactory<GameSearchBloc>(
     () => GameSearchBloc(gameRepository: getIt<GameRepository>()),
+  );
+
+  getIt.registerFactory<GameGatewayBloc>(
+    () => GameGatewayBloc(gameRepository: getIt<GameGatewayRepository>()),
   );
 
   getIt.registerFactory<GameCollectionBloc>(

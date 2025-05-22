@@ -21,7 +21,7 @@ class _GameSearchScreenBlocState extends State<GameSearchScreenBloc> {
     'BoardGameGeek',
     'IGDB',
     'Steam',
-    'None',
+    'Local',
   ];
 
   @override

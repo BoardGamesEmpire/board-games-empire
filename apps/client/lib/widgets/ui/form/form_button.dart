@@ -45,6 +45,9 @@ class FormButton extends StatelessWidget {
           foregroundColor: textColor ?? Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           padding: const EdgeInsets.symmetric(horizontal: 16),
+          shadowColor: Colors.orangeAccent,
+          elevation: 2,
+          side: BorderSide(color: theme.primaryColor, width: 1),
         ),
         child:
             isLoading

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../blocs/websocket/websocket_bloc.dart';
-import '../../models/config/server_config.dart';
 import '../../repositories/server/server_repository.dart';
 
 class WebSocketSettingsScreen extends StatelessWidget {

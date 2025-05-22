@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:formz/formz.dart';
 
@@ -81,6 +82,10 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
           deviceInfo: deviceInfo,
           rememberMe: state.rememberMe,
         );
+
+        if (kDebugMode) {
+          print('Login success: $success');
+        }
 
         if (success) {
           emit(state.copyWith(status: FormzSubmissionStatus.success));

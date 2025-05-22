@@ -4,8 +4,8 @@ model GameImplementation {
   game   Game   @relation(fields: [gameId], references: [id])
   gameId String @map("game_id")
 
-  source                   ExternalSourceRegistry? @relation(fields: [sourceId], references: [id])
-  sourceId                 String?                 @map("source_id")
+  gameGateway                   GameGateway? @relation(fields: [gameGatewayId], references: [id])
+  gameGatewayId                 String?                 @map("game_gateway_id")
   externalSourceIdentifier String?                 @map("external_source_identifier")
 
   platform GamePlatform

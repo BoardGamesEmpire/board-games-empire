@@ -85,23 +85,24 @@ class _BoardGamesEmpireState extends State<BoardGamesEmpire>
         ),
         BlocProvider<ErrorBloc>(create: (context) => getIt<ErrorBloc>()),
       ],
-      child: ErrorHandler(
-        child: BlocBuilder<ThemeBloc, ThemeState>(
-          buildWhen:
-              (previous, current) =>
-                  previous.themeMode != current.themeMode ||
-                  previous.systemBrightness != current.systemBrightness,
-          builder: (context, themeState) {
-            return MaterialApp.router(
-              title: title,
-              theme: ThemeProvider.lightTheme,
-              darkTheme: ThemeProvider.darkTheme,
-              themeMode: themeState.themeMode,
-              routerConfig: AppRouter.router,
-              debugShowCheckedModeBanner: false,
-            );
-          },
-        ),
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        buildWhen:
+            (previous, current) =>
+                previous.themeMode != current.themeMode ||
+                previous.systemBrightness != current.systemBrightness,
+        builder: (context, themeState) {
+          return MaterialApp.router(
+            title: title,
+            theme: ThemeProvider.lightTheme,
+            darkTheme: ThemeProvider.darkTheme,
+            themeMode: themeState.themeMode,
+            routerConfig: AppRouter.router,
+            debugShowCheckedModeBanner: false,
+            builder: (context, child) {
+              return ErrorHandler(child: child ?? const SizedBox());
+            },
+          );
+        },
       ),
     );
   }

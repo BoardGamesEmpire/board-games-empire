@@ -40,6 +40,11 @@ class AuthRepository {
 
   Future<void> _init() async {
     _currentServerId = await _userPreferences.getCurrentServerId();
+
+    if (kDebugMode) {
+      print('INIT: Current server ID: $_currentServerId');
+    }
+
     if (_currentServerId != null) {
       await _loadTokensFromStorage();
     } else {
@@ -90,9 +95,19 @@ class AuthRepository {
 
         _refreshTokenSilently();
       } else {
+        if (kDebugMode) {
+          print('No tokens found in storage for server: $serverPrefix');
+          print(userJson);
+          print(accessToken);
+          print(refreshToken);
+        }
         _controller.add(AuthStatus.unauthenticated);
       }
     } catch (e) {
+      if (kDebugMode) {
+        print('Error loading tokens from storage: ${e.toString()}');
+      }
+
       await _clearAuthData();
       _controller.add(AuthStatus.unauthenticated);
     }
@@ -102,6 +117,10 @@ class AuthRepository {
     if (_currentServerId == null) return;
 
     final serverPrefix = 'server_${_currentServerId}_';
+
+    if (kDebugMode) {
+      print('Saving tokens for server: $serverPrefix');
+    }
 
     await _secureStorage.write(
       '${serverPrefix}access_token',
@@ -147,6 +166,8 @@ class AuthRepository {
         'server_${_currentServerId}_access_token',
         _tokens!.accessToken,
       );
+
+      _controller.add(AuthStatus.authenticated);
 
       return true;
     } catch (e) {
