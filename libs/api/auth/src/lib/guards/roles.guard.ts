@@ -10,8 +10,6 @@ export class RolesGuard extends AuthGuard('jwt') {
   }
 
   override async canActivate(context: ExecutionContext) {
-    console.log('RolesGuard: canActivate called');
-
     const authenticated = await super.canActivate(context);
     if (!authenticated) {
       return false;
@@ -31,7 +29,6 @@ export class RolesGuard extends AuthGuard('jwt') {
   }
 
   override handleRequest(err: Error, user: any, info: any) {
-    console.log('RolesGuard: handleRequest called');
     if (err || !user) {
       throw err || new ForbiddenException('Authentication required');
     }

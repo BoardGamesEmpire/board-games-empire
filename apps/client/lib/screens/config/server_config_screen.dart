@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../blocs/server/server_config/server_config_bloc.dart';
-import '../../router/app_router.dart';
 import '../../router/route_constants.dart';
 import '../../widgets/ui/custom_text_field.dart';
 
@@ -65,7 +64,7 @@ class _ServerConfigScreenState extends State<ServerConfigScreenBloc> {
             state.status == ServerConfigStatus.serverUpdated) {
           // On success, navigate back or to login
           if (widget.isInitialSetup) {
-            AppRouter.navigateTo(AppRoutes.login);
+            context.goNamed(AppRouteNames.login);
           } else {
             context.pop();
           }

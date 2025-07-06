@@ -1,5 +1,12 @@
 import { PrismaService } from '@bg-empire/api-prisma';
-import { Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BaseException, ErrorCode, ResourceNotFoundException } from '@bge/server-errors';
+import {
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthStrategy, TokenType } from '@prisma/client';
@@ -30,7 +37,7 @@ export class OidcService {
     });
 
     if (!provider) {
-      throw new NotFoundException(`Identity provider '${providerName}' not found or not enabled`);
+      throw new ResourceNotFoundException(`Identity provider '${providerName}' not found or not enabled`);
     }
 
     // Generate state, nonce and PKCE params
@@ -88,8 +95,16 @@ export class OidcService {
       include: { provider: true },
     });
 
-    if (!session || session.expiresAt < new Date()) {
-      throw new UnauthorizedException('Invalid or expired authentication session');
+    if (!session) {
+      throw new ResourceNotFoundException('Authentication session', state, {
+        details: {
+          state,
+        },
+      });
+    }
+
+    if (session.expiresAt < new Date()) {
+      throw new UnauthorizedException('Authentication session expired');
     }
 
     try {
@@ -122,7 +137,7 @@ export class OidcService {
         email: user.email,
       };
 
-      const refreshToken = randomBytes(40).toString('hex');
+      const refreshToken = crypto.randomBytes(40).toString('hex');
       const refreshTokenExpiry = DateTime.now().plus({ days: 30 }).toJSDate();
 
       await this.prisma.token.create({
@@ -156,7 +171,16 @@ export class OidcService {
         isNewUser: isNew,
       };
     } catch (error) {
-      throw new InternalServerErrorException(`Authentication failed: ${error.message}`);
+      throw new BaseException({
+        errorCode: ErrorCode.ExternalServiceError,
+        message: 'Failed to exchange authorization code',
+        statusCode: HttpStatus.BAD_GATEWAY,
+        details: {
+          provider: session.provider.name,
+          error: error.message,
+        },
+        cause: error,
+      });
     }
   }
 
@@ -185,9 +209,9 @@ export class OidcService {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error: any = await response.json();
         throw new UnauthorizedException(
-          `Token exchange failed: ${error.error_description || error.error || 'Unknown error'}`,
+          `Token exchange failed: ${error?.error_description || error?.error || 'Unknown error'}`,
         );
       }
 
@@ -463,10 +487,11 @@ export class OidcService {
     });
 
     // Generate state, nonce and PKCE params
-    const state = randomBytes(32).toString('hex');
-    const nonce = randomBytes(32).toString('hex');
-    const codeVerifier = randomBytes(64).toString('hex');
-    const codeChallenge = createHash('sha256')
+    const state = crypto.randomBytes(32).toString('hex');
+    const nonce = crypto.randomBytes(32).toString('hex');
+    const codeVerifier = crypto.randomBytes(64).toString('hex');
+    const codeChallenge = crypto
+      .createHash('sha256')
       .update(codeVerifier)
       .digest('base64')
       .replace(/\+/g, '-')

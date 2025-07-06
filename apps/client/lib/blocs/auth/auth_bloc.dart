@@ -9,6 +9,8 @@ import '../../repositories/auth/auth_repository.dart';
 part 'auth_event.dart';
 part 'auth_state.dart';
 
+enum AuthStatus { unknown, authenticated, unauthenticated }
+
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   StreamSubscription? _authStatusSubscription;

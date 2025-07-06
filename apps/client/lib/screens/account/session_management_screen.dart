@@ -6,8 +6,6 @@ import 'package:intl/intl.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/session/session_bloc.dart';
 import '../../models/user.dart';
-import '../../repositories/auth/auth_repository.dart';
-import '../../router/app_router.dart';
 import '../../router/route_constants.dart';
 
 class SessionManagementScreenBloc extends StatefulWidget {
@@ -27,8 +25,8 @@ class _SessionManagementScreenBlocState
     context.read<AuthBloc>().stream.listen((state) {
       final states = [AuthStatus.unknown, AuthStatus.unauthenticated];
 
-      if (states.contains(state.status)) {
-        AppRouter.navigateTo(AppRoutes.login);
+      if (states.contains(state.status) && mounted) {
+        context.goNamed(AppRouteNames.login);
       }
     });
 

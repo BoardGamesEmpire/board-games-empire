@@ -12,7 +12,6 @@ export class LocalAuthGuard extends AuthGuard('local') {
   }
 
   override handleRequest(err: Error, user: any, info: any) {
-    console.log('LocalAuth handleRequest called', err, user, info);
     if (err || !user) {
       throw err || new UnauthorizedException('Invalid credentials');
     }

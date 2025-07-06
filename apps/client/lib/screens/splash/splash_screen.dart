@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../blocs/app/app_bloc.dart';
 import '../../blocs/app/initialization/app_initialization_bloc.dart';
-import '../../router/app_router.dart';
 import '../../router/route_constants.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -149,13 +149,16 @@ class SplashScreen extends StatelessWidget {
   void _navigateBasedOnAppState(BuildContext context, AppState state) {
     switch (state.status) {
       case AppStatus.needsServerSetup:
-        AppRouter.navigateTo('${AppRoutes.serverConfig}?initial=true');
+        context.goNamed(
+          AppRouteNames.serverConfig,
+          queryParameters: {'initial': true},
+        );
         break;
       case AppStatus.unauthenticated:
-        AppRouter.navigateTo(AppRoutes.login);
+        context.goNamed(AppRouteNames.login);
         break;
       case AppStatus.authenticated:
-        AppRouter.navigateTo(AppRoutes.home);
+        context.goNamed(AppRouteNames.home);
         break;
       case AppStatus.error:
         break;

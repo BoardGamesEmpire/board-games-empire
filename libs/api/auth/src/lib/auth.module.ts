@@ -24,9 +24,7 @@ import { LocalStrategy } from './strategies/local.strategy';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory(configService: ConfigService) {
-        const jwtConfig = configService.get('jwt');
-        console.log('JWT Config:', jwtConfig);
-        return jwtConfig;
+        return configService.get('jwt');
       },
     }),
     ConfigModule,

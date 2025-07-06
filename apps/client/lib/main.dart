@@ -1,13 +1,14 @@
-import 'package:board_games_empire/blocs/server/server_config/server_config_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_strategy/url_strategy.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:board_games_empire/blocs/server/server_config/server_config_bloc.dart';
 import './blocs/app/app_bloc.dart';
 import './blocs/app/initialization/app_initialization_bloc.dart';
 import './blocs/auth/auth_bloc.dart';
 import './blocs/error/error_bloc.dart';
 import './blocs/platform/platform_bloc.dart';
-import './blocs/router/router_bloc.dart';
 import './blocs/settings/theme/theme_bloc.dart';
 import './blocs/utils/app_bloc_observer.dart';
 import './blocs/websocket/websocket_bloc.dart';
@@ -21,11 +22,12 @@ import './widgets/app/error_widget.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  setPathUrlStrategy();
+
+  GoRouter.optionURLReflectsImperativeAPIs = true;
   Bloc.observer = AppBlocObserver();
 
   await setupDependencyInjection();
-
-  AppRouter.initialize();
 
   getIt<BlocCoordinator>();
 
@@ -71,7 +73,6 @@ class _BoardGamesEmpireState extends State<BoardGamesEmpire>
           create: (context) => getIt<AppBloc>()..add(const AppStarted()),
         ),
         BlocProvider<AuthBloc>(create: (context) => getIt<AuthBloc>()),
-        BlocProvider<RouterBloc>(create: (context) => getIt<RouterBloc>()),
         BlocProvider<ThemeBloc>(create: (context) => getIt<ThemeBloc>()),
         BlocProvider<PlatformBloc>(create: (context) => getIt<PlatformBloc>()),
         BlocProvider(create: (context) => getIt<WebSocketBloc>()),
