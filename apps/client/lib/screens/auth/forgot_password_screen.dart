@@ -1,10 +1,11 @@
+import 'package:board_games_empire/router/route_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:formz/formz.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../blocs/auth/forgot_password/forgot_password_bloc.dart';
 import '../../widgets/ui/custom_text_field.dart';
-import '../../router/app_router.dart';
 
 class ForgotPasswordScreenBloc extends StatefulWidget {
   const ForgotPasswordScreenBloc({super.key});
@@ -190,7 +191,7 @@ class _ForgotPasswordScreenBlocState extends State<ForgotPasswordScreenBloc> {
           height: 50,
           child: OutlinedButton(
             onPressed: () {
-              AppRouter.navigateTo('/login');
+              context.goNamed(AppRouteNames.login);
             },
             style: OutlinedButton.styleFrom(
               shape: RoundedRectangleBorder(

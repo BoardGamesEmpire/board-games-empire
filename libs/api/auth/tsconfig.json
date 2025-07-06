@@ -4,6 +4,9 @@
   "include": [],
   "references": [
     {
+      "path": "../../common/server/errors"
+    },
+    {
       "path": "../prisma"
     },
     {

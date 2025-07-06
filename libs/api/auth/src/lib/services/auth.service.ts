@@ -1,4 +1,5 @@
 import { PrismaService } from '@bg-empire/api-prisma';
+import { AccountLockedException, InvalidCredentialsException } from '@bge/server-errors';
 import { BadRequestException, ConflictException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService as NestJwtService } from '@nestjs/jwt';
 import cuid2 from '@paralleldrive/cuid2';
@@ -18,7 +19,6 @@ export class AuthService {
    * Validate user credentials
    */
   async validateUser(email: string, password: string): Promise<User | null> {
-    console.log('validating user', email, password);
     const auth = await this.prisma.userAuthentication.findFirst({
       where: { email },
       include: { user: true },
@@ -27,7 +27,11 @@ export class AuthService {
     if (!auth) {
       Logger.warn(`No authentication found for email: ${email}`);
 
-      return null;
+      throw new InvalidCredentialsException({
+        details: {
+          reason: 'email_not_found',
+        },
+      });
     }
 
     if (auth.accountLocked) {
@@ -35,7 +39,12 @@ export class AuthService {
 
       await this.increaseFailedLoginAttempts(auth.id);
 
-      return null;
+      throw new AccountLockedException('Account is locked', {
+        details: {
+          reason: 'account_locked',
+          unlockAt: auth.accountLockedUntil,
+        },
+      });
     }
 
     // If user doesn't have a password (OIDC user), validation fails
@@ -44,7 +53,12 @@ export class AuthService {
 
       await this.increaseFailedLoginAttempts(auth.id);
 
-      return null;
+      throw new InvalidCredentialsException({
+        details: {
+          reason: 'oauth_user',
+          strategy: auth.authStrategy,
+        },
+      });
     }
 
     const isPasswordValid = await bcrypt.compare(password, auth.password);
@@ -52,7 +66,11 @@ export class AuthService {
       Logger.warn(`Invalid password for email: ${email}`);
 
       await this.increaseFailedLoginAttempts(auth.id);
-      return null;
+      throw new InvalidCredentialsException({
+        details: {
+          reason: 'invalid_password',
+        },
+      });
     }
 
     await this.prisma.userAuthentication.update({
@@ -115,9 +133,7 @@ export class AuthService {
 
     const accessTokenExpiry = DateTime.now().plus({ hours: 1 }).toJSDate();
     const refreshTokenExpiry = DateTime.now()
-      .plus({
-        days: rememberMe ? 30 : 1,
-      })
+      .plus({ days: rememberMe ? 30 : 5 })
       .toJSDate();
     const sessionExpiry = refreshTokenExpiry;
 

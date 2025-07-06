@@ -18,6 +18,9 @@
   "include": ["src/**/*.ts"],
   "references": [
     {
+      "path": "../../common/server/errors/tsconfig.lib.json"
+    },
+    {
       "path": "../prisma/tsconfig.lib.json"
     }
   ],

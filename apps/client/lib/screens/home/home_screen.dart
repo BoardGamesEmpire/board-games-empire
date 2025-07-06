@@ -65,7 +65,7 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
                 title: const Text('Account'),
                 onTap: () {
                   context.pop();
-                  context.push(AppRoutes.account);
+                  context.pushNamed(AppRouteNames.account);
                 },
               ),
 
@@ -74,7 +74,7 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
                 title: const Text('Sessions'),
                 onTap: () {
                   context.pop();
-                  context.push(AppRoutes.sessionManagement);
+                  context.pushNamed(AppRouteNames.sessionManagement);
                 },
               ),
 
@@ -87,7 +87,7 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
                 ),
                 onTap: () {
                   context.pop();
-                  context.push(AppRoutes.connectionSettings);
+                  context.pushNamed(AppRouteNames.connectionSettings);
                 },
               ),
 
@@ -110,7 +110,7 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
                     title: const Text('Search Games'),
                     onTap: () {
                       context.pop();
-                      context.push(AppRoutes.gameSearch);
+                      context.pushNamed(AppRouteNames.gameSearch);
                     },
                   ),
                   ListTile(
@@ -123,7 +123,7 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
                     ),
                     onTap: () {
                       context.pop();
-                      context.push(AppRoutes.gameGateways);
+                      context.pushNamed(AppRouteNames.gameGateways);
                     },
                   ),
                 ],
@@ -134,7 +134,7 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
                 title: const Text('Chat'),
                 onTap: () {
                   context.pop();
-                  context.push(AppRoutes.chat);
+                  context.pushNamed(AppRouteNames.chat);
                 },
               ),
 
@@ -145,7 +145,7 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
                 title: const Text('Theme Settings'),
                 onTap: () {
                   context.pop();
-                  context.push(AppRoutes.themeSettings);
+                  context.pushNamed(AppRouteNames.themeSettings);
                 },
               ),
 
@@ -198,7 +198,7 @@ class _HomeScreenBlocState extends State<HomeScreenBloc> {
       trailing: const Icon(Icons.swap_horiz),
       onTap: () {
         context.pop();
-        context.push(AppRoutes.serverSelection);
+        context.pushNamed(AppRouteNames.serverSelection);
       },
     );
   }

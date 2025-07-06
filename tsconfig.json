@@ -35,6 +35,9 @@
     },
     {
       "path": "./libs/api/game-gateway"
+    },
+    {
+      "path": "./libs/common/server/errors"
     }
   ]
 }

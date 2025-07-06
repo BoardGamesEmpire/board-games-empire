@@ -4,7 +4,6 @@ import 'package:formz/formz.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../blocs/auth/register/register_bloc.dart';
-import '../../router/app_router.dart';
 import '../../router/route_constants.dart';
 import '../../widgets/ui/form/form_button.dart';
 import '../../widgets/ui/form/form_container.dart';
@@ -104,8 +103,7 @@ class _RegisterScreenBlocState extends State<RegisterScreenBloc> {
             actions: [
               TextButton(
                 onPressed: () {
-                  context.pop();
-                  AppRouter.navigateTo(AppRoutes.login);
+                  context.goNamed(AppRouteNames.login);
                 },
                 child: const Text('OK'),
               ),
@@ -337,7 +335,7 @@ class _RegisterScreenBlocState extends State<RegisterScreenBloc> {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     TextButton(
-                      onPressed: () => AppRouter.navigateTo(AppRoutes.login),
+                      onPressed: () => context.goNamed(AppRouteNames.login),
                       child: const Text(
                         'Sign In',
                         style: TextStyle(fontWeight: FontWeight.bold),

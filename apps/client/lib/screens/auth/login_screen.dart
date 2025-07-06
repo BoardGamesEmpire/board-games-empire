@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:formz/formz.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../blocs/auth/login/login_bloc.dart';
-import '../../router/app_router.dart';
 import '../../router/route_constants.dart';
 import '../../models/auth/form_inputs.dart';
 
@@ -63,11 +63,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToRegister() {
-    AppRouter.navigateTo(AppRoutes.register);
+    context.goNamed(AppRouteNames.register);
   }
 
   void _navigateToForgotPassword() {
-    AppRouter.navigateTo(AppRoutes.forgotPassword);
+    context.goNamed(AppRouteNames.forgotPassword);
   }
 
   @override
@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
             _showErrorSnackBar(state.errorMessage!);
           } else if (state.status.isSuccess) {
             final redirectPath = widget.redirectPath ?? AppRoutes.home;
-            AppRouter.replaceTo(redirectPath);
+            context.go(redirectPath);
           }
         },
         builder: (context, state) {

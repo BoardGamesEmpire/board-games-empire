@@ -52,7 +52,6 @@ import '../blocs/app/initialization/app_initialization_bloc.dart';
 import '../blocs/auth/password_reset/password_reset_form_bloc.dart';
 import '../blocs/error/error_bloc.dart';
 import '../blocs/platform/platform_bloc.dart';
-import '../blocs/router/router_bloc.dart';
 import '../blocs/server/selection/server_selection_bloc.dart';
 import '../blocs/server/server_bloc.dart';
 import '../blocs/server/server_config/server_config_bloc.dart';
@@ -218,8 +217,6 @@ Future<void> _registerBlocs() async {
       errorBloc: getIt<ErrorBloc>(),
     ),
   );
-
-  getIt.registerLazySingleton<RouterBloc>(() => RouterBloc());
 
   getIt.registerFactory<LoginBloc>(
     () => LoginBloc(authRepository: getIt<AuthRepository>()),

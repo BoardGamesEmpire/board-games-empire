@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../blocs/server/server_config/server_config_bloc.dart';
 import '../../models/config/server_config.dart';
-import '../../router/app_router.dart';
 import '../../router/route_constants.dart';
 
 class ServerSelectionScreenBloc extends StatefulWidget {
@@ -36,7 +35,7 @@ class _ServerSelectionScreenBlocState extends State<ServerSelectionScreenBloc> {
         if (state.error != null) {
           _showErrorSnackBar(state.error!);
         } else if (state.status == ServerConfigStatus.activeServerChanged) {
-          AppRouter.navigateTo(AppRoutes.login);
+          context.goNamed(AppRouteNames.login);
         } else if (state.status == ServerConfigStatus.serverAdded) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -209,23 +208,18 @@ class _ServerSelectionScreenBlocState extends State<ServerSelectionScreenBloc> {
   }
 
   Future<void> _navigateToAddServer() async {
-    AppRouter.navigateTo(AppRoutes.serverConfig);
+    context.pushNamed(AppRouteNames.serverConfig);
   }
 
   Future<void> _editServer(ServerConfig server) async {
-    // Pass server info to edit screen
-    AppRouter.navigateTo(
-      '${AppRoutes.serverConfig}/edit',
-      arguments: {
-        'serverId': server.id,
-        'name': server.name,
-        'url': server.url,
-      },
+    context.pushNamed(
+      AppRouteNames.serverEdit,
+      pathParameters: {'serverId': server.id},
+      extra: {'name': server.name, 'url': server.url},
     );
   }
 
   Future<void> _requestRemoveServer(ServerConfig server) async {
-    // Show dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => _buildRemovalConfirmation(server),
